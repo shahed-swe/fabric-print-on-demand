@@ -9,6 +9,7 @@ import { faPenFancy, faFont, faSmile, faImage, faPalette, faTrash } from "@forta
 import EmojiPicker from "emoji-picker-react";
 import Display from "../components/Display";
 import debounce from 'lodash.debounce';
+import { Configuration, OpenAIApi } from 'openai';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -34,6 +35,8 @@ const Index = () => {
   const [backPrice, setBackPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
+  const [aiImagePrompt, setAiImagePrompt] = useState("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // New state variables for additional features
   const [textColor, setTextColor] = useState("#000000");
@@ -43,6 +46,7 @@ const Index = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showStrokePicker, setShowStrokePicker] = useState(false);
+  const [opacity, setOpacity] = useState(1);
 
   // State for artwork
   const [showArtModal, setShowArtModal] = useState(false);
@@ -178,40 +182,56 @@ const Index = () => {
   };
 
   // Handle URL-based image
-  const handleAddImageFromUrl = (url: string) => {
+  const handleAddImageFromUrl = async (url: string) => {
     if (!editor) return;
 
-    fabric.Image.fromURL(url, (fabricImage) => {
-      // Calculate scale to fit within canvas
-      const canvasWidth = editor.canvas.width;
-      const canvasHeight = editor.canvas.height;
-      const imgWidth = fabricImage.width || 0;
-      const imgHeight = fabricImage.height || 0;
+    try {
+      // Use our proxy API to avoid CORS issues
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = proxyUrl;
 
-      // Calculate scaling factor
-      let scale = 1;
-      if (imgWidth > imgHeight) {
-        // For landscape images, scale based on width
-        scale = (canvasWidth * 0.8) / imgWidth;
-      } else {
-        // For portrait images, scale based on height
-        scale = (canvasHeight * 0.8) / imgHeight;
-      }
+      img.onload = () => {
+        // Calculate scale to fit within canvas
+        const canvasWidth = editor.canvas.width;
+        const canvasHeight = editor.canvas.height;
+        const imgWidth = img.width;
+        const imgHeight = img.height;
 
-      // Apply scale and position
-      fabricImage.set({
-        left: editor.canvas.width / 2,
-        top: editor.canvas.height / 2,
-        originX: 'center',
-        originY: 'center',
-        scaleX: scale,
-        scaleY: scale,
-      });
+        // Calculate scaling factor to fit within 50% of the canvas
+        let scale = 1;
+        if (imgWidth > imgHeight) {
+          // For landscape images, scale based on width
+          scale = (canvasWidth * 0.5) / imgWidth;
+        } else {
+          // For portrait images, scale based on height
+          scale = (canvasHeight * 0.5) / imgHeight;
+        }
 
-      editor.canvas.add(fabricImage);
-      editor.canvas.setActiveObject(fabricImage);
-      editor.canvas.renderAll();
-    }, { crossOrigin: 'anonymous' });
+        const fabricImage = new fabric.Image(img, {
+          left: editor.canvas.width / 2,
+          top: editor.canvas.height / 2,
+          originX: 'center',
+          originY: 'center',
+          scaleX: scale,
+          scaleY: scale,
+        });
+
+        editor.canvas.add(fabricImage);
+        editor.canvas.setActiveObject(fabricImage);
+        editor.canvas.renderAll();
+      };
+
+      img.onerror = (error) => {
+        console.error('Error loading image:', error);
+        alert('Failed to load the image. Please try again.');
+      };
+    } catch (error) {
+      console.error('Error adding image from URL:', error);
+      alert('Failed to add the image. Please try again.');
+    }
   };
 
   // Add text with current settings
@@ -253,25 +273,25 @@ const Index = () => {
 
   // Update active object properties
   const updateActiveObject = () => {
-    const activeObject = editor?.canvas.getActiveObject();
-    if (!activeObject) return;
+    if (!editor || !editor.canvas.getActiveObject()) return;
 
-    if (activeObject.type === 'i-text' || activeObject.type === 'text') {
+    const activeObject = editor.canvas.getActiveObject();
+    if (activeObject) {
       activeObject.set({
         fill: textColor,
         fontFamily: fontFamily,
         stroke: strokeColor,
         strokeWidth: strokeWidth,
+        opacity: opacity,
       });
+      editor.canvas.renderAll();
     }
-
-    editor?.canvas.renderAll();
   };
 
   // Effect to update active object when settings change
   useEffect(() => {
     updateActiveObject();
-  }, [textColor, fontFamily, strokeColor, strokeWidth]);
+  }, [textColor, fontFamily, strokeColor, strokeWidth, opacity]);
 
   const deleteSelected = () => {
     if (!editor) return;
@@ -325,8 +345,17 @@ const Index = () => {
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
 
-    // Store current view and canvas data
+    // Store current view and canvas states
     const currentView = back;
+
+    // Save current canvas state before switching views
+    if (currentView === "front") {
+      const frontState = JSON.stringify(editor.canvas.toJSON());
+      localStorage.setItem("front", frontState);
+    } else {
+      const backState = JSON.stringify(editor.canvas.toJSON());
+      localStorage.setItem("back", backState);
+    }
 
     // Get canvas elements
     const canvasContainers = document.querySelectorAll(".canvas-container");
@@ -350,78 +379,78 @@ const Index = () => {
       if (upperCanvas) upperCanvas.style.border = 'none';
       if (lowerCanvas) lowerCanvas.style.border = 'none';
 
-      // Save current canvas state
-      if (currentView === "front") {
-        localStorage.setItem("front", JSON.stringify(editor.canvas.toJSON()));
-      } else if (currentView === "back") {
-        localStorage.setItem("back", JSON.stringify(editor.canvas.toJSON()));
-      }
-
+      const pdf = new jsPDF();
+      
       // Capture front view
       handleBack("front");
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for view to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const frontState = localStorage.getItem("front");
+      if (frontState) {
+        editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
+          editor.canvas.renderAll();
+        });
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       const frontCanvas = await html2canvas(document.getElementById("sshot")!, {
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        removeContainer: true,
-        scale: 2 // Increase quality
+        scale: 2
       });
-      const images = [
-        { view: "front", data: frontCanvas.toDataURL("image/png", 1.0) },
-        { view: "back", data: null }
-      ];
 
       // Capture back view
       handleBack("back");
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for view to update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const backState = localStorage.getItem("back");
+      if (backState) {
+        editor.canvas.loadFromJSON(JSON.parse(backState), () => {
+          editor.canvas.renderAll();
+        });
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       const backCanvas = await html2canvas(document.getElementById("sshot")!, {
         useCORS: true,
         allowTaint: true,
         backgroundColor: null,
-        removeContainer: true,
-        scale: 2 // Increase quality
-      });
-      images[1].data = backCanvas.toDataURL("image/png", 1.0);
-
-      // Add images to PDF
-      const pdf = new jsPDF();
-      images.forEach((image, index) => {
-        if (index > 0) pdf.addPage();
-
-        // Calculate dimensions to fit the image properly
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 297; // A4 height in mm
-        const imgHeight = (frontCanvas.height * imgWidth) / frontCanvas.width;
-
-        // Add title
-        pdf.setFontSize(16);
-        pdf.text(`${image.view.toUpperCase()} VIEW`, 105, 20, { align: 'center' });
-
-        // Add image
-        pdf.addImage(
-          image.data!,
-          "PNG",
-          0,
-          30,
-          imgWidth,
-          imgHeight
-        );
+        scale: 2
       });
 
-      // Save PDF
+      // Add front view to PDF
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (frontCanvas.height * imgWidth) / frontCanvas.width;
+
+      pdf.setFontSize(16);
+      pdf.text("FRONT VIEW", 105, 20, { align: 'center' });
+      pdf.addImage(
+        frontCanvas.toDataURL("image/png", 1.0),
+        "PNG",
+        0,
+        30,
+        imgWidth,
+        imgHeight
+      );
+
+      // Add back view on new page
+      pdf.addPage();
+      pdf.setFontSize(16);
+      pdf.text("BACK VIEW", 105, 20, { align: 'center' });
+      pdf.addImage(
+        backCanvas.toDataURL("image/png", 1.0),
+        "PNG",
+        0,
+        30,
+        imgWidth,
+        imgHeight
+      );
+
+      // Save the PDF
       pdf.save("t-shirt-design.pdf");
-
-      // Clear all canvases after successful download
-      clearCanvas();
 
     } catch (error) {
       console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
     } finally {
-      // Restore original view
-      handleBack(currentView);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
       // Restore original borders
       originalStyles.forEach(({ element, style, border }) => {
         element.setAttribute('style', style);
@@ -429,6 +458,18 @@ const Index = () => {
       });
       if (upperCanvas) upperCanvas.style.border = upperOriginalBorder;
       if (lowerCanvas) lowerCanvas.style.border = lowerOriginalBorder;
+
+      // Restore original view and state
+      handleBack(currentView);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Restore the canvas state for the current view
+      const finalState = localStorage.getItem(currentView);
+      if (finalState) {
+        editor.canvas.loadFromJSON(JSON.parse(finalState), () => {
+          editor.canvas.renderAll();
+        });
+      }
 
       setLoading(false);
     }
@@ -459,6 +500,68 @@ const Index = () => {
       console.error("Error fetching EFG collection:", error);
     }
   }, []);
+
+  // Generate image using AI
+  const handleGenerateAIImage = async () => {
+    if (!editor || !aiImagePrompt) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      const configuration = new Configuration({
+        apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+      });
+      const openai = new OpenAIApi(configuration);
+
+      const response = await openai.createImage({
+        prompt: aiImagePrompt,
+        n: 1,
+        size: "1024x1024",
+      });
+
+      const imageUrl = response.data.data[0].url;
+      if (imageUrl) {
+        await handleAddImageFromUrl(imageUrl);
+        setAiImagePrompt(''); // Clear the prompt after successful generation
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      alert('Error generating image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  // Handle opacity change
+  const handleOpacityChange = (value: number) => {
+    setOpacity(value);
+    if (editor && editor.canvas.getActiveObject()) {
+      editor.canvas.getActiveObject()?.set({ opacity: value });
+      editor.canvas.renderAll();
+    }
+  };
+
+  // Update opacity when selecting a new object
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.canvas.on('selection:created', (e) => {
+      const selectedObject = e.selected?.[0];
+      if (selectedObject) {
+        setOpacity(selectedObject.opacity || 1);
+      }
+    });
+
+    editor.canvas.on('selection:updated', (e) => {
+      const selectedObject = e.selected?.[0];
+      if (selectedObject) {
+        setOpacity(selectedObject.opacity || 1);
+      }
+    });
+
+    editor.canvas.on('selection:cleared', () => {
+      setOpacity(1);
+    });
+  }, [editor]);
 
   return (
     <LoadingOverlay
@@ -553,10 +656,51 @@ const Index = () => {
                   <FontAwesomeIcon icon={faTrash} />
                   Delete
                 </button>
+
+                <button
+                  onClick={handleGenerateAIImage}
+                  disabled={isGeneratingImage || !aiImagePrompt}
+                  className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${
+                    isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
+                  }`}
+                >
+                  {isGeneratingImage ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faPenFancy} />
+                      Generate AI Image
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Text Customization */}
-              <div className="mt-4 space-y-4">
+              <div className="space-y-4 p-4 bg-white rounded-lg shadow">
+                <h3 className="text-lg font-semibold">Customization</h3>
+                
+                {/* Opacity Control */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Opacity ({Math.round(opacity * 100)}%)
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={opacity}
+                    onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
                   <select
@@ -614,6 +758,16 @@ const Index = () => {
                     value={strokeWidth}
                     onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
                     className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">AI Image Prompt</label>
+                  <input
+                    type="text"
+                    value={aiImagePrompt}
+                    onChange={(e) => setAiImagePrompt(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
                   />
                 </div>
               </div>
