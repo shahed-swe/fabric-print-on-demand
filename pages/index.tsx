@@ -106,7 +106,7 @@ const Index = () => {
   // Handle canvas data
   useEffect(() => {
     if (!editor) return;
-    
+
     const json = JSON.stringify(editor.canvas.toJSON());
     if (back === "back") {
       setBackData(json);
@@ -122,7 +122,7 @@ const Index = () => {
     try {
       const front = frontData ? JSON.parse(frontData) : null;
       const back = backData ? JSON.parse(backData) : null;
-      
+
       setFrontPrice(front?.objects?.length > 0 ? 100 : 0);
       setBackPrice(back?.objects?.length > 0 ? 100 : 0);
     } catch (error) {
@@ -282,52 +282,74 @@ const Index = () => {
     editor.canvas.renderAll();
   };
 
+  // Clear all canvas data
+  const clearCanvas = async () => {
+    if (!editor) return;
+
+    // Store current view
+    const currentView = back;
+
+    // Clear front view
+    handleBack("front");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const frontObjects = editor.canvas.getObjects();
+    frontObjects.forEach(obj => {
+      editor.canvas.remove(obj);
+    });
+    editor.canvas.renderAll();
+    localStorage.removeItem("front");
+
+    // Clear back view
+    handleBack("back");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const backObjects = editor.canvas.getObjects();
+    backObjects.forEach(obj => {
+      editor.canvas.remove(obj);
+    });
+    editor.canvas.renderAll();
+    localStorage.removeItem("back");
+
+    // Clear other views data
+    localStorage.removeItem("right");
+    localStorage.removeItem("left");
+
+    // Restore original view
+    handleBack(currentView);
+  };
+
   // Handle screenshot
   const handleSS = async () => {
     if (!editor) return;
-    
+
     setLoading(true);
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
 
     // Store current view and canvas data
     const currentView = back;
-    
-    // Remove canvas borders and background
-    const canvasContainer = document.querySelector(".canvas-container") as HTMLElement;
+
+    // Get canvas elements
     const canvasContainers = document.querySelectorAll(".canvas-container");
     const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
     const lowerCanvas = document.querySelector(".lower-canvas") as HTMLElement;
-    
+
     // Store original styles
-    const originalStyles = {
-      container: canvasContainer?.style.cssText || '',
-      upper: upperCanvas?.style.cssText || '',
-      lower: lowerCanvas?.style.cssText || ''
-    };
-
-    // Remove borders and set clean background
-    canvasContainers.forEach(container => {
-      container.classList.remove('with-border');
-    });
-    
-    if (upperCanvas) {
-      upperCanvas.style.border = 'none';
-      upperCanvas.style.boxShadow = 'none';
-    }
-    if (lowerCanvas) {
-      lowerCanvas.style.border = 'none';
-      lowerCanvas.style.boxShadow = 'none';
-    }
-
-    // Create PDF document
-    const pdf = new jsPDF();
-    const images = [
-      { view: "front", data: null },
-      { view: "back", data: null }
-    ];
+    const originalStyles = Array.from(canvasContainers).map(container => ({
+      element: container,
+      style: container.getAttribute('style') || '',
+      border: (container as HTMLElement).style.border
+    }));
+    const upperOriginalBorder = upperCanvas?.style.border;
+    const lowerOriginalBorder = lowerCanvas?.style.border;
 
     try {
+      // Temporarily remove borders for screenshot
+      canvasContainers.forEach(container => {
+        (container as HTMLElement).style.border = 'none';
+      });
+      if (upperCanvas) upperCanvas.style.border = 'none';
+      if (lowerCanvas) lowerCanvas.style.border = 'none';
+
       // Save current canvas state
       if (currentView === "front") {
         localStorage.setItem("front", JSON.stringify(editor.canvas.toJSON()));
@@ -345,7 +367,10 @@ const Index = () => {
         removeContainer: true,
         scale: 2 // Increase quality
       });
-      images[0].data = frontCanvas.toDataURL("image/png", 1.0);
+      const images = [
+        { view: "front", data: frontCanvas.toDataURL("image/png", 1.0) },
+        { view: "back", data: null }
+      ];
 
       // Capture back view
       handleBack("back");
@@ -360,18 +385,19 @@ const Index = () => {
       images[1].data = backCanvas.toDataURL("image/png", 1.0);
 
       // Add images to PDF
+      const pdf = new jsPDF();
       images.forEach((image, index) => {
         if (index > 0) pdf.addPage();
-        
+
         // Calculate dimensions to fit the image properly
         const imgWidth = 210; // A4 width in mm
         const pageHeight = 297; // A4 height in mm
         const imgHeight = (frontCanvas.height * imgWidth) / frontCanvas.width;
-        
+
         // Add title
         pdf.setFontSize(16);
         pdf.text(`${image.view.toUpperCase()} VIEW`, 105, 20, { align: 'center' });
-        
+
         // Add image
         pdf.addImage(
           image.data!,
@@ -386,22 +412,24 @@ const Index = () => {
       // Save PDF
       pdf.save("t-shirt-design.pdf");
 
+      // Clear all canvases after successful download
+      clearCanvas();
+
     } catch (error) {
       console.error("Error generating PDF:", error);
     } finally {
       // Restore original view
       handleBack(currentView);
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Restore borders
-      canvasContainers.forEach(container => {
-        container.classList.add('with-border');
+
+      // Restore original borders
+      originalStyles.forEach(({ element, style, border }) => {
+        element.setAttribute('style', style);
+        (element as HTMLElement).style.border = border;
       });
-      
-      // Restore original styles
-      if (upperCanvas) upperCanvas.style.cssText = originalStyles.upper;
-      if (lowerCanvas) lowerCanvas.style.cssText = originalStyles.lower;
-      
+      if (upperCanvas) upperCanvas.style.border = upperOriginalBorder;
+      if (lowerCanvas) lowerCanvas.style.border = lowerOriginalBorder;
+
       setLoading(false);
     }
   };
@@ -464,21 +492,19 @@ const Index = () => {
             />
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <button
-                className={`px-6 py-2 rounded-lg transition-colors ${
-                  back === "front"
+                className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
                     ? "bg-orange-500 text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                  }`}
                 onClick={() => handleBack("front")}
               >
                 Front View
               </button>
               <button
-                className={`px-6 py-2 rounded-lg transition-colors ${
-                  back === "back"
+                className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
                     ? "bg-orange-500 text-white"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
+                  }`}
                 onClick={() => handleBack("back")}
               >
                 Back View
@@ -660,11 +686,10 @@ const Index = () => {
                     {["S", "M", "L", "XL", "XXL"].map((item) => (
                       <button
                         key={item}
-                        className={`px-6 py-2 border-2 rounded-lg transition-colors ${
-                          size === item
+                        className={`px-6 py-2 border-2 rounded-lg transition-colors ${size === item
                             ? "border-orange-500 bg-orange-50 text-orange-600"
                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        }`}
+                          }`}
                         onClick={() => setSize(item)}
                       >
                         {item}
@@ -679,11 +704,10 @@ const Index = () => {
                     {data.map((item, index) => (
                       <button
                         key={index}
-                        className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${
-                          image === item
+                        className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
                             ? "border-orange-500 bg-orange-50"
                             : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        }`}
+                          }`}
                         onClick={() => {
                           setImage(item);
                           localStorage.setItem("image", JSON.stringify(item));
@@ -744,36 +768,12 @@ const Index = () => {
                   </button>
                 </div>
 
-                <div className="flex gap-4 mb-4">
-                  <button
-                    onClick={() => {
-                      setShowPixabay(true);
-                      setShowEfgCollection(false);
-                    }}
-                    className={`flex-1 py-2 px-4 rounded ${
-                      showPixabay ? "bg-blue-500 text-white" : "bg-gray-200"
-                    }`}
-                  >
-                    Browse from Pixabay
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowPixabay(false);
-                      setShowEfgCollection(true);
-                    }}
-                    className={`flex-1 py-2 px-4 rounded ${
-                      showEfgCollection ? "bg-blue-500 text-white" : "bg-gray-200"
-                    }`}
-                  >
-                    Browse From EFG Collection
-                  </button>
-                </div>
-
-                {showPixabay && (
-                  <div>
-                    <div className="flex gap-2 mb-4">
+                <div className="flex gap-4 mb-4" >
+                  <div style={{ width: "100%" }}>
+                    <div className="flex gap-2 mb-4" >
                       <input
                         type="text"
+
                         className="flex-1 px-3 py-2 border rounded"
                         placeholder="Search artwork..."
                         onChange={handleSearchArtWork}
@@ -800,17 +800,24 @@ const Index = () => {
                             handleAddImageFromUrl(item.largeImageURL);
                             setShowArtModal(false);
                           }}
+                          
                         >
                           <img
                             src={item.previewURL}
                             alt={item.tags}
-                            className="w-full h-auto rounded"
+                            className="rounded"
+                            
+                            style={{height: "150px", width: "200px"}}
                           />
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* {showPixabay && (
+                  
+                )} */}
 
                 {showEfgCollection && (
                   <div className="grid grid-cols-4 gap-4">
