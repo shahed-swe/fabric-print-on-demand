@@ -3,7 +3,7 @@ import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { fabric } from "fabric";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import LoadingOverlay from "react-loading-overlay";
+import { ClipLoader } from "react-spinners";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenFancy, faFont, faSmile, faImage, faPalette, faTrash } from "@fortawesome/free-solid-svg-icons";
 import EmojiPicker from "emoji-picker-react";
@@ -167,15 +167,17 @@ const Index = () => {
       const img = new Image();
       img.src = reader.result as string;
       img.onload = () => {
-        const fabricImage = new fabric.Image(img, {
-          left: editor.canvas.width / 2,
-          top: editor.canvas.height / 2,
-          originX: 'center',
-          originY: 'center',
-        });
-        editor.canvas.add(fabricImage);
-        editor.canvas.setActiveObject(fabricImage);
-        editor.canvas.renderAll();
+        if (editor && editor.canvas) {
+          const fabricImage = new fabric.Image(img, {
+            left: (editor.canvas.width || 200) / 2,
+            top: (editor.canvas.height || 400) / 2,
+            originX: 'center',
+            originY: 'center',
+          });
+          editor.canvas.add(fabricImage);
+          editor.canvas.setActiveObject(fabricImage);
+          editor.canvas.renderAll();
+        }
       };
     };
     reader.readAsDataURL(file);
@@ -195,33 +197,35 @@ const Index = () => {
 
       img.onload = () => {
         // Calculate scale to fit within canvas
-        const canvasWidth = editor.canvas.width;
-        const canvasHeight = editor.canvas.height;
-        const imgWidth = img.width;
-        const imgHeight = img.height;
+        if (editor && editor.canvas) {
+          const canvasWidth = editor.canvas.width || 200;
+          const canvasHeight = editor.canvas.height || 400;
+          const imgWidth = img.width;
+          const imgHeight = img.height;
 
-        // Calculate scaling factor to fit within 50% of the canvas
-        let scale = 1;
-        if (imgWidth > imgHeight) {
-          // For landscape images, scale based on width
-          scale = (canvasWidth * 0.5) / imgWidth;
-        } else {
-          // For portrait images, scale based on height
-          scale = (canvasHeight * 0.5) / imgHeight;
+          // Calculate scaling factor to fit within 50% of the canvas
+          let scale = 1;
+          if (imgWidth > imgHeight) {
+            // For landscape images, scale based on width
+            scale = (canvasWidth * 0.5) / imgWidth;
+          } else {
+            // For portrait images, scale based on height
+            scale = (canvasHeight * 0.5) / imgHeight;
+          }
+
+          const fabricImage = new fabric.Image(img, {
+            left: canvasWidth / 2,
+            top: canvasHeight / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: scale,
+            scaleY: scale,
+          });
+
+          editor.canvas.add(fabricImage);
+          editor.canvas.setActiveObject(fabricImage);
+          editor.canvas.renderAll();
         }
-
-        const fabricImage = new fabric.Image(img, {
-          left: editor.canvas.width / 2,
-          top: editor.canvas.height / 2,
-          originX: 'center',
-          originY: 'center',
-          scaleX: scale,
-          scaleY: scale,
-        });
-
-        editor.canvas.add(fabricImage);
-        editor.canvas.setActiveObject(fabricImage);
-        editor.canvas.renderAll();
       };
 
       img.onerror = (error) => {
@@ -236,11 +240,14 @@ const Index = () => {
 
   // Add text with current settings
   const addText = () => {
-    if (!editor) return;
+    if (!editor || !editor.canvas) return;
+
+    const canvasWidth = editor.canvas.width || 200;
+    const canvasHeight = editor.canvas.height || 400;
 
     const text = new fabric.IText("Double click to edit", {
-      left: editor.canvas.width / 2,
-      top: editor.canvas.height / 2,
+      left: canvasWidth / 2,
+      top: canvasHeight / 2,
       fontSize: 20,
       fill: textColor,
       fontFamily: fontFamily,
@@ -256,11 +263,14 @@ const Index = () => {
 
   // Add emoji
   const onEmojiClick = (emojiData: any) => {
-    if (!editor) return;
+    if (!editor || !editor.canvas) return;
+
+    const canvasWidth = editor.canvas.width || 200;
+    const canvasHeight = editor.canvas.height || 400;
 
     const text = new fabric.Text(emojiData.emoji, {
-      left: editor.canvas.width / 2,
-      top: editor.canvas.height / 2,
+      left: canvasWidth / 2,
+      top: canvasHeight / 2,
       fontSize: 30,
     });
 
@@ -277,7 +287,7 @@ const Index = () => {
 
     const activeObject = editor.canvas.getActiveObject();
     if (activeObject) {
-      activeObject.set({
+      (activeObject as fabric.Text | fabric.IText).set({
         fill: textColor,
         fontFamily: fontFamily,
         stroke: strokeColor,
@@ -476,7 +486,7 @@ const Index = () => {
   };
 
   // Handle pixabay search
-  const handleSearchPix = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchPix = async (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     try {
       // Implement your pixabay API call here
       const response = await fetch(`https://pixabay.com/api/?key=26989130-08a64865604ee2a22958b6c98&q=${event.target.value}&image_type=photo&pretty=true`);
@@ -564,25 +574,30 @@ const Index = () => {
   }, [editor]);
 
   return (
-    <LoadingOverlay
-      active={loading}
-      spinner
-      text="Loading..."
-      styles={{
-        wrapper: {
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      overflow: loading ? 'hidden' : 'auto'
+    }}>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
           height: '100%',
-          overflow: loading ? 'hidden' : 'auto'
-        },
-        overlay: (base: any) => ({
-          ...base,
-          background: 'rgba(255, 255, 255, 0.5)'
-        }),
-        content: (base: any) => ({
-          ...base
-        })
-      }}
-    >
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255, 255, 255, 0.5)',
+          zIndex: 1000
+        }}>
+          <ClipLoader color="#000000" loading={true} size={50} />
+          <div style={{ marginTop: '1rem' }}>Loading...</div>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="flex flex-col items-center">
@@ -998,7 +1013,7 @@ const Index = () => {
           </div>
         </div>
       )}
-    </LoadingOverlay>
+    </div>
   );
 };
 

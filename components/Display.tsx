@@ -36,7 +36,7 @@ const Display: React.FC<DisplayProps> = (props) => {
         >
           <img
             className="img-fluid"
-            name="tshirtview"
+            data-name="tshirtview"
             id="tshirtFacing"
             src={props.image?.front?.src}
             alt="T-shirt front view"
@@ -53,17 +53,16 @@ const Display: React.FC<DisplayProps> = (props) => {
                 height: "400px",
               }}
             >
-              <Canvas
-                className="sample-canvas"
-                onReady={onReady}
-                width={200}
-                height={400}
-                style={{
+              <div style={{
                   WebkitUserSelect: "none",
                   width: "100%",
                   height: "100%"
-                }}
-              />
+                }}>
+                <Canvas
+                  className="sample-canvas"
+                  onReady={onReady}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -95,17 +94,16 @@ const Display: React.FC<DisplayProps> = (props) => {
                 height: "400px",
               }}
             >
-              <Canvas
-                className="sample-canvas"
-                onReady={onReady}
-                width={200}
-                height={400}
-                style={{
+              <div style={{
                   WebkitUserSelect: "none",
                   width: "100%",
                   height: "100%"
-                }}
-              />
+                }}>
+                <Canvas
+                  className="sample-canvas"
+                  onReady={onReady}
+                />
+              </div>
             </div>
           )}
         </div>

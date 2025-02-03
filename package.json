@@ -23,9 +23,10 @@
     "openai": "^3.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-loading-overlay": "^1.0.1 "
+    "react-spinners": "^0.13.8"
   },
   "devDependencies": {
+    "@types/fabric": "^5.3.9",
     "@types/node": "^20.11.5",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
