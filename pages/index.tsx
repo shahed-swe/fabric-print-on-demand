@@ -5,7 +5,15 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { ClipLoader } from "react-spinners";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenFancy, faFont, faSmile, faImage, faPalette, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { 
+  faPenFancy, 
+  faFont, 
+  faSmile, 
+  faTimes, 
+  faTrash, 
+  faImage, 
+  faPalette 
+} from "@fortawesome/free-solid-svg-icons";
 import EmojiPicker from "emoji-picker-react";
 import Display from "../components/Display";
 import PricingCalculator from "../components/PricingCalculator";
@@ -41,24 +49,25 @@ const Index = () => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showTextEditor, setShowTextEditor] = useState(false);
 
-  // Add emoji handling function
-  const onEmojiClick = (emojiData: any) => {
+  // Add text editor position state
+  const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
+
+  // Function to handle text editor positioning
+  const handleTextEditorOpen = () => {
     if (!editor?.canvas) return;
     
-    const textBox = new fabric.Text(emojiData.emoji, {
-      left: editor.canvas.width ? editor.canvas.width / 2 : 100,
-      top: editor.canvas.height ? editor.canvas.height / 2 : 100,
-      originX: 'center',
-      originY: 'center',
-      fontSize: 30,
+    // Position the editor next to the canvas
+    const canvasElement = editor.canvas.getElement();
+    const rect = canvasElement.getBoundingClientRect();
+    
+    setTextEditorPosition({
+      x: rect.right + 20, // 20px gap from canvas
+      y: rect.top
     });
-
-    editor.canvas.add(textBox);
-    editor.canvas.setActiveObject(textBox);
-    setSelectedObject(textBox);
-    editor.canvas.renderAll();
-    setShowEmojiPicker(false);
+    
+    setShowTextEditor(true);
   };
 
   // State for artwork
@@ -554,6 +563,14 @@ const Index = () => {
             <div className="mt-6 p-4 bg-white rounded-xl shadow-lg w-full">
               <div className="flex flex-wrap gap-4 justify-center">
                 <button
+                  onClick={handleTextEditorOpen}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  <FontAwesomeIcon icon={faFont} />
+                  Add Text
+                </button>
+
+                <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                 >
@@ -609,31 +626,71 @@ const Index = () => {
                 </button>
               </div>
 
-              {/* Replace old text customization with TextStyler */}
-              <TextStyler
-                editor={editor}
-                selectedObject={editor?.canvas.getActiveObject()}
-                onTextAdd={(text) => {
-                  if (!editor?.canvas) return;
+              {/* Text Editor Modal */}
+              {showTextEditor && (
+                <div 
+                  className="fixed z-50 bg-white rounded-lg shadow-xl border"
+                  style={{
+                    top: textEditorPosition.y,
+                    left: textEditorPosition.x,
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    width: '350px'
+                  }}
+                >
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Text Editor</h3>
+                    <button
+                      onClick={() => setShowTextEditor(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </div>
                   
-                  const textBox = new fabric.IText(text, {
-                    left: editor.canvas.width ? editor.canvas.width / 2 : 100,
-                    top: editor.canvas.height ? editor.canvas.height / 2 : 100,
-                    originX: 'center',
-                    originY: 'center',
-                    fontSize: 20,
-                  });
+                  <TextStyler
+                    editor={editor}
+                    selectedObject={selectedObject}
+                    onTextAdd={(text) => {
+                      if (!editor?.canvas) return;
+                      
+                      const textBox = new fabric.IText(text, {
+                        left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                        top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                        originX: 'center',
+                        originY: 'center',
+                        fontSize: 20,
+                      });
 
-                  editor.canvas.add(textBox);
-                  editor.canvas.setActiveObject(textBox);
-                  editor.canvas.renderAll();
-                }}
-              />
+                      editor.canvas.add(textBox);
+                      editor.canvas.setActiveObject(textBox);
+                      setSelectedObject(textBox);
+                      editor.canvas.renderAll();
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Emoji Picker */}
               {showEmojiPicker && (
                 <div className="absolute z-10 mt-2">
-                  <EmojiPicker onEmojiClick={onEmojiClick} />
+                  <EmojiPicker onEmojiClick={(emojiData: any) => {
+                    if (!editor?.canvas) return;
+                    
+                    const textBox = new fabric.Text(emojiData.emoji, {
+                      left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                      top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                      originX: 'center',
+                      originY: 'center',
+                      fontSize: 30,
+                    });
+
+                    editor.canvas.add(textBox);
+                    editor.canvas.setActiveObject(textBox);
+                    setSelectedObject(textBox);
+                    editor.canvas.renderAll();
+                    setShowEmojiPicker(false);
+                  }} />
                 </div>
               )}
             </div>
