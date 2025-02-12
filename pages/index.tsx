@@ -20,6 +20,8 @@ import PricingCalculator from "../components/PricingCalculator";
 import debounce from 'lodash.debounce';
 import { Configuration, OpenAIApi } from 'openai';
 import TextStyler from "../components/TextStyler";
+import NavBar from '../components/NavBar';
+import axios from 'axios';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -277,14 +279,14 @@ const Index = () => {
   // Handle screenshot
   const handleSS = async () => {
     if (!editor) return;
-
+  
     setLoading(true);
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
-
+  
     // Store current view and canvas states
     const currentView = back;
-
+  
     // Save current canvas state before switching views
     if (currentView === "front") {
       const frontState = JSON.stringify(editor.canvas.toJSON());
@@ -293,12 +295,12 @@ const Index = () => {
       const backState = JSON.stringify(editor.canvas.toJSON());
       localStorage.setItem("back", backState);
     }
-
+  
     // Get canvas elements
     const canvasContainers = document.querySelectorAll(".canvas-container");
     const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
     const lowerCanvas = document.querySelector(".lower-canvas") as HTMLElement;
-
+  
     // Store original styles
     const originalStyles = Array.from(canvasContainers).map(container => ({
       element: container,
@@ -307,15 +309,15 @@ const Index = () => {
     }));
     const upperOriginalBorder = upperCanvas?.style.border;
     const lowerOriginalBorder = lowerCanvas?.style.border;
-
+  
     try {
       // Temporarily remove borders for screenshot
       canvasContainers.forEach(container => {
         (container as HTMLElement).style.border = 'none';
       });
       if (upperCanvas) upperCanvas.style.border = 'none';
-      if (lowerCanvas) lowerCanvas.style.border = 'none';
-
+      if (lowerCanvas) upperCanvas.style.border = 'none';
+  
       const pdf = new jsPDF();
       
       // Capture front view
@@ -334,7 +336,7 @@ const Index = () => {
         backgroundColor: null,
         scale: 2
       });
-
+  
       // Capture back view
       handleBack("back");
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -351,12 +353,12 @@ const Index = () => {
         backgroundColor: null,
         scale: 2
       });
-
+  
       // Add front view to PDF
       const imgWidth = 210;
       const pageHeight = 297;
       const imgHeight = (frontCanvas.height * imgWidth) / frontCanvas.width;
-
+  
       pdf.setFontSize(16);
       pdf.text("FRONT VIEW", 105, 20, { align: 'center' });
       pdf.addImage(
@@ -367,7 +369,7 @@ const Index = () => {
         imgWidth,
         imgHeight
       );
-
+  
       // Add back view on new page
       pdf.addPage();
       pdf.setFontSize(16);
@@ -380,10 +382,38 @@ const Index = () => {
         imgWidth,
         imgHeight
       );
-
-      // Save the PDF
-      pdf.save("t-shirt-design.pdf");
-
+  
+      // Save the PDF to a Blob
+      const pdfBlob = pdf.output('blob');
+  
+      // Upload the PDF file
+      const formData = new FormData();
+      formData.append('file', pdfBlob, 't-shirt-design.pdf');
+  
+      console.log('Uploading PDF...');
+      const uploadResponse = await axios.post('/api/uploadFile', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+  
+      if (uploadResponse.status === 404) {
+        throw new Error('Upload API endpoint not found');
+      }
+  
+      const fileId = uploadResponse.data.fileId;
+      const userId = 'your-user-id'; // Replace with actual user ID
+  
+      // Create payload
+      const payload = {
+        userId,
+        fileId,
+        sizeQuantities
+      };
+  
+      console.log('Sending payload...');
+      await axios.post('/api/save-design', payload);
+  
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
@@ -394,8 +424,8 @@ const Index = () => {
         (element as HTMLElement).style.border = border;
       });
       if (upperCanvas) upperCanvas.style.border = upperOriginalBorder;
-      if (lowerCanvas) lowerCanvas.style.border = lowerOriginalBorder;
-
+      if (lowerCanvas) upperCanvas.style.border = lowerOriginalBorder;
+  
       // Restore original view and state
       handleBack(currentView);
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -407,7 +437,7 @@ const Index = () => {
           editor.canvas.renderAll();
         });
       }
-
+  
       setLoading(false);
     }
   };
@@ -425,18 +455,6 @@ const Index = () => {
   };
 
   const handleSearchArtWork = useCallback(debounce(handleSearchPix, 1000), []);
-
-  // Handle EFG collection
-  const fetchEFGData = useCallback(async () => {
-    try {
-      // Implement your EFG collection API call here
-      const response = await fetch('your-efg-collection-api-endpoint');
-      const data = await response.json();
-      setArtworkDataEFG(data);
-    } catch (error) {
-      console.error("Error fetching EFG collection:", error);
-    }
-  }, []);
 
   // Generate image using AI
   const handleGenerateAIImage = async () => {
@@ -504,437 +522,440 @@ const Index = () => {
   }, [editor]);
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      overflow: loading ? 'hidden' : 'auto'
-    }}>
-      {loading && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(255, 255, 255, 0.5)',
-          zIndex: 1000
-        }}>
-          <ClipLoader color="#000000" loading={true} size={50} />
-          <div style={{ marginTop: '1rem' }}>Loading...</div>
-        </div>
-      )}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="flex flex-col items-center">
-            <Display
-              back={back}
-              color={color}
-              image={image}
-              Canvas={FabricJSCanvas}
-              onReady={onReady}
-            />
-            <div className="mt-6 flex flex-wrap justify-center gap-4">
-              <button
-                className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                onClick={() => handleBack("front")}
-              >
-                Front View
-              </button>
-              <button
-                className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                onClick={() => handleBack("back")}
-              >
-                Back View
-              </button>
-            </div>
-
-            {/* Design Tools */}
-            <div className="mt-6 p-4 bg-white rounded-xl shadow-lg w-full">
-              <div className="flex flex-wrap gap-4 justify-center">
+    <div>
+      <NavBar />
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: loading ? 'hidden' : 'auto'
+      }}>
+        {loading && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.5)',
+            zIndex: 1000
+          }}>
+            <ClipLoader color="#000000" loading={true} size={50} />
+            <div style={{ marginTop: '1rem' }}>Loading...</div>
+          </div>
+        )}
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="flex flex-col items-center">
+              <Display
+                back={back}
+                color={color}
+                image={image}
+                Canvas={FabricJSCanvas}
+                onReady={onReady}
+              />
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <button
-                  onClick={handleTextEditorOpen}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  onClick={() => handleBack("front")}
                 >
-                  <FontAwesomeIcon icon={faFont} />
-                  Add Text
+                  Front View
                 </button>
-
                 <button
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                  className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  onClick={() => handleBack("back")}
                 >
-                  <FontAwesomeIcon icon={faSmile} />
-                  Add Emoji
-                </button>
-
-                <label
-                  htmlFor="imageUpload"
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer"
-                >
-                  <FontAwesomeIcon icon={faImage} />
-                  Add Image
-                </label>
-
-                <button
-                  onClick={() => setShowArtModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                >
-                  <FontAwesomeIcon icon={faImage} />
-                  Browse Artwork
-                </button>
-
-                <button
-                  onClick={deleteSelected}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  <FontAwesomeIcon icon={faTrash} />
-                  Delete
-                </button>
-
-                <button
-                  onClick={handleGenerateAIImage}
-                  disabled={isGeneratingImage || !aiImagePrompt}
-                  className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${
-                    isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
-                  }`}
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faPenFancy} />
-                      Generate AI Image
-                    </>
-                  )}
+                  Back View
                 </button>
               </div>
 
-              {/* Text Editor Modal */}
-              {showTextEditor && (
-                <div 
-                  className="fixed z-50 bg-white rounded-lg shadow-xl border"
-                  style={{
-                    top: textEditorPosition.y,
-                    left: textEditorPosition.x,
-                    maxHeight: '80vh',
-                    overflowY: 'auto',
-                    width: '350px'
-                  }}
-                >
-                  <div className="p-4 border-b flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">Text Editor</h3>
-                    <button
-                      onClick={() => setShowTextEditor(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
+              {/* Design Tools */}
+              <div className="mt-6 p-4 bg-white rounded-xl shadow-lg w-full">
+                <div className="flex flex-wrap gap-4 justify-center">
+                  <button
+                    onClick={handleTextEditorOpen}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
+                    <FontAwesomeIcon icon={faFont} />
+                    Add Text
+                  </button>
+
+                  <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+                  >
+                    <FontAwesomeIcon icon={faSmile} />
+                    Add Emoji
+                  </button>
+
+                  <label
+                    htmlFor="imageUpload"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faImage} />
+                    Add Image
+                  </label>
+
+                  <button
+                    onClick={() => setShowArtModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                  >
+                    <FontAwesomeIcon icon={faImage} />
+                    Browse Artwork
+                  </button>
+
+                  <button
+                    onClick={deleteSelected}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                    Delete
+                  </button>
+
+                  <button
+                    onClick={handleGenerateAIImage}
+                    disabled={isGeneratingImage || !aiImagePrompt}
+                    className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${
+                      isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
+                    }`}
+                  >
+                    {isGeneratingImage ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faPenFancy} />
+                        Generate AI Image
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Text Editor Modal */}
+                {showTextEditor && (
+                  <div 
+                    className="fixed z-50 bg-white rounded-lg shadow-xl border"
+                    style={{
+                      top: textEditorPosition.y,
+                      left: textEditorPosition.x,
+                      maxHeight: '80vh',
+                      overflowY: 'auto',
+                      width: '350px'
+                    }}
+                  >
+                    <div className="p-4 border-b flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Text Editor</h3>
+                      <button
+                        onClick={() => setShowTextEditor(false)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </button>
+                    </div>
+                    
+                    <TextStyler
+                      editor={editor}
+                      selectedObject={selectedObject}
+                      onTextAdd={(text) => {
+                        if (!editor?.canvas) return;
+                        
+                        const textBox = new fabric.IText(text, {
+                          left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                          top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                          originX: 'center',
+                          originY: 'center',
+                          fontSize: 20,
+                        });
+
+                        editor.canvas.add(textBox);
+                        editor.canvas.setActiveObject(textBox);
+                        setSelectedObject(textBox);
+                        editor.canvas.renderAll();
+                      }}
+                    />
                   </div>
-                  
-                  <TextStyler
-                    editor={editor}
-                    selectedObject={selectedObject}
-                    onTextAdd={(text) => {
+                )}
+
+                {/* Emoji Picker */}
+                {showEmojiPicker && (
+                  <div className="absolute z-10 mt-2">
+                    <EmojiPicker onEmojiClick={(emojiData: any) => {
                       if (!editor?.canvas) return;
                       
-                      const textBox = new fabric.IText(text, {
+                      const textBox = new fabric.Text(emojiData.emoji, {
                         left: editor.canvas.width ? editor.canvas.width / 2 : 100,
                         top: editor.canvas.height ? editor.canvas.height / 2 : 100,
                         originX: 'center',
                         originY: 'center',
-                        fontSize: 20,
+                        fontSize: 30,
                       });
 
                       editor.canvas.add(textBox);
                       editor.canvas.setActiveObject(textBox);
                       setSelectedObject(textBox);
                       editor.canvas.renderAll();
-                    }}
-                  />
-                </div>
-              )}
+                      setShowEmojiPicker(false);
+                    }} />
+                  </div>
+                )}
+              </div>
 
-              {/* Emoji Picker */}
-              {showEmojiPicker && (
-                <div className="absolute z-10 mt-2">
-                  <EmojiPicker onEmojiClick={(emojiData: any) => {
-                    if (!editor?.canvas) return;
-                    
-                    const textBox = new fabric.Text(emojiData.emoji, {
-                      left: editor.canvas.width ? editor.canvas.width / 2 : 100,
-                      top: editor.canvas.height ? editor.canvas.height / 2 : 100,
-                      originX: 'center',
-                      originY: 'center',
-                      fontSize: 30,
-                    });
-
-                    editor.canvas.add(textBox);
-                    editor.canvas.setActiveObject(textBox);
-                    setSelectedObject(textBox);
-                    editor.canvas.renderAll();
-                    setShowEmojiPicker(false);
-                  }} />
-                </div>
-              )}
+              <input
+                type="file"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleAddImage(e.target.files[0]);
+                  }
+                }}
+                className="hidden"
+                id="imageUpload"
+                accept="image/*"
+              />
             </div>
 
-            <input
-              type="file"
-              onChange={(e) => {
-                if (e.target.files?.[0]) {
-                  handleAddImage(e.target.files[0]);
-                }
-              }}
-              className="hidden"
-              id="imageUpload"
-              accept="image/*"
-            />
-          </div>
+            <div>
+              <div className="bg-white p-8 rounded-xl shadow-lg">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  {image?.title || "Custom T-Shirt"}
+                </h2>
 
-          <div>
-            <div className="bg-white p-8 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                {image?.title || "Custom T-Shirt"}
-              </h2>
+                {/* Replace the old pricing display with PricingCalculator */}
+                <PricingCalculator
+                  basePrice={image?.price ? parseInt(image.price) : 500}
+                  sizeQuantities={sizeQuantities}
+                  frontDesignPrice={frontPrice}
+                  backDesignPrice={backPrice}
+                  style={image?.title || "T-shirt"}
+                />
 
-              {/* Replace the old pricing display with PricingCalculator */}
-              <PricingCalculator
-                basePrice={image?.price ? parseInt(image.price) : 500}
-                sizeQuantities={sizeQuantities}
-                frontDesignPrice={frontPrice}
-                backDesignPrice={backPrice}
-                style={image?.title || "T-shirt"}
-              />
-
-              <div className="space-y-8 mt-8">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {[
-                      "#F6F6F6",
-                      "black",
-                      "#0C0CAE",
-                      "#2A2929",
-                      "gray",
-                      "#919a54",
-                      "#7F3232",
-                      "#276457",
-                      "#0DD6C5",
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        style={{ backgroundColor: item }}
-                        className="color-preview border-2 border-gray-200"
-                        onClick={() => {
-                          setColor(item);
-                          localStorage.setItem("color", item);
-                        }}
-                      />
-                    ))}
+                <div className="space-y-8 mt-8">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
+                    <div className="flex flex-wrap gap-3">
+                      {[
+                        "#F6F6F6",
+                        "black",
+                        "#0C0CAE",
+                        "#2A2929",
+                        "gray",
+                        "#919a54",
+                        "#7F3232",
+                        "#276457",
+                        "#0DD6C5",
+                      ].map((item, index) => (
+                        <div
+                          key={index}
+                          style={{ backgroundColor: item }}
+                          className="color-preview border-2 border-gray-200"
+                          onClick={() => {
+                            setColor(item);
+                            localStorage.setItem("color", item);
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size & Quantity</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {(["S", "M", "L", "XL", "XXL"] as TShirtSize[]).map((sizeOption) => (
-                      <div
-                        key={sizeOption}
-                        className={`p-3 border-2 rounded-lg transition-colors ${
-                          sizeQuantities[sizeOption] > 0
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-medium">{sizeOption}</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleSizeQuantityChange(sizeOption, Math.max(0, sizeQuantities[sizeOption] - 1))}
-                              className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
-                            >
-                              -
-                            </button>
-                            <span className="w-8 text-center">{sizeQuantities[sizeOption]}</span>
-                            <button
-                              onClick={() => handleSizeQuantityChange(sizeOption, sizeQuantities[sizeOption] + 1)}
-                              className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
-                            >
-                              +
-                            </button>
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size & Quantity</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {(["S", "M", "L", "XL", "XXL"] as TShirtSize[]).map((sizeOption) => (
+                        <div
+                          key={sizeOption}
+                          className={`p-3 border-2 rounded-lg transition-colors ${
+                            sizeQuantities[sizeOption] > 0
+                              ? "border-orange-500 bg-orange-50"
+                              : "border-gray-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-lg font-medium">{sizeOption}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleSizeQuantityChange(sizeOption, Math.max(0, sizeQuantities[sizeOption] - 1))}
+                                className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center">{sizeQuantities[sizeOption]}</span>
+                              <button
+                                onClick={() => handleSizeQuantityChange(sizeOption, sizeQuantities[sizeOption] + 1)}
+                                className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="mt-2 text-right text-sm text-gray-600">
+                      Total Quantity: {getTotalQuantity()}
+                    </div>
                   </div>
-                  <div className="mt-2 text-right text-sm text-gray-600">
-                    Total Quantity: {getTotalQuantity()}
-                  </div>
-                </div>
 
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Style</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    {data.map((item, index) => (
-                      <button
-                        key={index}
-                        className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
-                            ? "border-orange-500 bg-orange-50"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        onClick={() => {
-                          setImage(item);
-                          localStorage.setItem("image", JSON.stringify(item));
-                        }}
-                      >
-                        <img
-                          src={item.front.src}
-                          alt={item.title}
-                          className="w-10 h-12 object-contain"
-                        />
-                        <span className="text-sm font-medium text-gray-700">{item.title}</span>
-                      </button>
-                    ))}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Style</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {data.map((item, index) => (
+                        <button
+                          key={index}
+                          className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
+                              ? "border-orange-500 bg-orange-50"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                          onClick={() => {
+                            setImage(item);
+                            localStorage.setItem("image", JSON.stringify(item));
+                          }}
+                        >
+                          <img
+                            src={item.front.src}
+                            alt={item.title}
+                            className="w-10 h-12 object-contain"
+                          />
+                          <span className="text-sm font-medium text-gray-700">{item.title}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    onClick={handleSS}
-                    className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Download Design
-                  </button>
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      onClick={handleSS}
+                      className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                    >
+                      Download Design
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Artwork Modal */}
-      {showArtModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="flex justify-between mb-4">
-                  <h3 className="text-lg font-medium">
-                    Browse Artwork {showPixabay ? "From Pixabay" : showEfgCollection ? "From EFG Collection" : ""}
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowArtModal(false);
-                      setShowPixabay(false);
-                      setShowEfgCollection(false);
-                      setArtworkDataPixy([]);
-                      setArtworkDataEFG([]);
-                    }}
-                    className="text-gray-400 hover:text-gray-500"
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+        {/* Artwork Modal */}
+        {showArtModal && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity">
+                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="text-lg font-medium">
+                      Browse Artwork {showPixabay ? "From Pixabay" : showEfgCollection ? "From EFG Collection" : ""}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setShowArtModal(false);
+                        setShowPixabay(false);
+                        setShowEfgCollection(false);
+                        setArtworkDataPixy([]);
+                        setArtworkDataEFG([]);
+                      }}
+                      className="text-gray-400 hover:text-gray-500"
+                    >
+                      <span className="sr-only">Close</span>
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
 
-                <div className="flex gap-4 mb-4" >
-                  <div style={{ width: "100%" }}>
-                    <div className="flex gap-2 mb-4" >
-                      <input
-                        type="text"
+                  <div className="flex gap-4 mb-4" >
+                    <div style={{ width: "100%" }}>
+                      <div className="flex gap-2 mb-4" >
+                        <input
+                          type="text"
 
-                        className="flex-1 px-3 py-2 border rounded"
-                        placeholder="Search artwork..."
-                        onChange={handleSearchArtWork}
-                      />
-                      <select
-                        className="px-3 py-2 border rounded"
-                        onChange={handleSearchArtWork}
-                      >
-                        <option value="">Select Category</option>
-                        {["All", "Art", "Design", "Illustration", "Photography", "Vectors", "3D"].map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
+                          className="flex-1 px-3 py-2 border rounded"
+                          placeholder="Search artwork..."
+                          onChange={handleSearchArtWork}
+                        />
+                        <select
+                          className="px-3 py-2 border rounded"
+                          onChange={handleSearchArtWork}
+                        >
+                          <option value="">Select Category</option>
+                          {["All", "Art", "Design", "Illustration", "Photography", "Vectors", "3D"].map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-4">
+                        {artworkDataPixy.map((item, index) => (
+                          <div
+                            key={index}
+                            className="cursor-pointer hover:opacity-75"
+                            onClick={() => {
+                              handleAddImageFromUrl(item.largeImageURL);
+                              setShowArtModal(false);
+                            }}
+                            
+                          >
+                            <img
+                              src={item.previewURL}
+                              alt={item.tags}
+                              className="rounded"
+                              
+                              style={{height: "150px", width: "200px"}}
+                            />
+                          </div>
                         ))}
-                      </select>
+                      </div>
                     </div>
+                  </div>
 
+                  {/* {showPixabay && (
+                    
+                  )} */}
+
+                  {showEfgCollection && (
                     <div className="grid grid-cols-4 gap-4">
-                      {artworkDataPixy.map((item, index) => (
+                      {artworkDataEFG.map((item, index) => (
                         <div
                           key={index}
                           className="cursor-pointer hover:opacity-75"
                           onClick={() => {
-                            handleAddImageFromUrl(item.largeImageURL);
+                            handleAddImageFromUrl(item.imageUrl);
                             setShowArtModal(false);
                           }}
-                          
                         >
                           <img
-                            src={item.previewURL}
-                            alt={item.tags}
-                            className="rounded"
-                            
-                            style={{height: "150px", width: "200px"}}
+                            src={item.thumbnailUrl}
+                            alt={item.title}
+                            className="w-full h-auto rounded"
                           />
                         </div>
                       ))}
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                {/* {showPixabay && (
-                  
-                )} */}
-
-                {showEfgCollection && (
-                  <div className="grid grid-cols-4 gap-4">
-                    {artworkDataEFG.map((item, index) => (
-                      <div
-                        key={index}
-                        className="cursor-pointer hover:opacity-75"
-                        onClick={() => {
-                          handleAddImageFromUrl(item.imageUrl);
-                          setShowArtModal(false);
-                        }}
-                      >
-                        <img
-                          src={item.thumbnailUrl}
-                          alt={item.title}
-                          className="w-full h-auto rounded"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
