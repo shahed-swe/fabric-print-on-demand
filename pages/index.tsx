@@ -5,11 +5,21 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { ClipLoader } from "react-spinners";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenFancy, faFont, faSmile, faImage, faPalette, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { 
+  faPenFancy, 
+  faFont, 
+  faSmile, 
+  faTimes, 
+  faTrash, 
+  faImage, 
+  faPalette 
+} from "@fortawesome/free-solid-svg-icons";
 import EmojiPicker from "emoji-picker-react";
 import Display from "../components/Display";
+import PricingCalculator from "../components/PricingCalculator";
 import debounce from 'lodash.debounce';
 import { Configuration, OpenAIApi } from 'openai';
+import TextStyler from "../components/TextStyler";
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -37,16 +47,28 @@ const Index = () => {
   const [data, setData] = useState<any[]>([]);
   const [aiImagePrompt, setAiImagePrompt] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-
-  // New state variables for additional features
-  const [textColor, setTextColor] = useState("#000000");
-  const [strokeColor, setStrokeColor] = useState("#000000");
-  const [strokeWidth, setStrokeWidth] = useState(0);
-  const [fontFamily, setFontFamily] = useState("Arial");
+  const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showStrokePicker, setShowStrokePicker] = useState(false);
-  const [opacity, setOpacity] = useState(1);
+  const [showTextEditor, setShowTextEditor] = useState(false);
+
+  // Add text editor position state
+  const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
+
+  // Function to handle text editor positioning
+  const handleTextEditorOpen = () => {
+    if (!editor?.canvas) return;
+    
+    // Position the editor next to the canvas
+    const canvasElement = editor.canvas.getElement();
+    const rect = canvasElement.getBoundingClientRect();
+    
+    setTextEditorPosition({
+      x: rect.right + 20, // 20px gap from canvas
+      y: rect.top
+    });
+    
+    setShowTextEditor(true);
+  };
 
   // State for artwork
   const [showArtModal, setShowArtModal] = useState(false);
@@ -55,19 +77,33 @@ const Index = () => {
   const [artworkDataPixy, setArtworkDataPixy] = useState<any[]>([]);
   const [artworkDataEFG, setArtworkDataEFG] = useState<any[]>([]);
 
-  // Font families
-  const fonts = [
-    "Arial",
-    "Times New Roman",
-    "Courier New",
-    "Georgia",
-    "Verdana",
-    "Helvetica",
-    "Comic Sans MS",
-    "Impact",
-    "Trebuchet MS",
-    "Palatino",
-  ];
+  // Add new state for size quantities
+  type TShirtSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
+  type SizeQuantities = {
+    [key in TShirtSize]: number;
+  };
+
+  const [sizeQuantities, setSizeQuantities] = useState<SizeQuantities>({
+    'S': 0,
+    'M': 0,
+    'L': 0,
+    'XL': 0,
+    'XXL': 0
+  });
+
+  // Function to handle size quantity changes
+  const handleSizeQuantityChange = (size: TShirtSize, quantity: number) => {
+    if (quantity < 0) return; // Prevent negative quantities
+    setSizeQuantities(prev => ({
+      ...prev,
+      [size]: quantity
+    }));
+  };
+
+  // Function to get total quantity
+  const getTotalQuantity = () => {
+    return Object.values(sizeQuantities).reduce((sum, quantity) => sum + quantity, 0);
+  };
 
   // Initialize data
   useEffect(() => {
@@ -236,115 +272,6 @@ const Index = () => {
       console.error('Error adding image from URL:', error);
       alert('Failed to add the image. Please try again.');
     }
-  };
-
-  // Add text with current settings
-  const addText = () => {
-    if (!editor || !editor.canvas) return;
-
-    const canvasWidth = editor.canvas.width || 200;
-    const canvasHeight = editor.canvas.height || 400;
-
-    const text = new fabric.IText("Double click to edit", {
-      left: canvasWidth / 2,
-      top: canvasHeight / 2,
-      fontSize: 20,
-      fill: textColor,
-      fontFamily: fontFamily,
-      stroke: strokeColor,
-      strokeWidth: strokeWidth,
-    });
-
-    editor.canvas.add(text);
-    editor.canvas.setActiveObject(text);
-    editor.canvas.centerObject(text);
-    editor.canvas.renderAll();
-  };
-
-  // Add emoji
-  const onEmojiClick = (emojiData: any) => {
-    if (!editor || !editor.canvas) return;
-
-    const canvasWidth = editor.canvas.width || 200;
-    const canvasHeight = editor.canvas.height || 400;
-
-    const text = new fabric.Text(emojiData.emoji, {
-      left: canvasWidth / 2,
-      top: canvasHeight / 2,
-      fontSize: 30,
-    });
-
-    editor.canvas.add(text);
-    editor.canvas.setActiveObject(text);
-    editor.canvas.centerObject(text);
-    editor.canvas.renderAll();
-    setShowEmojiPicker(false);
-  };
-
-  // Update active object properties
-  const updateActiveObject = () => {
-    if (!editor || !editor.canvas.getActiveObject()) return;
-
-    const activeObject = editor.canvas.getActiveObject();
-    if (activeObject) {
-      (activeObject as fabric.Text | fabric.IText).set({
-        fill: textColor,
-        fontFamily: fontFamily,
-        stroke: strokeColor,
-        strokeWidth: strokeWidth,
-        opacity: opacity,
-      });
-      editor.canvas.renderAll();
-    }
-  };
-
-  // Effect to update active object when settings change
-  useEffect(() => {
-    updateActiveObject();
-  }, [textColor, fontFamily, strokeColor, strokeWidth, opacity]);
-
-  const deleteSelected = () => {
-    if (!editor) return;
-    editor.canvas.getActiveObjects().forEach((obj) => {
-      editor.canvas.remove(obj);
-    });
-    editor.canvas.discardActiveObject();
-    editor.canvas.renderAll();
-  };
-
-  // Clear all canvas data
-  const clearCanvas = async () => {
-    if (!editor) return;
-
-    // Store current view
-    const currentView = back;
-
-    // Clear front view
-    handleBack("front");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const frontObjects = editor.canvas.getObjects();
-    frontObjects.forEach(obj => {
-      editor.canvas.remove(obj);
-    });
-    editor.canvas.renderAll();
-    localStorage.removeItem("front");
-
-    // Clear back view
-    handleBack("back");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const backObjects = editor.canvas.getObjects();
-    backObjects.forEach(obj => {
-      editor.canvas.remove(obj);
-    });
-    editor.canvas.renderAll();
-    localStorage.removeItem("back");
-
-    // Clear other views data
-    localStorage.removeItem("right");
-    localStorage.removeItem("left");
-
-    // Restore original view
-    handleBack(currentView);
   };
 
   // Handle screenshot
@@ -541,36 +468,39 @@ const Index = () => {
     }
   };
 
-  // Handle opacity change
-  const handleOpacityChange = (value: number) => {
-    setOpacity(value);
-    if (editor && editor.canvas.getActiveObject()) {
-      editor.canvas.getActiveObject()?.set({ opacity: value });
-      editor.canvas.renderAll();
-    }
+  // Add deleteSelected function
+  const deleteSelected = () => {
+    if (!editor?.canvas) return;
+    
+    const activeObjects = editor.canvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    activeObjects.forEach((obj) => {
+      editor.canvas.remove(obj);
+    });
+    editor.canvas.discardActiveObject();
+    setSelectedObject(null);
+    editor.canvas.renderAll();
   };
 
-  // Update opacity when selecting a new object
+  // Add selection event handlers
   useEffect(() => {
-    if (!editor) return;
+    if (!editor?.canvas) return;
 
-    editor.canvas.on('selection:created', (e) => {
-      const selectedObject = e.selected?.[0];
-      if (selectedObject) {
-        setOpacity(selectedObject.opacity || 1);
-      }
-    });
+    const handleSelection = (e: any) => {
+      const selected = e.selected?.[0];
+      setSelectedObject(selected || null);
+    };
 
-    editor.canvas.on('selection:updated', (e) => {
-      const selectedObject = e.selected?.[0];
-      if (selectedObject) {
-        setOpacity(selectedObject.opacity || 1);
-      }
-    });
+    editor.canvas.on('selection:created', handleSelection);
+    editor.canvas.on('selection:updated', handleSelection);
+    editor.canvas.on('selection:cleared', () => setSelectedObject(null));
 
-    editor.canvas.on('selection:cleared', () => {
-      setOpacity(1);
-    });
+    return () => {
+      editor.canvas.off('selection:created', handleSelection);
+      editor.canvas.off('selection:updated', handleSelection);
+      editor.canvas.off('selection:cleared');
+    };
   }, [editor]);
 
   return (
@@ -633,7 +563,7 @@ const Index = () => {
             <div className="mt-6 p-4 bg-white rounded-xl shadow-lg w-full">
               <div className="flex flex-wrap gap-4 justify-center">
                 <button
-                  onClick={addText}
+                  onClick={handleTextEditorOpen}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
                   <FontAwesomeIcon icon={faFont} />
@@ -696,104 +626,74 @@ const Index = () => {
                 </button>
               </div>
 
-              {/* Text Customization */}
-              <div className="space-y-4 p-4 bg-white rounded-lg shadow">
-                <h3 className="text-lg font-semibold">Customization</h3>
-                
-                {/* Opacity Control */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Opacity ({Math.round(opacity * 100)}%)
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={opacity}
-                    onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
-                  <select
-                    value={fontFamily}
-                    onChange={(e) => setFontFamily(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    {fonts.map((font) => (
-                      <option key={font} value={font}>{font}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-10 h-10 rounded-lg cursor-pointer border"
-                      style={{ backgroundColor: textColor }}
-                      onClick={() => setShowColorPicker(!showColorPicker)}
-                    />
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={(e) => setTextColor(e.target.value)}
-                      className="h-10"
-                    />
+              {/* Text Editor Modal */}
+              {showTextEditor && (
+                <div 
+                  className="fixed z-50 bg-white rounded-lg shadow-xl border"
+                  style={{
+                    top: textEditorPosition.y,
+                    left: textEditorPosition.x,
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    width: '350px'
+                  }}
+                >
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Text Editor</h3>
+                    <button
+                      onClick={() => setShowTextEditor(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
                   </div>
-                </div>
+                  
+                  <TextStyler
+                    editor={editor}
+                    selectedObject={selectedObject}
+                    onTextAdd={(text) => {
+                      if (!editor?.canvas) return;
+                      
+                      const textBox = new fabric.IText(text, {
+                        left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                        top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                        originX: 'center',
+                        originY: 'center',
+                        fontSize: 20,
+                      });
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stroke Color</label>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-10 h-10 rounded-lg cursor-pointer border"
-                      style={{ backgroundColor: strokeColor }}
-                      onClick={() => setShowStrokePicker(!showStrokePicker)}
-                    />
-                    <input
-                      type="color"
-                      value={strokeColor}
-                      onChange={(e) => setStrokeColor(e.target.value)}
-                      className="h-10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Stroke Width</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-                    className="w-full"
+                      editor.canvas.add(textBox);
+                      editor.canvas.setActiveObject(textBox);
+                      setSelectedObject(textBox);
+                      editor.canvas.renderAll();
+                    }}
                   />
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">AI Image Prompt</label>
-                  <input
-                    type="text"
-                    value={aiImagePrompt}
-                    onChange={(e) => setAiImagePrompt(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                  />
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div className="absolute z-10 mt-2">
+                  <EmojiPicker onEmojiClick={(emojiData: any) => {
+                    if (!editor?.canvas) return;
+                    
+                    const textBox = new fabric.Text(emojiData.emoji, {
+                      left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                      top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                      originX: 'center',
+                      originY: 'center',
+                      fontSize: 30,
+                    });
+
+                    editor.canvas.add(textBox);
+                    editor.canvas.setActiveObject(textBox);
+                    setSelectedObject(textBox);
+                    editor.canvas.renderAll();
+                    setShowEmojiPicker(false);
+                  }} />
                 </div>
-              </div>
+              )}
             </div>
-
-            {/* Emoji Picker */}
-            {showEmojiPicker && (
-              <div className="absolute z-10 mt-2">
-                <EmojiPicker onEmojiClick={onEmojiClick} />
-              </div>
-            )}
 
             <input
               type="file"
@@ -813,15 +713,17 @@ const Index = () => {
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 {image?.title || "Custom T-Shirt"}
               </h2>
-              <h3 className="text-3xl font-bold text-orange-500 mb-8">
-                {image &&
-                  (parseFloat(image.price) +
-                    parseFloat(frontPrice.toString()) +
-                    parseFloat(backPrice.toString())).toFixed(2)}
-                ৳
-              </h3>
 
-              <div className="space-y-8">
+              {/* Replace the old pricing display with PricingCalculator */}
+              <PricingCalculator
+                basePrice={image?.price ? parseInt(image.price) : 500}
+                sizeQuantities={sizeQuantities}
+                frontDesignPrice={frontPrice}
+                backDesignPrice={backPrice}
+                style={image?.title || "T-shirt"}
+              />
+
+              <div className="space-y-8 mt-8">
                 <div>
                   <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
                   <div className="flex flex-wrap gap-3">
@@ -850,20 +752,40 @@ const Index = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {["S", "M", "L", "XL", "XXL"].map((item) => (
-                      <button
-                        key={item}
-                        className={`px-6 py-2 border-2 rounded-lg transition-colors ${size === item
-                            ? "border-orange-500 bg-orange-50 text-orange-600"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                          }`}
-                        onClick={() => setSize(item)}
+                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size & Quantity</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {(["S", "M", "L", "XL", "XXL"] as TShirtSize[]).map((sizeOption) => (
+                      <div
+                        key={sizeOption}
+                        className={`p-3 border-2 rounded-lg transition-colors ${
+                          sizeQuantities[sizeOption] > 0
+                            ? "border-orange-500 bg-orange-50"
+                            : "border-gray-200"
+                        }`}
                       >
-                        {item}
-                      </button>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-medium">{sizeOption}</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleSizeQuantityChange(sizeOption, Math.max(0, sizeQuantities[sizeOption] - 1))}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center">{sizeQuantities[sizeOption]}</span>
+                            <button
+                              onClick={() => handleSizeQuantityChange(sizeOption, sizeQuantities[sizeOption] + 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     ))}
+                  </div>
+                  <div className="mt-2 text-right text-sm text-gray-600">
+                    Total Quantity: {getTotalQuantity()}
                   </div>
                 </div>
 
