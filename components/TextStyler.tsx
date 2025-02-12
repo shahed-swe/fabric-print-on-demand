@@ -54,6 +54,9 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
   const [gradientColor1, setGradientColor1] = useState("#000000");
   const [gradientColor2, setGradientColor2] = useState("#ffffff");
 
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('font');
+
   // Update text properties when selected object changes
   useEffect(() => {
     if (!selectedObject || !(selectedObject instanceof fabric.IText)) return;
@@ -226,7 +229,7 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
   ]);
 
   return (
-    <div className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <div className="p-4 space-y-4">
       {/* Text Input */}
       <div className="flex gap-2">
         <input
@@ -240,295 +243,329 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
           onClick={handleAddText}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          Add Text
+          Add
         </button>
       </div>
 
-      {/* Basic Styling */}
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <select
-            value={fontFamily}
-            onChange={(e) => setFontFamily(e.target.value)}
-            className="p-2 border rounded"
-          >
-            {fonts.map(font => (
-              <option key={font} value={font}>{font}</option>
-            ))}
-          </select>
-          
-          <input
-            type="number"
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-            className="w-20 p-2 border rounded"
-            min="1"
-            max="200"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setBold(!bold)}
-            className={`p-2 rounded ${bold ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faBold} />
-          </button>
-          <button
-            onClick={() => setItalic(!italic)}
-            className={`p-2 rounded ${italic ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faItalic} />
-          </button>
-          <button
-            onClick={() => setUnderline(!underline)}
-            className={`p-2 rounded ${underline ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faUnderline} />
-          </button>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTextAlign('left')}
-            className={`p-2 rounded ${textAlign === 'left' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faAlignLeft} />
-          </button>
-          <button
-            onClick={() => setTextAlign('center')}
-            className={`p-2 rounded ${textAlign === 'center' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faAlignCenter} />
-          </button>
-          <button
-            onClick={() => setTextAlign('right')}
-            className={`p-2 rounded ${textAlign === 'right' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faAlignRight} />
-          </button>
-        </div>
+      {/* Quick Actions */}
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setBold(!bold)}
+          className={`p-2 rounded ${bold ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Bold"
+        >
+          <FontAwesomeIcon icon={faBold} />
+        </button>
+        <button
+          onClick={() => setItalic(!italic)}
+          className={`p-2 rounded ${italic ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Italic"
+        >
+          <FontAwesomeIcon icon={faItalic} />
+        </button>
+        <button
+          onClick={() => setUnderline(!underline)}
+          className={`p-2 rounded ${underline ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Underline"
+        >
+          <FontAwesomeIcon icon={faUnderline} />
+        </button>
+        <button
+          onClick={() => setTextAlign('left')}
+          className={`p-2 rounded ${textAlign === 'left' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Align Left"
+        >
+          <FontAwesomeIcon icon={faAlignLeft} />
+        </button>
+        <button
+          onClick={() => setTextAlign('center')}
+          className={`p-2 rounded ${textAlign === 'center' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Align Center"
+        >
+          <FontAwesomeIcon icon={faAlignCenter} />
+        </button>
+        <button
+          onClick={() => setTextAlign('right')}
+          className={`p-2 rounded ${textAlign === 'right' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          title="Align Right"
+        >
+          <FontAwesomeIcon icon={faAlignRight} />
+        </button>
       </div>
 
-      {/* Color Controls */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <label>Text Color:</label>
-          <input
-            type="color"
-            value={textColor}
-            onChange={(e) => setTextColor(e.target.value)}
-            className="w-8 h-8"
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <label>Background:</label>
-          <input
-            type="color"
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="w-8 h-8"
-          />
-        </div>
-      </div>
-
-      {/* Advanced Controls */}
-      <div className="space-y-2">
-        <div>
-          <label>Letter Spacing:</label>
-          <input
-            type="range"
-            min="-20"
-            max="100"
-            value={letterSpacing}
-            onChange={(e) => setLetterSpacing(Number(e.target.value))}
-            className="w-full"
-          />
+      {/* Tabs for different settings */}
+      <div className="border-t pt-4">
+        <div className="flex gap-2 mb-4">
+          {['Font', 'Color', 'Effects', 'Shadow'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab.toLowerCase())}
+              className={`px-3 py-1 rounded ${
+                activeTab === tab.toLowerCase() 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        <div>
-          <label>Line Height:</label>
-          <input
-            type="range"
-            min="0.5"
-            max="3"
-            step="0.1"
-            value={lineHeight}
-            onChange={(e) => setLineHeight(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+        {/* Font Settings */}
+        {activeTab === 'font' && (
+          <div className="space-y-4">
+            <select
+              value={fontFamily}
+              onChange={(e) => setFontFamily(e.target.value)}
+              className="w-full p-2 border rounded"
+            >
+              {fonts.map(font => (
+                <option key={font} value={font}>{font}</option>
+              ))}
+            </select>
+            
+            <div>
+              <label className="block text-sm mb-1">Font Size</label>
+              <input
+                type="number"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full p-2 border rounded"
+                min="1"
+                max="200"
+              />
+            </div>
 
-        <div>
-          <label>Rotation:</label>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            value={rotation}
-            onChange={(e) => setRotation(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+            <div>
+              <label className="block text-sm mb-1">Letter Spacing</label>
+              <input
+                type="range"
+                min="-20"
+                max="100"
+                value={letterSpacing}
+                onChange={(e) => setLetterSpacing(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
 
-        <div>
-          <label>Opacity:</label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={opacity}
-            onChange={(e) => setOpacity(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-      </div>
+            <div>
+              <label className="block text-sm mb-1">Line Height</label>
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={lineHeight}
+                onChange={(e) => setLineHeight(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Shadow Effects */}
-      <div className="space-y-2">
-        <h3 className="font-semibold">Shadow Effects</h3>
-        <div className="flex items-center gap-2">
-          <label>Color:</label>
-          <input
-            type="color"
-            value={shadowColor}
-            onChange={(e) => setShadowColor(e.target.value)}
-            className="w-8 h-8"
-          />
-        </div>
-        
-        <div>
-          <label>Blur:</label>
-          <input
-            type="range"
-            min="0"
-            max="50"
-            value={shadowBlur}
-            onChange={(e) => setShadowBlur(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+        {/* Color Settings */}
+        {activeTab === 'color' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm mb-1">Text Color</label>
+              <input
+                type="color"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="w-full h-10"
+              />
+            </div>
 
-        <div>
-          <label>Offset X:</label>
-          <input
-            type="range"
-            min="-50"
-            max="50"
-            value={shadowOffsetX}
-            onChange={(e) => setShadowOffsetX(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+            <div>
+              <label className="block text-sm mb-1">Background</label>
+              <input
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-full h-10"
+              />
+            </div>
 
-        <div>
-          <label>Offset Y:</label>
-          <input
-            type="range"
-            min="-50"
-            max="50"
-            value={shadowOffsetY}
-            onChange={(e) => setShadowOffsetY(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-      </div>
+            <div>
+              <label className="block text-sm mb-1">Opacity</label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={opacity}
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
 
-      {/* Text Effects */}
-      <div className="space-y-2">
-        <h3 className="font-semibold">Text Effects</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTextEffect('none')}
-            className={`p-2 rounded ${textEffect === 'none' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faFont} />
-          </button>
-          <button
-            onClick={() => setTextEffect('arc')}
-            className={`p-2 rounded ${textEffect === 'arc' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faArrowRotateRight} />
-          </button>
-          <button
-            onClick={() => setTextEffect('wave')}
-            className={`p-2 rounded ${textEffect === 'wave' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faWaveSquare} />
-          </button>
-          <button
-            onClick={() => setTextEffect('circle')}
-            className={`p-2 rounded ${textEffect === 'circle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faCircle} />
-          </button>
-          <button
-            onClick={() => setTextEffect('star')}
-            className={`p-2 rounded ${textEffect === 'star' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            <FontAwesomeIcon icon={faStar} />
-          </button>
-        </div>
-
-        {textEffect !== 'none' && (
-          <div>
-            <label>Effect Size:</label>
-            <input
-              type="range"
-              min="10"
-              max="200"
-              value={effectRadius}
-              onChange={(e) => setEffectRadius(Number(e.target.value))}
-              className="w-full"
-            />
-            {textEffect === 'wave' && (
-              <div>
-                <label>Wave Height:</label>
+            <div className="pt-2">
+              <label className="flex items-center gap-2">
                 <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  value={effectAmplitude}
-                  onChange={(e) => setEffectAmplitude(Number(e.target.value))}
-                  className="w-full"
+                  type="checkbox"
+                  checked={useGradient}
+                  onChange={(e) => setUseGradient(e.target.checked)}
                 />
+                <span>Use Gradient</span>
+              </label>
+              
+              {useGradient && (
+                <div className="grid grid-cols-2 gap-4 mt-2">
+                  <div>
+                    <label className="block text-sm mb-1">Start Color</label>
+                    <input
+                      type="color"
+                      value={gradientColor1}
+                      onChange={(e) => setGradientColor1(e.target.value)}
+                      className="w-full h-8"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">End Color</label>
+                    <input
+                      type="color"
+                      value={gradientColor2}
+                      onChange={(e) => setGradientColor2(e.target.value)}
+                      className="w-full h-8"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Effects Settings */}
+        {activeTab === 'effects' && (
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTextEffect('none')}
+                className={`p-2 rounded ${textEffect === 'none' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                title="Normal"
+              >
+                <FontAwesomeIcon icon={faFont} />
+              </button>
+              <button
+                onClick={() => setTextEffect('arc')}
+                className={`p-2 rounded ${textEffect === 'arc' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                title="Arc"
+              >
+                <FontAwesomeIcon icon={faArrowRotateRight} />
+              </button>
+              <button
+                onClick={() => setTextEffect('wave')}
+                className={`p-2 rounded ${textEffect === 'wave' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                title="Wave"
+              >
+                <FontAwesomeIcon icon={faWaveSquare} />
+              </button>
+              <button
+                onClick={() => setTextEffect('circle')}
+                className={`p-2 rounded ${textEffect === 'circle' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                title="Circle"
+              >
+                <FontAwesomeIcon icon={faCircle} />
+              </button>
+              <button
+                onClick={() => setTextEffect('star')}
+                className={`p-2 rounded ${textEffect === 'star' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                title="Star"
+              >
+                <FontAwesomeIcon icon={faStar} />
+              </button>
+            </div>
+
+            {textEffect !== 'none' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm mb-1">Effect Size</label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="200"
+                    value={effectRadius}
+                    onChange={(e) => setEffectRadius(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                {textEffect === 'wave' && (
+                  <div>
+                    <label className="block text-sm mb-1">Wave Height</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="50"
+                      value={effectAmplitude}
+                      onChange={(e) => setEffectAmplitude(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm mb-1">Rotation</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="360"
+                    value={rotation}
+                    onChange={(e) => setRotation(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
               </div>
             )}
           </div>
         )}
-      </div>
 
-      {/* Gradient */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={useGradient}
-            onChange={(e) => setUseGradient(e.target.checked)}
-          />
-          <label>Use Gradient</label>
-        </div>
-        
-        {useGradient && (
-          <div className="flex gap-4">
+        {/* Shadow Settings */}
+        {activeTab === 'shadow' && (
+          <div className="space-y-4">
             <div>
-              <label>Color 1:</label>
+              <label className="block text-sm mb-1">Shadow Color</label>
               <input
                 type="color"
-                value={gradientColor1}
-                onChange={(e) => setGradientColor1(e.target.value)}
-                className="w-8 h-8"
+                value={shadowColor}
+                onChange={(e) => setShadowColor(e.target.value)}
+                className="w-full h-10"
               />
             </div>
+
             <div>
-              <label>Color 2:</label>
+              <label className="block text-sm mb-1">Blur</label>
               <input
-                type="color"
-                value={gradientColor2}
-                onChange={(e) => setGradientColor2(e.target.value)}
-                className="w-8 h-8"
+                type="range"
+                min="0"
+                max="50"
+                value={shadowBlur}
+                onChange={(e) => setShadowBlur(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">Offset X</label>
+              <input
+                type="range"
+                min="-50"
+                max="50"
+                value={shadowOffsetX}
+                onChange={(e) => setShadowOffsetX(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">Offset Y</label>
+              <input
+                type="range"
+                min="-50"
+                max="50"
+                value={shadowOffsetY}
+                onChange={(e) => setShadowOffsetY(Number(e.target.value))}
+                className="w-full"
               />
             </div>
           </div>
