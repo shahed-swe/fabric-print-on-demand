@@ -28,8 +28,9 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtDiv"
           className="page"
           style={{
-            width: "530px",
-            height: "630px",
+            width: "100%",
+            maxWidth: "530px",
+            height: "auto",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -40,17 +41,18 @@ const Display: React.FC<DisplayProps> = (props) => {
             id="tshirtFacing"
             src={props.image?.front?.src}
             alt="T-shirt front view"
+            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "100px",
-                left: "165px",
+                top: "18%",
+                left: "31%",
                 zIndex: 10,
-                width: "200px",
-                height: "400px",
+                width: "38%",
+                height: "64%",
               }}
             >
               <div style={{
@@ -71,8 +73,9 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtBack"
           className="page"
           style={{
-            width: "530px",
-            height: "630px",
+            width: "100%",
+            maxWidth: "530px",
+            height: "auto",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -81,17 +84,18 @@ const Display: React.FC<DisplayProps> = (props) => {
             className="img-fluid"
             src={props.image?.back?.src}
             alt="T-shirt back view"
+            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "100px",
-                left: "165px",
+                top: "18%",
+                left: "31%",
                 zIndex: 10,
-                width: "200px",
-                height: "400px",
+                width: "38%",
+                height: "64%",
               }}
             >
               <div style={{

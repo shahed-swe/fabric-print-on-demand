@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { fabric } from "fabric";
 import html2canvas from "html2canvas";
@@ -56,21 +56,42 @@ const Index = () => {
   // Add text editor position state
   const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
 
+  const textEditorRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
   // Function to handle text editor positioning
-  const handleTextEditorOpen = () => {
+  const handleTextEditorOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!editor?.canvas) return;
-    
-    // Position the editor next to the canvas
-    const canvasElement = editor.canvas.getElement();
-    const rect = canvasElement.getBoundingClientRect();
-    
+
+    const buttonRect = event.currentTarget.getBoundingClientRect();
     setTextEditorPosition({
-      x: rect.right + 20, // 20px gap from canvas
-      y: rect.top
+      x: buttonRect.left,
+      y: buttonRect.bottom + window.scrollY
     });
-    
+
     setShowTextEditor(true);
+    setShowEmojiPicker(false); // Ensure Emoji Picker is closed
   };
+
+  // Close Text Editor and Emoji Picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        textEditorRef.current &&
+        !textEditorRef.current.contains(event.target as Node) &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowTextEditor(false);
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // State for artwork
   const [showArtModal, setShowArtModal] = useState(false);
@@ -548,39 +569,10 @@ const Index = () => {
             <div style={{ marginTop: '1rem' }}>Loading...</div>
           </div>
         )}
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="flex flex-col items-center">
-              <Display
-                back={back}
-                color={color}
-                image={image}
-                Canvas={FabricJSCanvas}
-                onReady={onReady}
-              />
-              <div className="mt-6 flex flex-wrap justify-center gap-4">
-                <button
-                  className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  onClick={() => handleBack("front")}
-                >
-                  Front View
-                </button>
-                <button
-                  className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                    }`}
-                  onClick={() => handleBack("back")}
-                >
-                  Back View
-                </button>
-              </div>
-
-              {/* Design Tools */}
-              <div className="mt-6 p-4 bg-white rounded-xl shadow-lg w-full">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="p-4 bg-white rounded-xl shadow-lg">
+              <div>
                 <div className="flex flex-wrap gap-4 justify-center">
                   <button
                     onClick={handleTextEditorOpen}
@@ -591,7 +583,15 @@ const Index = () => {
                   </button>
 
                   <button
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    onClick={(e) => {
+                      setShowEmojiPicker(!showEmojiPicker);
+                      const buttonRect = e.currentTarget.getBoundingClientRect();
+                      setTextEditorPosition({
+                        x: buttonRect.left,
+                        y: buttonRect.bottom + window.scrollY
+                      });
+                      setShowTextEditor(false); // Ensure Text Editor is closed
+                    }}
                     className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                   >
                     <FontAwesomeIcon icon={faSmile} />
@@ -625,9 +625,8 @@ const Index = () => {
                   <button
                     onClick={handleGenerateAIImage}
                     disabled={isGeneratingImage || !aiImagePrompt}
-                    className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${
-                      isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
+                      }`}
                   >
                     {isGeneratingImage ? (
                       <>
@@ -645,75 +644,169 @@ const Index = () => {
                     )}
                   </button>
                 </div>
-
-                {/* Text Editor Modal */}
-                {showTextEditor && (
-                  <div 
-                    className="fixed z-50 bg-white rounded-lg shadow-xl border"
-                    style={{
-                      top: textEditorPosition.y,
-                      left: textEditorPosition.x,
-                      maxHeight: '80vh',
-                      overflowY: 'auto',
-                      width: '350px'
-                    }}
-                  >
-                    <div className="p-4 border-b flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">Text Editor</h3>
+                <div className="mt-4">
+                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Style</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {data.map((item, index) => (
                       <button
-                        onClick={() => setShowTextEditor(false)}
-                        className="text-gray-500 hover:text-gray-700"
+                        key={index}
+                        className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                          }`}
+                        onClick={() => {
+                          setImage(item);
+                          localStorage.setItem("image", JSON.stringify(item));
+                        }}
                       >
-                        <FontAwesomeIcon icon={faTimes} />
+                        <img
+                          src={item.front.src}
+                          alt={item.title}
+                          className="w-10 h-12 object-contain"
+                        />
+                        <span className="text-sm font-medium text-gray-700">{item.title}</span>
                       </button>
-                    </div>
-                    
-                    <TextStyler
-                      editor={editor}
-                      selectedObject={selectedObject}
-                      onTextAdd={(text) => {
-                        if (!editor?.canvas) return;
-                        
-                        const textBox = new fabric.IText(text, {
-                          left: editor.canvas.width ? editor.canvas.width / 2 : 100,
-                          top: editor.canvas.height ? editor.canvas.height / 2 : 100,
-                          originX: 'center',
-                          originY: 'center',
-                          fontSize: 20,
-                        });
-
-                        editor.canvas.add(textBox);
-                        editor.canvas.setActiveObject(textBox);
-                        setSelectedObject(textBox);
-                        editor.canvas.renderAll();
-                      }}
-                    />
+                    ))}
                   </div>
-                )}
+                </div>
+                <div className="mt-4">
+                  <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      "#F6F6F6",
+                      "black",
+                      "#0C0CAE",
+                      "#2A2929",
+                      "gray",
+                      "#919a54",
+                      "#7F3232",
+                      "#276457",
+                      "#0DD6C5",
+                    ].map((item, index) => (
+                      <div
+                        key={index}
+                        style={{ backgroundColor: item }}
+                        className="color-preview border-2 border-gray-200"
+                        onClick={() => {
+                          setColor(item);
+                          localStorage.setItem("color", item);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                {/* Emoji Picker */}
-                {showEmojiPicker && (
-                  <div className="absolute z-10 mt-2">
-                    <EmojiPicker onEmojiClick={(emojiData: any) => {
+              {/* Text Editor Modal */}
+              {showTextEditor && (
+                <div
+                  ref={textEditorRef}
+                  className="fixed z-50 bg-white rounded-lg shadow-xl border"
+                  style={{
+                    top: textEditorPosition.y,
+                    left: textEditorPosition.x,
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    width: '350px'
+                  }}
+                >
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Text Editor</h3>
+                    <button
+                      onClick={() => setShowTextEditor(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </button>
+                  </div>
+
+                  <TextStyler
+                    editor={editor}
+                    selectedObject={selectedObject}
+                    onTextAdd={(text) => {
                       if (!editor?.canvas) return;
-                      
-                      const textBox = new fabric.Text(emojiData.emoji, {
+
+                      const textBox = new fabric.IText(text, {
                         left: editor.canvas.width ? editor.canvas.width / 2 : 100,
                         top: editor.canvas.height ? editor.canvas.height / 2 : 100,
                         originX: 'center',
                         originY: 'center',
-                        fontSize: 30,
+                        fontSize: 20,
                       });
 
                       editor.canvas.add(textBox);
                       editor.canvas.setActiveObject(textBox);
                       setSelectedObject(textBox);
                       editor.canvas.renderAll();
-                      setShowEmojiPicker(false);
-                    }} />
-                  </div>
-                )}
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div
+                  ref={emojiPickerRef}
+                  className="absolute z-10 bg-white rounded-lg shadow-xl border"
+                  style={{
+                    top: textEditorPosition.y,
+                    left: textEditorPosition.x,
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    width: '350px'
+                  }}
+                >
+                  <EmojiPicker onEmojiClick={(emojiData: any) => {
+                    if (!editor?.canvas) return;
+
+                    const textBox = new fabric.Text(emojiData.emoji, {
+                      left: editor.canvas.width ? editor.canvas.width / 2 : 100,
+                      top: editor.canvas.height ? editor.canvas.height / 2 : 100,
+                      originX: 'center',
+                      originY: 'center',
+                      fontSize: 30,
+                    });
+
+                    editor.canvas.add(textBox);
+                    editor.canvas.setActiveObject(textBox);
+                    setSelectedObject(textBox);
+                    editor.canvas.renderAll();
+                    setShowEmojiPicker(false);
+                  }} />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col items-center">
+              <Display
+                back={back}
+                color={color}
+                image={image}
+                Canvas={FabricJSCanvas}
+                onReady={onReady}
+              />
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
+                <button
+                  className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  onClick={() => handleBack("front")}
+                >
+                  Front View
+                </button>
+                <button
+                  className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
+                      ? "bg-orange-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  onClick={() => handleBack("back")}
+                >
+                  Back View
+                </button>
               </div>
+
+              {/* Design Tools */}
+
 
               <input
                 type="file"
@@ -727,8 +820,7 @@ const Index = () => {
                 accept="image/*"
               />
             </div>
-
-            <div>
+            <div className="w-full">
               <div className="bg-white p-8 rounded-xl shadow-lg">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   {image?.title || "Custom T-Shirt"}
@@ -744,44 +836,20 @@ const Index = () => {
                 />
 
                 <div className="space-y-8 mt-8">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
-                    <div className="flex flex-wrap gap-3">
-                      {[
-                        "#F6F6F6",
-                        "black",
-                        "#0C0CAE",
-                        "#2A2929",
-                        "gray",
-                        "#919a54",
-                        "#7F3232",
-                        "#276457",
-                        "#0DD6C5",
-                      ].map((item, index) => (
-                        <div
-                          key={index}
-                          style={{ backgroundColor: item }}
-                          className="color-preview border-2 border-gray-200"
-                          onClick={() => {
-                            setColor(item);
-                            localStorage.setItem("color", item);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  
 
-                  <div>
+
+
+                  <div className="mt-4">
                     <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size & Quantity</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
                       {(["S", "M", "L", "XL", "XXL"] as TShirtSize[]).map((sizeOption) => (
                         <div
                           key={sizeOption}
-                          className={`p-3 border-2 rounded-lg transition-colors ${
-                            sizeQuantities[sizeOption] > 0
-                              ? "border-orange-500 bg-orange-50"
-                              : "border-gray-200"
-                          }`}
+                          className={`p-3 border-2 rounded-lg transition-colors ${sizeQuantities[sizeOption] > 0
+                            ? "border-orange-500 bg-orange-50"
+                            : "border-gray-200"
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-lg font-medium">{sizeOption}</span>
@@ -809,38 +877,13 @@ const Index = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Style</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {data.map((item, index) => (
-                        <button
-                          key={index}
-                          className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
-                              ? "border-orange-500 bg-orange-50"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                            }`}
-                          onClick={() => {
-                            setImage(item);
-                            localStorage.setItem("image", JSON.stringify(item));
-                          }}
-                        >
-                          <img
-                            src={item.front.src}
-                            alt={item.title}
-                            className="w-10 h-12 object-contain"
-                          />
-                          <span className="text-sm font-medium text-gray-700">{item.title}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
                   <div className="flex gap-4 pt-4">
                     <button
                       onClick={handleSS}
                       className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
                     >
-                      Download Design
+                      Add To Cart
                     </button>
                   </div>
                 </div>
