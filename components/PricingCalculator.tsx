@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 type TShirtSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
 type SizeQuantities = {
@@ -20,6 +21,8 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   backDesignPrice,
   style
 }) => {
+  const { setTotalPrice } = useAuth();
+
   // Calculate total quantity
   const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + qty, 0);
 
@@ -63,6 +66,10 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   const totalPrice = calculateTotalPrice();
   const pricePerItem = totalQuantity > 0 ? totalPrice / totalQuantity : 0;
   const discount = getBulkDiscount(totalQuantity);
+
+  useEffect(() => {
+    setTotalPrice(totalPrice);
+  }, [totalPrice, setTotalPrice]);
 
   return (
     <div className="p-6 ">

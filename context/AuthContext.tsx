@@ -11,6 +11,8 @@ interface AuthContextProps {
   user: User | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  totalPrice: number;
+  setTotalPrice: (price: number) => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -22,6 +24,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -46,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
-  const value = React.useMemo(() => ({ isAuthenticated, user, login, logout }), [isAuthenticated, user]);
+  const value = React.useMemo(() => ({ isAuthenticated, user, login, logout, totalPrice, setTotalPrice }), [isAuthenticated, user, totalPrice]);
 
   return (
     <AuthContext.Provider value={value}>

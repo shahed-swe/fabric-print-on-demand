@@ -7,7 +7,7 @@ export default async function saveDesign(req: NextApiRequest, res: NextApiRespon
   }
 
   try {
-    const { userId, fileId, sizeQuantities } = req.body;
+    const { userId, fileId, sizeQuantities,title, price } = req.body;
 
     if (!userId || !fileId || !sizeQuantities) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -21,6 +21,8 @@ export default async function saveDesign(req: NextApiRequest, res: NextApiRespon
       userId,
       fileId,
       sizeQuantities,
+      title,
+      price,
       createdAt: new Date(),
     };
     await collection.insertOne(designData);

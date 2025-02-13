@@ -17,7 +17,7 @@ import NavBar from '../components/NavBar';
 import axios from 'axios';
 import LeftSideComp from "@/components/LeftSideComp";
 import RightSideComp from "@/components/RightSideComp";
-
+import { useAuth } from "@/context/AuthContext";
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
 const TShirtBack = "/images/crew_back.png";
@@ -34,7 +34,6 @@ const Index = () => {
   const [back, setBack] = useState("front");
   const [color, setColor] = useState("");
   const [image, setImage] = useState<any>(null);
-  const [size, setSize] = useState("");
   const { editor, onReady } = useFabricJSEditor();
   const [frontData, setFrontData] = useState<string | null>(null);
   const [backData, setBackData] = useState<string | null>(null);
@@ -47,6 +46,7 @@ const Index = () => {
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
+  const { user, totalPrice } = useAuth();
 
   // Add text editor position state
   const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
@@ -420,14 +420,20 @@ const Index = () => {
       }
   
       const fileId = uploadResponse.data.fileId;
-      const userId = 'your-user-id'; // Replace with actual user ID
+      const userId = user?.id; // Replace with actual user ID
   
       // Create payload
       const payload = {
         userId,
         fileId,
-        sizeQuantities
+        sizeQuantities,
+        title: image.title,
+        price: totalPrice
+        
       };
+      
+
+      console.log(image.title)
   
       console.log('Sending payload...');
       await axios.post('/api/save-design', payload);
