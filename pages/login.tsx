@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { FaEnvelope, FaLock } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const router = useRouter();
@@ -11,6 +12,7 @@ const Login = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +35,8 @@ const Login = () => {
       }
 
       // Save token to localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
 
+      login(data.token, data.user);
       // Redirect to home page
       router.push('/');
     } catch (err: any) {

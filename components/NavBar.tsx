@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaShoppingCart, FaSearch, FaUser } from 'react-icons/fa';
+import { FaShoppingCart } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 
 const NavBar = () => {
+  const { isAuthenticated, user, logout } = useAuth();
   const [cartItems, setCartItems] = useState(0);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setIsAuthenticated(true);
-      setUserName(JSON.parse(user).name);
+    // Fetch cart items from local storage or API
+    const storedCartItems = localStorage.getItem('cartItems');
+    if (storedCartItems) {
+      setCartItems(JSON.parse(storedCartItems).length);
     }
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUserName('');
-  };
 
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 z-50">
@@ -34,25 +26,13 @@ const NavBar = () => {
           </a>
         </Link>
 
-        {/* Search Bar */}
-        {/* <div className="flex-grow mx-4 relative">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:border-orange-500"
-            />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          </div>
-        </div> */}
-
         {/* Navigation Links */}
         <div className="flex items-center space-x-6">
           {isAuthenticated ? (
             <>
-              <span className="text-gray-600">Welcome, {userName}</span>
+              <span className="text-gray-600">Welcome, {user?.name}</span>
               <button
-                onClick={handleLogout}
+                onClick={logout}
                 className="text-gray-600 hover:text-orange-500 transition-colors"
               >
                 Logout

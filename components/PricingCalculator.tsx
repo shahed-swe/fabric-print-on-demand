@@ -65,7 +65,7 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   const discount = getBulkDiscount(totalQuantity);
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg">
+    <div className="p-6 ">
       <h3 className="text-2xl font-bold text-gray-800 mb-4">Price Breakdown</h3>
       
       <div className="space-y-3">

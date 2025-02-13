@@ -3,7 +3,7 @@ import { fabric } from 'fabric';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBold, faItalic, faUnderline, faAlignLeft, faAlignCenter,
-  faAlignRight, faFont, faPalette, faDroplet, faShadow,
+  faAlignRight, faFont, faPalette, faDroplet,
   faArrowRotateRight, faCircle, faStar, faWaveSquare
 } from '@fortawesome/free-solid-svg-icons';
 

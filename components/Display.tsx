@@ -28,9 +28,8 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtDiv"
           className="page"
           style={{
-            width: "100%",
-            maxWidth: "530px",
-            height: "auto",
+            width: "530px",
+            height: "630px",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -41,25 +40,24 @@ const Display: React.FC<DisplayProps> = (props) => {
             id="tshirtFacing"
             src={props.image?.front?.src}
             alt="T-shirt front view"
-            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "18%",
-                left: "31%",
+                top: "100px",
+                left: "165px",
                 zIndex: 10,
-                width: "38%",
-                height: "64%",
+                width: "200px",
+                height: "400px",
               }}
             >
               <div style={{
-                  WebkitUserSelect: "none",
-                  width: "100%",
-                  height: "100%"
-                }}>
+                WebkitUserSelect: "none",
+                width: "100%",
+                height: "100%"
+              }}>
                 <Canvas
                   className="sample-canvas"
                   onReady={onReady}
@@ -73,9 +71,8 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtBack"
           className="page"
           style={{
-            width: "100%",
-            maxWidth: "530px",
-            height: "auto",
+            width: "530px",
+            height: "630px",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -84,25 +81,24 @@ const Display: React.FC<DisplayProps> = (props) => {
             className="img-fluid"
             src={props.image?.back?.src}
             alt="T-shirt back view"
-            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "18%",
-                left: "31%",
+                top: "100px",
+                left: "165px",
                 zIndex: 10,
-                width: "38%",
-                height: "64%",
+                width: "200px",
+                height: "400px",
               }}
             >
               <div style={{
-                  WebkitUserSelect: "none",
-                  width: "100%",
-                  height: "100%"
-                }}>
+                WebkitUserSelect: "none",
+                width: "100%",
+                height: "100%"
+              }}>
                 <Canvas
                   className="sample-canvas"
                   onReady={onReady}
