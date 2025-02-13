@@ -30,10 +30,11 @@ export default async function handler(
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const result = await db.collection('users').insertOne({
+    await db.collection('users').insertOne({
       name,
       email,
       password: hashedPassword,
+      type: "User",
       createdAt: new Date(),
     });
 
