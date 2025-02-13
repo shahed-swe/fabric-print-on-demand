@@ -116,7 +116,7 @@ const Cart = () => {
 
                   <div className="text-gray-700">
                     <div className="flex space-x-4">
-                      {Object.entries(item.sizeQuantities).map(([size, quantity]) => (
+                      {Object.entries(item.sizeQuantities as Record<string, number>).map(([size, quantity]) => (
                         <div key={size} className="flex items-center space-x-2 border p-2 rounded-lg">
                           <label className="font-medium">{size}:</label>
                           <button
@@ -125,7 +125,7 @@ const Cart = () => {
                           >
                             -
                           </button>
-                          <div>{quantity as number}</div>
+                          <div>{quantity}</div>
                           <button
                             onClick={() => handleQuantityChange(item._id, size, quantity + 1)}
                             className="px-3 py-1 bg-gray-200 rounded-xl hover:bg-gray-300"
