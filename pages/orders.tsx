@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NavBar from '../components/NavBar';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/router';
 
 const OrdersPage = () => {
     const [orders, setOrders] = useState([]);
+    const { user } = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
+        if (!user || user.type !== 'Admin') {
+            router.push('/');
+            return;
+        }
+
         const fetchOrders = async () => {
             try {
                 const response = await axios.get('/api/checkout');
@@ -16,7 +25,11 @@ const OrdersPage = () => {
         };
 
         fetchOrders();
-    }, []);
+    }, [user]);
+
+    if (!user || user.type !== 'Admin') {
+        return null;
+    }
 
     return (
         <div>

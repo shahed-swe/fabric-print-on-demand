@@ -7,6 +7,7 @@ const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const [cartItems, setCartItems] = useState(0);
 
+
   useEffect(() => {
     // Fetch cart items from local storage or API
     const storedCartItems = localStorage.getItem('cartItems');
@@ -37,6 +38,13 @@ const NavBar = () => {
               >
                 Logout
               </button>
+              {user && user.type === 'Admin' && (
+                <Link href="/orders">
+                  <a className="text-gray-600 hover:text-orange-500 transition-colors">
+                    Orders
+                  </a>
+                </Link>
+              )}
             </>
           ) : (
             <>
