@@ -123,7 +123,7 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
         <div className="grid grid-cols-2 gap-4">
           {data?.map((item, index) => (
             <button
-              key={index}
+              key={item.id}
               className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
                 ? "border-orange-500 bg-orange-50"
                 : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"

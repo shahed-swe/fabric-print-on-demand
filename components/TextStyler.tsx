@@ -69,7 +69,7 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
     setBold(selectedObject.fontWeight === 'bold');
     setItalic(selectedObject.fontStyle === 'italic');
     setUnderline(selectedObject.underline || false);
-    setTextAlign(selectedObject.textAlign || "left");
+    setTextAlign((selectedObject.textAlign as "left" | "center" | "right") ?? "left");
     setLetterSpacing(selectedObject.charSpacing || 0);
     setLineHeight(selectedObject.lineHeight || 1.2);
     setRotation(selectedObject.angle || 0);
@@ -132,8 +132,8 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
       coords: {
         x1: 0,
         y1: 0,
-        x2: selectedObject.width,
-        y2: selectedObject.height,
+        x2: selectedObject.width as number,
+        y2: selectedObject.height as number,
       },
       colorStops: [
         { offset: 0, color: gradientColor1 },
@@ -171,7 +171,7 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
         const amplitude = effectAmplitude;
         const frequency = 0.1;
         textObject.set({
-          top: textObject.top + Math.sin(frequency * textObject.left!) * amplitude
+          top: (textObject.top || 0) + Math.sin(frequency * (textObject.left || 0)) * amplitude
         });
         break;
 
@@ -180,10 +180,6 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
         const textLength = (textObject.text || '').length;
         const anglePerChar = (360 / circumference) * (textObject.fontSize || 20);
         
-        textObject.set({
-          radius: effectRadius,
-          spacing: anglePerChar
-        });
         break;
 
       case 'star':
