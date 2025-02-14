@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
 import { FaTrash, FaDownload } from 'react-icons/fa';
+import CheckoutForm from '../components/CheckoutForm';
+
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const { user } = useAuth();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -46,7 +54,7 @@ const Cart = () => {
         };
       }
       return item;
-    }));
+    } ));
   };
 
   const handleDownloadFile = async (fileId: string) => {
@@ -77,23 +85,45 @@ const Cart = () => {
     }
   };
 
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + item.price, 0);
+  };
+
   const handleCheckout = async () => {
     try {
-      const response = await axios.post('/api/checkout', {
-        userId: user?.id,
-        items: cartItems
+      const response = await axios.post('/api/create-payment-intent', {
+        amount: calculateTotal(),
       });
-      if (response.status === 200) {
-        alert('Order placed successfully!');
-          await axios.delete('/api/cart', { params: { userId: user?.id }, data: { userId: user?.id } });
-        setCartItems([]);
-      } else {
-        console.error('Error placing order');
-        alert('Error placing order');
-      }
+
+      setClientSecret(response.data.clientSecret);
+      setShowPayment(true);
     } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Error placing order');
+      console.error('Error during checkout:', error);
+      alert('Error processing payment. Please try again.');
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      // Create order
+      await axios.post('/api/checkout', {
+        userId: user?.id,
+        items: cartItems,
+        paymentStatus: 'paid'
+      });
+
+      // Clear cart
+      await axios.delete('/api/cart', { 
+        params: { userId: user?.id }, 
+        data: { userId: user?.id } 
+      });
+      
+      setCartItems([]);
+      setShowPayment(false);
+      alert('Order placed successfully!');
+    } catch (error) {
+      console.error('Error finalizing order:', error);
+      alert('Payment successful but error creating order. Please contact support.');
     }
   };
 
@@ -153,13 +183,34 @@ const Cart = () => {
                 </div>
               </div>
             ))}
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={handleCheckout}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
-              >
-                Checkout
-              </button>
+            <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
+
+                <div className="flex justify-between items-center">
+                  <div className="text-xl font-semibold">
+                    Total: ${calculateTotal()}
+                  </div>
+                  <button
+                    onClick={handleCheckout}
+                    className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
+                  >
+                    Proceed to Payment
+                  </button>
+                </div>
+                {showPayment && clientSecret && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                  <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                    <h2 className="text-2xl font-bold mb-4">Complete Your Payment</h2>
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <CheckoutForm 
+                        clientSecret={clientSecret}
+                        onSuccess={handlePaymentSuccess}
+                        setShowPayment={setShowPayment}
+                      />
+                    </Elements>
+                    
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

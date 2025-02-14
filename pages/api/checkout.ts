@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { userId, items } = req.body;
+    const { userId, items, paymentStatus } = req.body;
 
     if (!userId || !items || items.length === 0) {
       return res.status(400).json({ error: 'Invalid request' });
@@ -17,6 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const order = {
         userId,
         items,
+        paymentStatus: paymentStatus || 'pending',
+        status: "Processing",
         createdAt: new Date(),
       };
 

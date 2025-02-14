@@ -3,22 +3,41 @@ import axios from 'axios';
 import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/router';
+import { FaDownload } from 'react-icons/fa';
+
+interface Order {
+    _id: string;
+    user: {
+        name: string;
+    };
+    items: {
+        _id: string;
+        title: string;
+        sizeQuantities: { [size: string]: number };
+        price: number;
+        fileId: string;
+    }[];
+    paymentStatus: string;
+    status: string;
+}
 
 const OrdersPage = () => {
-    const [orders, setOrders] = useState([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const { user } = useAuth();
-    const router = useRouter();
+
 
     useEffect(() => {
-        if (!user || user.type !== 'Admin') {
-            router.push('/');
-            return;
-        }
-
         const fetchOrders = async () => {
             try {
                 const response = await axios.get('/api/checkout');
-                setOrders(response.data);
+                const allOrders = response.data;
+
+                if (user?.type === 'Admin') {
+                    setOrders(allOrders);
+                } else {
+                    const userOrders = allOrders.filter((order: Order) => order.user._id === user?.id);
+                    setOrders(userOrders);
+                }
             } catch (error) {
                 console.error('Error fetching orders:', error);
             }
@@ -27,9 +46,43 @@ const OrdersPage = () => {
         fetchOrders();
     }, [user]);
 
-    if (!user || user.type !== 'Admin') {
-        return null;
-    }
+    const handleDownloadFile = async (fileId: string) => {
+        try {
+            const response = await axios.get(`/api/files/${fileId}`, {
+                responseType: 'blob',
+            });
+            if (response.status === 200) {
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', fileId);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            } else {
+                console.error('File not found');
+                alert('File not found');
+            }
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
+                console.error('File not found');
+                alert('File not found');
+            } else {
+                console.error('Error downloading file:', error);
+                alert('Error downloading file');
+            }
+        }
+    };
+
+    const handleChangeStatus = async (orderId: string, newStatus: string) => {
+        try {
+            await axios.put(`/api/orders/${orderId}`, { status: newStatus });
+            setOrders(orders.map(order => order._id === orderId ? { ...order, status: newStatus } : order));
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            alert('Error updating order status. Please try again.');
+        }
+    };
 
     return (
         <div>
@@ -47,6 +100,7 @@ const OrdersPage = () => {
                                 <th className="py-2 px-4 border">Items</th>
                                 <th className="py-2 px-4 border">Total</th>
                                 <th className="py-2 px-4 border">Status</th>
+                                <th className="py-2 px-4 border">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,7 +120,39 @@ const OrdersPage = () => {
                                         </ul>
                                     </td>
                                     <td className="py-2 px-4 border">{order.items.reduce((total, item) => total + item.price, 0)}</td>
-                                    <td className="py-2 px-4 border">Pending</td>
+                                    <td className="py-2 px-4 border">
+                                        {user?.type === "Admin" ? (
+                                            <select
+                                                value={order.status}
+                                                onChange={(e) => handleChangeStatus(order._id, e.target.value)}
+                                                className="border rounded px-2 py-1"
+                                            >
+                                                <option value="Pending">Pending</option>
+                                                <option value="Processing">Processing</option>
+                                                <option value="Shipped">Shipped</option>
+                                                <option value="Delivered">Delivered</option>
+                                            </select>
+                                        ) : (
+                                            order.status
+                                        )}
+                                    </td>
+                                    <td className='py-2 px-4 border'>
+                                    {
+                                        user?.type === "Admin" && (
+                                            <>
+                                                {order.items.map(item => (
+                                                    <button
+                                                        key={item._id}
+                                                        onClick={() => handleDownloadFile(item.fileId)}
+                                                        className="mt-1 px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center text-sm"
+                                                    >
+                                                        <FaDownload className="mr-1" /> Design File
+                                                    </button>
+                                                ))}
+                                            </>
+                                        )
+                                    }
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

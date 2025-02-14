@@ -38,13 +38,12 @@ const NavBar = () => {
               >
                 Logout
               </button>
-              {user && user.type === 'Admin' && (
-                <Link href="/orders">
-                  <a className="text-gray-600 hover:text-orange-500 transition-colors">
-                    Orders
-                  </a>
-                </Link>
-              )}
+
+              <Link href="/orders">
+                <a className="text-gray-600 hover:text-orange-500 transition-colors">
+                  Orders
+                </a>
+              </Link>
             </>
           ) : (
             <>
