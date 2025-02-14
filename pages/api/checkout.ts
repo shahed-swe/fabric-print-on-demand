@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Fetch user details for each order
       const ordersWithUserDetails = await Promise.all(
-        orders.map(async (order) => {
+        orders.map(async (order: any) => {
           const user = await usersCollection.findOne({ _id: new ObjectId(order.userId) });
           return { ...order, user };
         })

@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 interface Order {
     _id: string;
     user: {
+        _id: string;
         name: string;
     };
     items: {
