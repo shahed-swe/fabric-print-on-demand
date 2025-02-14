@@ -18,6 +18,7 @@ import axios from 'axios';
 import LeftSideComp from "@/components/LeftSideComp";
 import RightSideComp from "@/components/RightSideComp";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from 'react-toastify';
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
 const TShirtBack = "/images/crew_back.png";
@@ -286,11 +287,11 @@ const Index = () => {
 
       img.onerror = (error) => {
         console.error('Error loading image:', error);
-        alert('Failed to load the image. Please try again.');
+        toast.error('Failed to load the image. Please try again.');
       };
     } catch (error) {
       console.error('Error adding image from URL:', error);
-      alert('Failed to add the image. Please try again.');
+      toast.error('Failed to add the image. Please try again.');
     }
   };
 
@@ -437,10 +438,11 @@ const Index = () => {
   
       console.log('Sending payload...');
       await axios.post('/api/save-design', payload);
-  
+      // add a toast  with a button to go to the cart
+      toast.success('Item Added to Cart successfully!');
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error generating PDF. Please try again.");
+      toast.error("Error generating PDF. Please try again.");
     } finally {
       // Restore original borders
       originalStyles.forEach(({ element, style, border }) => {
@@ -504,7 +506,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      alert('Error generating image. Please try again.');
+      toast.error('Error generating image. Please try again.');
     } finally {
       setIsGeneratingImage(false);
     }

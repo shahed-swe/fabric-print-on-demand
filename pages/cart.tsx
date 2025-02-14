@@ -6,6 +6,7 @@ import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
 import { FaTrash, FaDownload } from 'react-icons/fa';
 import CheckoutForm from '../components/CheckoutForm';
+import { toast } from 'react-toastify';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -27,6 +28,7 @@ const Cart = () => {
         setCartItems(response.data);
       } catch (error) {
         console.error('Error fetching cart items:', error);
+        toast.error('Error fetching cart items');
       }
     };
 
@@ -37,8 +39,10 @@ const Cart = () => {
     try {
       await axios.delete('/api/cart', { params: {userId: user?.id}, data: { id, userId: user?.id } });
       setCartItems(cartItems.filter(item => item._id !== id));
+      toast.success('Item removed successfully');
     } catch (error) {
       console.error('Error removing item:', error);
+      toast.error('Error removing item');
     }
   };
 
@@ -72,15 +76,15 @@ const Cart = () => {
         link.remove();
       } else {
         console.error('File not found');
-        alert('File not found');
+        toast.error('File not found');
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
         console.error('File not found');
-        alert('File not found');
+        toast.error('File not found');
       } else {
         console.error('Error downloading file:', error);
-        alert('Error downloading file');
+        toast.error('Error downloading file');
       }
     }
   };
@@ -99,7 +103,7 @@ const Cart = () => {
       setShowPayment(true);
     } catch (error) {
       console.error('Error during checkout:', error);
-      alert('Error processing payment. Please try again.');
+      toast.error('Error processing payment. Please try again.');
     }
   };
 
@@ -120,10 +124,10 @@ const Cart = () => {
       
       setCartItems([]);
       setShowPayment(false);
-      alert('Order placed successfully!');
+      toast.success('Order placed successfully!');
     } catch (error) {
       console.error('Error finalizing order:', error);
-      alert('Payment successful but error creating order. Please contact support.');
+      toast.error('Payment successful but error creating order. Please contact support.');
     }
   };
 

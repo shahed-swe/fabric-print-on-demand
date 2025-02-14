@@ -4,6 +4,7 @@ import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/router';
 import { FaDownload } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 interface Order {
     _id: string;
@@ -40,6 +41,7 @@ const OrdersPage = () => {
                 }
             } catch (error) {
                 console.error('Error fetching orders:', error);
+                toast.error('Error fetching orders');
             }
         };
 
@@ -61,15 +63,15 @@ const OrdersPage = () => {
                 link.remove();
             } else {
                 console.error('File not found');
-                alert('File not found');
+                toast.error('File not found');
             }
         } catch (error) {
             if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
                 console.error('File not found');
-                alert('File not found');
+                toast.error('File not found');
             } else {
                 console.error('Error downloading file:', error);
-                alert('Error downloading file');
+                toast.error('Error downloading file');
             }
         }
     };
@@ -78,9 +80,10 @@ const OrdersPage = () => {
         try {
             await axios.put(`/api/orders/${orderId}`, { status: newStatus });
             setOrders(orders.map(order => order._id === orderId ? { ...order, status: newStatus } : order));
+            toast.success('Order status updated successfully');
         } catch (error) {
             console.error('Error updating order status:', error);
-            alert('Error updating order status. Please try again.');
+            toast.error('Error updating order status. Please try again.');
         }
     };
 
