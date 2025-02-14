@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { fabric } from 'fabric';
 import { FabricJSCanvas } from 'fabricjs-react';
 
@@ -21,6 +21,25 @@ interface DisplayProps {
 const Display: React.FC<DisplayProps> = (props) => {
   const { Canvas, onReady } = props;
 
+  const [canvasSize, setCanvasSize] = useState({ width: 200, height: 400 });
+
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      if (window.innerWidth <= 600) {
+        setCanvasSize({ width: 150, height: 250 });
+      } else if (window.innerWidth <= 1440) {
+        setCanvasSize({ width: 180, height: 320 });
+      } else {
+        setCanvasSize({ width: 200, height: 400 });
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener("resize", updateCanvasSize);
+
+    return () => window.removeEventListener("resize", updateCanvasSize);
+  }, []);
+
   return (
     <div id="sshot" style={props.style}>
       {props.back === "front" ? (
@@ -28,8 +47,9 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtDiv"
           className="page"
           style={{
-            width: "530px",
-            height: "630px",
+            width: "100%",
+            maxWidth: "530px",
+            height: "auto",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -40,24 +60,26 @@ const Display: React.FC<DisplayProps> = (props) => {
             id="tshirtFacing"
             src={props.image?.front?.src}
             alt="T-shirt front view"
+            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "100px",
-                left: "165px",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
                 zIndex: 10,
-                width: "200px",
-                height: "400px",
+                width: `${canvasSize.width}px`,
+                height: `${canvasSize.height}px`,// Responsive height fallback
               }}
             >
               <div style={{
-                WebkitUserSelect: "none",
-                width: "100%",
-                height: "100%"
-              }}>
+                  WebkitUserSelect: "none",
+                  width: "100%",
+                  height: "100%"
+                }}>
                 <Canvas
                   className="sample-canvas"
                   onReady={onReady}
@@ -71,8 +93,9 @@ const Display: React.FC<DisplayProps> = (props) => {
           id="shirtBack"
           className="page"
           style={{
-            width: "530px",
-            height: "630px",
+            width: "100%",
+            maxWidth: "530px",
+            height: "auto",
             position: "relative",
             backgroundColor: props.color || "white",
           }}
@@ -81,24 +104,26 @@ const Display: React.FC<DisplayProps> = (props) => {
             className="img-fluid"
             src={props.image?.back?.src}
             alt="T-shirt back view"
+            style={{ width: "100%", height: "auto" }}
           />
           {Canvas && (
             <div
               id="drawingArea"
               style={{
                 position: "absolute",
-                top: "100px",
-                left: "165px",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
                 zIndex: 10,
-                width: "200px",
-                height: "400px",
+                width: `${canvasSize.width}px`,
+                height: `${canvasSize.height}px`,
               }}
             >
               <div style={{
-                WebkitUserSelect: "none",
-                width: "100%",
-                height: "100%"
-              }}>
+                  WebkitUserSelect: "none",
+                  width: "100%",
+                  height: "100%"
+                }}>
                 <Canvas
                   className="sample-canvas"
                   onReady={onReady}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaShoppingCart } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -9,12 +10,20 @@ const NavBar = () => {
 
 
   useEffect(() => {
-    // Fetch cart items from local storage or API
-    const storedCartItems = localStorage.getItem('cartItems');
-    if (storedCartItems) {
-      setCartItems(JSON.parse(storedCartItems).length);
-    }
-  }, []);
+    const fetchCartItems = async () => {
+      if (!user) return;
+
+      try {
+        const response = await axios.get('/api/cart', {
+          params: { userId: user.id }
+        });
+        setCartItems(response.data.length);
+      } catch (error) {
+      }
+    };
+
+    fetchCartItems();
+  }, [user]);
 
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 z-50">
@@ -32,18 +41,22 @@ const NavBar = () => {
           {isAuthenticated ? (
             <>
               <span className="text-gray-600">Welcome, {user?.name}</span>
+              <Link href="/orders">
+                <a className="text-gray-600 hover:text-orange-500 transition-colors">
+                  Orders
+                </a>
+              </Link>
+              <Link href="/print-on-demand">
+                <a className="text-gray-600 hover:text-orange-500 transition-colors">
+                  Custom Print
+                </a>
+              </Link>
               <button
                 onClick={logout}
                 className="text-gray-600 hover:text-orange-500 transition-colors"
               >
                 Logout
               </button>
-
-              <Link href="/orders">
-                <a className="text-gray-600 hover:text-orange-500 transition-colors">
-                  Orders
-                </a>
-              </Link>
             </>
           ) : (
             <>

@@ -40,6 +40,7 @@ const Display: React.FC<DisplayProps> = (props) => {
                         id="tshirtFacing"
                         src={props.image?.front?.src}
                         alt="T-shirt front view"
+                        
                     />
                     {Canvas && (
                         <div

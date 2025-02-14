@@ -432,9 +432,6 @@ const Index = () => {
         price: totalPrice
         
       };
-      
-
-      console.log(image.title)
   
       console.log('Sending payload...');
       await axios.post('/api/save-design', payload);
