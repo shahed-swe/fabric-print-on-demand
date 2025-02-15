@@ -36,8 +36,8 @@ const Index = () => {
   const [color, setColor] = useState("");
   const [image, setImage] = useState<any>(null);
   const { editor, onReady } = useFabricJSEditor();
-  const [frontData, setFrontData] = useState<string | null>(null);
-  const [backData, setBackData] = useState<string | null>(null);
+  const [frontCanvasData, setFrontCanvasData] = useState<string | null>(null);
+  const [backCanvasData, setBackCanvasData] = useState<string | null>(null);
   const [frontPrice, setFrontPrice] = useState(0);
   const [backPrice, setBackPrice] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -168,49 +168,43 @@ const Index = () => {
 
     const json = JSON.stringify(editor.canvas.toJSON());
     if (back === "back") {
-      setBackData(json);
-      localStorage.setItem("back", json);
+      setBackCanvasData(json);
     } else {
-      setFrontData(json);
-      localStorage.setItem("front", json);
+      setFrontCanvasData(json);
     }
   }, [back, editor]);
 
   // Calculate prices
   useEffect(() => {
     try {
-      const front = frontData ? JSON.parse(frontData) : null;
-      const back = backData ? JSON.parse(backData) : null;
+      const front = frontCanvasData ? JSON.parse(frontCanvasData) : null;
+      const back = backCanvasData ? JSON.parse(backCanvasData) : null;
 
       setFrontPrice(front?.objects?.length > 0 ? 100 : 0);
       setBackPrice(back?.objects?.length > 0 ? 100 : 0);
     } catch (error) {
       console.error("Error calculating prices:", error);
     }
-  }, [frontData, backData]);
+  }, [frontCanvasData, backCanvasData]);
 
-  const handleBack = (data: string) => {
-    if (data === "back") {
-      const json = JSON.stringify(editor?.canvas.toJSON());
-      setFrontData(json);
-      localStorage.setItem("front", json);
-      editor?.canvas.clear();
-      editor?.canvas.loadFromJSON(
-        backData,
-        editor?.canvas.renderAll.bind(editor?.canvas)
-      );
+  const handleBack = (view: string) => {
+    if (!editor) return;
+
+    const json = JSON.stringify(editor.canvas.toJSON());
+    if (back === "back") {
+      setBackCanvasData(json);
     } else {
-      const json = JSON.stringify(editor?.canvas.toJSON());
-      setBackData(json);
-      localStorage.setItem("back", json);
-      editor?.canvas.clear();
-      editor?.canvas.loadFromJSON(
-        frontData,
-        editor?.canvas.renderAll.bind(editor?.canvas)
-      );
+      setFrontCanvasData(json);
     }
-    setBack(data);
-    return data;
+
+    editor.canvas.clear();
+    if (view === "back" && backCanvasData) {
+      editor.canvas.loadFromJSON(backCanvasData, editor.canvas.renderAll.bind(editor.canvas));
+    } else if (view === "front" && frontCanvasData) {
+      editor.canvas.loadFromJSON(frontCanvasData, editor.canvas.renderAll.bind(editor.canvas));
+    }
+
+    setBack(view);
   };
 
   // Handle file upload
