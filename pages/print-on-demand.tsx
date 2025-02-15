@@ -469,7 +469,7 @@ const Index = () => {
   const handleSearchPix = async (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     try {
       // Implement your pixabay API call here
-      const response = await fetch(`https://pixabay.com/api/?key=26989130-08a64865604ee2a22958b6c98&q=${event.target.value}&image_type=photo&pretty=true`);
+      const response = await fetch(`https://pixabay.com/api/?key=26989130-08a64865604ee2a22958b6c98&q=${event.target.value}&image_type=illustration&pretty=true`);
       const data = await response.json();
       setArtworkDataPixy(data.hits);
     } catch (error) {
@@ -773,7 +773,7 @@ const Index = () => {
                           onChange={handleSearchArtWork}
                         >
                           <option value="">Select Category</option>
-                          {["All", "Art", "Design", "Illustration", "Photography", "Vectors", "3D"].map((item) => (
+                          {["All", "Animals","Architecture","Beauty","Computer","Food","Music","Movies","Medical","Nature","Places","Science","Sports","Technology","Transportation","Travel"].map((item) => (
                             <option key={item} value={item}>
                               {item}
                             </option>
