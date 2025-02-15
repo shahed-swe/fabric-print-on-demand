@@ -36,8 +36,8 @@ const Index = () => {
   const [color, setColor] = useState("");
   const [image, setImage] = useState<any>(null);
   const { editor, onReady } = useFabricJSEditor();
-  const [frontCanvasData, setFrontCanvasData] = useState<string | null>(null);
-  const [backCanvasData, setBackCanvasData] = useState<string | null>(null);
+  const [frontData, setFrontData] = useState<string | null>(null);
+  const [backData, setBackData] = useState<string | null>(null);
   const [frontPrice, setFrontPrice] = useState(0);
   const [backPrice, setBackPrice] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -168,43 +168,49 @@ const Index = () => {
 
     const json = JSON.stringify(editor.canvas.toJSON());
     if (back === "back") {
-      setBackCanvasData(json);
+      setBackData(json);
+      localStorage.setItem("back", json);
     } else {
-      setFrontCanvasData(json);
+      setFrontData(json);
+      localStorage.setItem("front", json);
     }
   }, [back, editor]);
 
   // Calculate prices
   useEffect(() => {
     try {
-      const front = frontCanvasData ? JSON.parse(frontCanvasData) : null;
-      const back = backCanvasData ? JSON.parse(backCanvasData) : null;
+      const front = frontData ? JSON.parse(frontData) : null;
+      const back = backData ? JSON.parse(backData) : null;
 
       setFrontPrice(front?.objects?.length > 0 ? 100 : 0);
       setBackPrice(back?.objects?.length > 0 ? 100 : 0);
     } catch (error) {
       console.error("Error calculating prices:", error);
     }
-  }, [frontCanvasData, backCanvasData]);
+  }, [frontData, backData]);
 
-  const handleBack = (view: string) => {
-    if (!editor) return;
-
-    const json = JSON.stringify(editor.canvas.toJSON());
-    if (back === "back") {
-      setBackCanvasData(json);
+  const handleBack = (data: string) => {
+    if (data === "back") {
+      const json = JSON.stringify(editor?.canvas.toJSON());
+      setFrontData(json);
+      localStorage.setItem("front", json);
+      editor?.canvas.clear();
+      editor?.canvas.loadFromJSON(
+        backData,
+        editor?.canvas.renderAll.bind(editor?.canvas)
+      );
     } else {
-      setFrontCanvasData(json);
+      const json = JSON.stringify(editor?.canvas.toJSON());
+      setBackData(json);
+      localStorage.setItem("back", json);
+      editor?.canvas.clear();
+      editor?.canvas.loadFromJSON(
+        frontData,
+        editor?.canvas.renderAll.bind(editor?.canvas)
+      );
     }
-
-    editor.canvas.clear();
-    if (view === "back" && backCanvasData) {
-      editor.canvas.loadFromJSON(backCanvasData, editor.canvas.renderAll.bind(editor.canvas));
-    } else if (view === "front" && frontCanvasData) {
-      editor.canvas.loadFromJSON(frontCanvasData, editor.canvas.renderAll.bind(editor.canvas));
-    }
-
-    setBack(view);
+    setBack(data);
+    return data;
   };
 
   // Handle file upload
@@ -291,24 +297,25 @@ const Index = () => {
 
   // Handle screenshot
   const handleSS = async () => {
+    
     if (!editor) return;
-  
+    
     setLoading(true);
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
   
     // Store current view and canvas states
     const currentView = back;
-  
+    let frontState;
+    let backState;
     // Save current canvas state before switching views
     if (currentView === "front") {
-      const frontState = JSON.stringify(editor.canvas.toJSON());
+      frontState = JSON.stringify(editor.canvas.toJSON());
       localStorage.setItem("front", frontState);
     } else {
-      const backState = JSON.stringify(editor.canvas.toJSON());
+      backState = JSON.stringify(editor.canvas.toJSON());
       localStorage.setItem("back", backState);
     }
-  
     // Get canvas elements
     const canvasContainers = document.querySelectorAll(".canvas-container");
     const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
@@ -332,45 +339,88 @@ const Index = () => {
       if (lowerCanvas) upperCanvas.style.border = 'none';
   
       const pdf = new jsPDF();
-      
+      let frontCanvas;
+      let backCanvas;
       // Capture front view
-      handleBack("front");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const frontState = localStorage.getItem("front");
-      if (frontState) {
-        editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
-          editor.canvas.renderAll();
+      if(currentView === "front") {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // const frontState = localStorage.getItem("front");
+        console.log(frontState)
+        if (frontState) {
+          editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
+            editor.canvas.renderAll();
+          });
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        frontCanvas = await html2canvas(document.getElementById("sshot")!, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 2
         });
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      const frontCanvas = await html2canvas(document.getElementById("sshot")!, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2
-      });
-  
-      // Capture back view
-      handleBack("back");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const backState = localStorage.getItem("back");
-      if (backState) {
-        editor.canvas.loadFromJSON(JSON.parse(backState), () => {
-          editor.canvas.renderAll();
+    
+        // Capture back view
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        handleBack("back");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const backState = localStorage.getItem("back");
+        console.log(backState)
+        if (backState) {
+          editor.canvas.loadFromJSON(JSON.parse(backState), () => {
+            editor.canvas.renderAll();
+          });
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        backCanvas = await html2canvas(document.getElementById("sshot")!, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 2
         });
-        await new Promise(resolve => setTimeout(resolve, 500));
+      }else{
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        handleBack("front")
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const frontState = localStorage.getItem("front");
+        console.log(frontState)
+        if (frontState) {
+          editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
+            editor.canvas.renderAll();
+          });
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        frontCanvas = await html2canvas(document.getElementById("sshot")!, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 2
+        });
+
+        // Capture back view
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        handleBack("back");
+        // const backState = localStorage.getItem("back");
+        console.log(backState)
+        if (backState) {
+          editor.canvas.loadFromJSON(JSON.parse(backState), () => {
+            editor.canvas.renderAll();
+          });
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        backCanvas = await html2canvas(document.getElementById("sshot")!, {
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          scale: 2
+        });
       }
-      const backCanvas = await html2canvas(document.getElementById("sshot")!, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 2
-      });
   
       // Add front view to PDF
       const imgWidth = 210;
       const pageHeight = 297;
-      const imgHeight = (frontCanvas.height * imgWidth) / frontCanvas.width;
+      const imgHeight = frontCanvas ? (frontCanvas.height * imgWidth) / frontCanvas.width : 0;
   
       pdf.setFontSize(16);
       pdf.text("FRONT VIEW", 105, 20, { align: 'center' });
@@ -676,6 +726,7 @@ const Index = () => {
               />
               <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <button
+                  disabled={back === "front"}
                   className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
                       ? "bg-orange-500 text-white"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -685,6 +736,7 @@ const Index = () => {
                   Front View
                 </button>
                 <button
+                  disabled={back === "back"}
                   className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
                       ? "bg-orange-500 text-white"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
