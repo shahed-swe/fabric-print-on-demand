@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { FaTrash, FaDownload } from 'react-icons/fa';
 import CheckoutForm from '../components/CheckoutForm';
 import { toast } from 'react-toastify';
+import ShippingAddressForm from '../components/ShippingAddressForm';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -16,6 +17,8 @@ const Cart = () => {
   const { user } = useAuth();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [showShippingForm, setShowShippingForm] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState(null);
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -46,19 +49,139 @@ const Cart = () => {
     }
   };
 
-  const handleQuantityChange = (itemId: string, size: string, quantity: number) => {
-    setCartItems(cartItems.map(item => {
+  const getStylePremium = (styleName: string): number => {
+    switch (styleName.toLowerCase()) {
+      case "hoodie":
+        return 300;
+      case "long sleeve":
+        return 100;
+      case "mens tank":
+        return -50;
+      default:
+        return 0;
+    }
+  };
+
+  const getBulkDiscount = (quantity: number): number => {
+    if (quantity >= 100) return 0.20;
+    if (quantity >= 50) return 0.15;
+    if (quantity >= 20) return 0.10;
+    if (quantity >= 10) return 0.05;
+    return 0;
+  };
+
+  const calculateItemTotal = (item: { sizeQuantities: Record<string, number>; title: string }) => {
+    const totalQuantity = Object.values(item.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0);
+    if (totalQuantity === 0) return 0;
+
+    const basePrice = 500; // Base price for t-shirts
+    const stylePremium = getStylePremium(item.title);
+    const pricePerItem = basePrice + stylePremium;
+    const subtotal = pricePerItem * totalQuantity;
+    const discount = getBulkDiscount(totalQuantity);
+    const discountAmount = subtotal * discount;
+
+    return subtotal - discountAmount;
+  };
+
+  const handleQuantityChange = async (itemId: string, size: string, quantity: number) => {
+    const updatedCartItems = cartItems.map(item => {
       if (item._id === itemId) {
-        return {
+        const updatedItem = {
           ...item,
           sizeQuantities: {
             ...item.sizeQuantities,
             [size]: quantity
           }
         };
+        // Recalculate the price for this item
+        updatedItem.price = calculateItemTotal(updatedItem);
+        return updatedItem;
       }
       return item;
-    } ));
+    });
+
+    setCartItems(updatedCartItems);
+  };
+
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + item.price, 0);
+  };
+
+  const handleCheckout = async () => {
+    if (calculateTotal() === 0) {
+      toast.error('Cannot checkout with 0 order');
+      return;
+    }
+    setShowShippingForm(true);
+  };
+
+  const handleShippingSubmit = async (address: any) => {
+    try {
+      let shippingAddressData;
+      
+      // Only create new address if it's a new submission
+      if (address.isNewAddress) {
+        const { isNewAddress, ...addressToSave } = address;
+        const response = await axios.post('/api/shipping-address', {
+          ...addressToSave,
+          userId: user?.id
+        });
+        
+        if (!response.data.success) {
+          throw new Error('Failed to save shipping address');
+        }
+        
+        shippingAddressData = response.data;
+      } else {
+        // Use the existing address directly
+        shippingAddressData = address;
+      }
+      
+      setShippingAddress(shippingAddressData);
+      
+      // Create payment intent
+      const paymentResponse = await axios.post('/api/create-payment-intent', {
+        amount: calculateTotal(),
+      });
+
+      if (!paymentResponse.data.clientSecret) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      setClientSecret(paymentResponse.data.clientSecret);
+      setShowShippingForm(false);
+      setShowPayment(true);
+    } catch (error) {
+      console.error('Error processing shipping:', error);
+      toast.error('Error processing shipping. Please try again.');
+      setShowPayment(false);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      // Create order with shipping address
+      await axios.post('/api/checkout', {
+        userId: user?.id,
+        items: cartItems,
+        shippingAddress,
+        paymentStatus: 'paid'
+      });
+
+      // Clear cart
+      await axios.delete('/api/cart', { 
+        params: { userId: user?.id }, 
+        data: { userId: user?.id } 
+      });
+      
+      setCartItems([]);
+      setShowPayment(false);
+      toast.success('Order placed successfully!');
+    } catch (error) {
+      console.error('Error finalizing order:', error);
+      toast.error('Payment successful but error creating order. Please contact support.');
+    }
   };
 
   const handleDownloadFile = async (fileId: string) => {
@@ -89,48 +212,6 @@ const Cart = () => {
     }
   };
 
-  const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price, 0);
-  };
-
-  const handleCheckout = async () => {
-    try {
-      const response = await axios.post('/api/create-payment-intent', {
-        amount: calculateTotal(),
-      });
-
-      setClientSecret(response.data.clientSecret);
-      setShowPayment(true);
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      toast.error('Error processing payment. Please try again.');
-    }
-  };
-
-  const handlePaymentSuccess = async () => {
-    try {
-      // Create order
-      await axios.post('/api/checkout', {
-        userId: user?.id,
-        items: cartItems,
-        paymentStatus: 'paid'
-      });
-
-      // Clear cart
-      await axios.delete('/api/cart', { 
-        params: { userId: user?.id }, 
-        data: { userId: user?.id } 
-      });
-      
-      setCartItems([]);
-      setShowPayment(false);
-      toast.success('Order placed successfully!');
-    } catch (error) {
-      console.error('Error finalizing order:', error);
-      toast.error('Payment successful but error creating order. Please contact support.');
-    }
-  };
-
   return (
     <div>
       <NavBar />
@@ -145,7 +226,7 @@ const Cart = () => {
                 <div>
                   <div className='flex'>
                     <h2 className="text-xl font-semibold mb-2">{item.title}:</h2>
-                    <p className="text-gray-700 ml-3 mt-1 font-semibold">{item.price}</p>
+                    <p className="text-gray-700 ml-3 mt-1 font-semibold">৳{item.price.toFixed(2)}</p>
                   </div>
 
                   <div className="text-gray-700">
@@ -200,6 +281,16 @@ const Cart = () => {
                     Proceed to Payment
                   </button>
                 </div>
+                {showShippingForm && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                      <ShippingAddressForm
+                        onSubmit={handleShippingSubmit}
+                        onCancel={() => setShowShippingForm(false)}
+                      />
+                    </div>
+                  </div>
+                )}
                 {showPayment && clientSecret && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                   <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
@@ -211,7 +302,6 @@ const Cart = () => {
                         setShowPayment={setShowPayment}
                       />
                     </Elements>
-                    
                   </div>
                 </div>
               )}
