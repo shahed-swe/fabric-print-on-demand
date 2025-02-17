@@ -21,32 +21,71 @@ interface Order {
     }[];
     paymentStatus: string;
     status: string;
+    shippingAddress: {
+        fullName: string;
+        streetAddress: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        phone: string;
+    };
+    userId: string; // Add this field
+}
+
+interface ShippingAddress {
+    _id: string;
+    fullName: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    phone: string;
+    userId: string;
 }
 
 const OrdersPage = () => {
     const [orders, setOrders] = useState<Order[]>([]);
+    const [shippingAddresses, setShippingAddresses] = useState<{ [key: string]: ShippingAddress }>({});
     const { user } = useAuth();
-
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [selectedAddress, setSelectedAddress] = useState<ShippingAddress | null>(null);
 
     useEffect(() => {
-        const fetchOrders = async () => {
+        const fetchOrdersAndAddresses = async () => {
             try {
-                const response = await axios.get('/api/checkout');
-                const allOrders = response.data;
+                // Fetch orders
+                const ordersResponse = await axios.get('/api/checkout');
+                const allOrders = ordersResponse.data;
+                const filteredOrders = user?.type === 'Admin' 
+                    ? allOrders 
+                    : allOrders.filter((order: Order) => order.user._id === user?.id);
+                setOrders(filteredOrders);
 
-                if (user?.type === 'Admin') {
-                    setOrders(allOrders);
-                } else {
-                    const userOrders = allOrders.filter((order: Order) => order.user._id === user?.id);
-                    setOrders(userOrders);
+                // Fetch shipping addresses for all orders
+                const uniqueUserIds = Array.from(filteredOrders.reduce((set: { add: (arg0: string) => void; }, order: Order) => {
+                    set.add(order.userId);
+                    return set;
+                }, new Set<string>()));
+                const addressesMap: { [key: string]: ShippingAddress } = {};
+
+                for (const userId of uniqueUserIds as string[]) {
+                    const addressResponse = await axios.get('/api/shipping-address', {
+                        params: { userId }
+                    });
+                    // Store the first address for each user (you might want to modify this logic)
+                    if (addressResponse.data && addressResponse.data.length > 0) {
+                        addressesMap[userId] = (addressResponse.data as ShippingAddress[])[0];
+                    }
                 }
+                
+                setShippingAddresses(addressesMap);
             } catch (error) {
-                console.error('Error fetching orders:', error);
-                toast.error('Error fetching orders');
+                console.error('Error fetching data:', error);
+                toast.error('Error fetching orders and addresses');
             }
         };
 
-        fetchOrders();
+        fetchOrdersAndAddresses();
     }, [user]);
 
     const handleDownloadFile = async (fileId: string) => {
@@ -85,6 +124,17 @@ const OrdersPage = () => {
         } catch (error) {
             console.error('Error updating order status:', error);
             toast.error('Error updating order status. Please try again.');
+        }
+    };
+
+    // Modify handleShowAddress to use the shipping addresses map
+    const handleShowAddress = (userId: string) => {
+        const address = shippingAddresses[userId];
+        if (address) {
+            setSelectedAddress(address);
+            setShowAddressModal(true);
+        } else {
+            toast.error('No shipping address found');
         }
     };
 
@@ -141,26 +191,54 @@ const OrdersPage = () => {
                                         )}
                                     </td>
                                     <td className='py-2 px-4 border'>
-                                    {
-                                        user?.type === "Admin" && (
-                                            <>
-                                                {order.items.map(item => (
-                                                    <button
-                                                        key={item._id}
-                                                        onClick={() => handleDownloadFile(item.fileId)}
-                                                        className="mt-1 px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center text-sm"
-                                                    >
-                                                        <FaDownload className="mr-1" /> Design File
-                                                    </button>
-                                                ))}
-                                            </>
-                                        )
-                                    }
+                                        <div className="flex flex-col gap-2">
+                                            {user?.type === "Admin" && (
+                                                <>
+                                                    {order.items.map(item => (
+                                                        <button
+                                                            key={item._id}
+                                                            onClick={() => handleDownloadFile(item.fileId)}
+                                                            className="px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center text-sm"
+                                                        >
+                                                            <FaDownload className="mr-1" /> Design File
+                                                        </button>
+                                                    ))}
+                                                </>
+                                            )}
+                                            <button
+                                                onClick={() => handleShowAddress(order.userId)}
+                                                className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 flex items-center text-sm"
+                                                disabled={!shippingAddresses[order.userId]}
+                                            >
+                                                Show Address
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                )}
+                {showAddressModal && selectedAddress && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                            <h3 className="text-xl font-bold mb-4">Shipping Address</h3>
+                            <div className="space-y-2">
+                                <p><span className="font-semibold">Name:</span> {selectedAddress.fullName}</p>
+                                <p><span className="font-semibold">Address:</span> {selectedAddress.streetAddress}</p>
+                                <p><span className="font-semibold">City:</span> {selectedAddress.city}</p>
+                                <p><span className="font-semibold">State:</span> {selectedAddress.state}</p>
+                                <p><span className="font-semibold">Postal Code:</span> {selectedAddress.postalCode}</p>
+                                <p><span className="font-semibold">Phone:</span> {selectedAddress.phone}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowAddressModal(false)}
+                                className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
