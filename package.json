@@ -33,7 +33,8 @@
     "react-icons": "^5.4.0",
     "react-spinners": "^0.13.8",
     "react-toastify": "^11.0.3",
-    "stripe": "^17.6.0"
+    "stripe": "^17.6.0",
+    "twemoji": "^14.0.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FaShoppingCart } from 'react-icons/fa';
+import { FaShoppingCart, FaChevronDown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import countries from '../utils/countries';
 
 const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const [cartItems, setCartItems] = useState(0);
-
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for category dropdown
+  const [selectedCountry, setSelectedCountry] = useState(countries[13]); // Default to USA
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -19,11 +24,39 @@ const NavBar = () => {
         });
         setCartItems(response.data.length);
       } catch (error) {
+        console.error(error);
       }
     };
 
     fetchCartItems();
   }, [user]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowCountryDropdown(false);
+      }
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleCountrySelect = (country: any) => {
+    setSelectedCountry(country);
+    setShowCountryDropdown(false);
+  };
 
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 z-50">
@@ -38,9 +71,66 @@ const NavBar = () => {
 
         {/* Navigation Links */}
         <div className="flex items-center space-x-6">
+          {/* Country Selector */}
+          <div className="relative" ref={countryDropdownRef}>
+            <button 
+              className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
+              onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+            >
+              <span className="text-xl">{selectedCountry?.flag}</span>
+              <FaChevronDown className="text-xs" />
+            </button>
+            
+            {showCountryDropdown && (
+              <div className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                {countries.map((country, index) => (
+                  <Link href={`/countries/${country.name.toLowerCase().replace(/\s+/g, '-')}`} key={index}>
+                    <a
+                      className={`flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left ${
+                        selectedCountry?.name === country?.name ? 'bg-orange-50' : ''
+                      }`}
+                      onClick={() => handleCountrySelect(country)}
+                    >
+                      <span className="text-xl">{country.flag}</span>
+                      <span>{country.name}</span>
+                    </a>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Category Selector */}
+          <div className="relative" ref={categoryDropdownRef}>
+            <button
+              className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            >
+              <span>Categories</span>
+              <FaChevronDown className="text-xs" />
+            </button>
+
+            {showCategoryDropdown && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <Link href="/categories/islamic">
+                  <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Islamic
+                  </a>
+                </Link>
+                <Link href="/categories/sports">
+                  <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Sports
+                  </a>
+                </Link>
+              </div>
+            )}
+          </div>
+
           {isAuthenticated ? (
             <>
-              <span className="text-gray-600">Welcome, {user?.name}</span>
+              {user && 'name' in user && (
+                <span className="text-gray-600">Welcome, {user.name}</span>
+              )}
               <Link href="/orders">
                 <a className="text-gray-600 hover:text-orange-500 transition-colors">
                   Orders

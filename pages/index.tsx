@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import NavBar from '../components/NavBar';
 import { FaPencilAlt, FaTshirt, FaMagic, FaShippingFast, FaUsers, FaStar, FaComments } from 'react-icons/fa';
 
+import { useRouter } from 'next/router';
+
 const LandingPage = () => {
+
+    const router = useRouter();
+
+    const handleStartDesigning = () => {
+        
+        router.push('/print-on-demand');
+    };
+
+
     return (
         <div className="min-h-screen">
             <NavBar />
@@ -21,11 +32,12 @@ const LandingPage = () => {
                     <div className="max-w-3xl">
                         <h1 className="text-6xl font-bold mb-6">Create Your Perfect Custom Clothing</h1>
                         <p className="text-xl mb-8">Transform your ideas into unique custom apparel with our easy-to-use design studio.</p>
-                        <Link href="/print-on-demand">
-                            <a className="inline-block bg-orange-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 transform hover:scale-105">
-                                Start Designing Now
-                            </a>
-                        </Link>
+                        <button 
+                            onClick={handleStartDesigning}
+                            className="inline-block bg-orange-500 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 transform hover:scale-105"
+                        >
+                            Start Designing Now
+                        </button>
                     </div>
                 </div>
             </header>
@@ -159,11 +171,12 @@ const LandingPage = () => {
                                 <div className="p-6 text-white">
                                     <h3 className="text-2xl font-semibold mb-2">T-Shirts</h3>
                                     <p className="mb-4">Create your custom t-shirt design</p>
-                                    <Link href="/print-on-demand">
-                                        <a className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300">
-                                            Design Now
-                                        </a>
-                                    </Link>
+                                    <button 
+                                        onClick={handleStartDesigning}
+                                        className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300"
+                                    >
+                                        Design Now
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -174,11 +187,12 @@ const LandingPage = () => {
                                 <div className="p-6 text-white">
                                     <h3 className="text-2xl font-semibold mb-2">Hoodies</h3>
                                     <p className="mb-4">Design your perfect hoodie</p>
-                                    <Link href="/print-on-demand">
-                                        <a className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300">
-                                            Design Now
-                                        </a>
-                                    </Link>
+                                    <button 
+                                        onClick={handleStartDesigning}
+                                        className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300"
+                                    >
+                                        Design Now
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -189,11 +203,12 @@ const LandingPage = () => {
                                 <div className="p-6 text-white">
                                     <h3 className="text-2xl font-semibold mb-2">Design Studio</h3>
                                     <p className="mb-4">Powerful tools for your creativity</p>
-                                    <Link href="/print-on-demand">
-                                        <a className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300">
-                                            Try Now
-                                        </a>
-                                    </Link>
+                                    <button 
+                                        onClick={handleStartDesigning}
+                                        className="inline-block bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300"
+                                    >
+                                        Try Now
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -211,9 +226,21 @@ const LandingPage = () => {
                         <div>
                             <h3 className="text-xl font-bold mb-4">Quick Links</h3>
                             <ul className="space-y-2 text-gray-400">
-                                <li><Link href="/print-on-demand"><a className="hover:text-white">Design Studio</a></Link></li>
-                                <li><Link href="/products"><a className="hover:text-white">Products</a></Link></li>
-                                <li><Link href="/pricing"><a className="hover:text-white">Pricing</a></Link></li>
+                                <li>
+                                    <Link href="/print-on-demand" className="hover:text-white">
+                                        Design Studio
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/products" className="hover:text-white">
+                                        Products
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="/pricing" className="hover:text-white">
+                                        Pricing
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         <div>

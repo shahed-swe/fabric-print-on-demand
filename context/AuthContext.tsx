@@ -7,13 +7,20 @@ interface User {
   type: string;
 }
 
+interface GuestUser {
+  id: string;
+  type: 'guest';
+}
+
 interface AuthContextProps {
   isAuthenticated: boolean;
-  user: User | null;
+  user: User | GuestUser | null;
   login: (token: string, user: User) => void;
   logout: () => void;
   totalPrice: number;
   setTotalPrice: (price: number) => void;
+  createGuestSession: () => void;
+  isGuest: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -24,33 +31,60 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | GuestUser | null>(null);
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
+    const guestId = localStorage.getItem('guestId');
+    
     if (token && userData) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
+      setIsGuest(false);
+    } else if (guestId) {
+      setIsGuest(true);
+      setUser({ id: guestId, type: 'guest' } as GuestUser);
     }
   }, []);
 
   const login = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
+    localStorage.removeItem('guestId');
     setIsAuthenticated(true);
     setUser(user);
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUser(null);
+  const createGuestSession = () => {
+    const guestId = `guest_${Date.now()}`;
+    localStorage.setItem('guestId', guestId);
+    setIsGuest(true);
+    setUser({ id: guestId, type: 'guest' } as GuestUser);
   };
 
-  const value = React.useMemo(() => ({ isAuthenticated, user, login, logout, totalPrice, setTotalPrice }), [isAuthenticated, user, totalPrice]);
+  const logout = () => {
+    localStorage.clear();
+    setIsAuthenticated(false);
+    setUser(null);
+    createGuestSession();
+  };
+
+  const value = React.useMemo(
+    () => ({ 
+      isAuthenticated, 
+      user, 
+      login, 
+      logout, 
+      totalPrice, 
+      setTotalPrice, 
+      createGuestSession,
+      isGuest 
+    }), 
+    [isAuthenticated, user, totalPrice, isGuest]
+  );
 
   return (
     <AuthContext.Provider value={value}>
