@@ -37,5 +37,18 @@ export const designService = {
       console.error('Upload error:', error);
       throw new Error('Failed to upload file');
     }
+  },
+  
+  // New function to download files
+  getFile: async (fileId: string) => {
+    try {
+      const response = await api.get(`/files/${fileId}`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Download error:', error);
+      throw error;
+    }
   }
 };

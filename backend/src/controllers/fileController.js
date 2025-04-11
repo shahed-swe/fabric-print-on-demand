@@ -48,14 +48,41 @@ exports.uploadFile = async (req, res) => {
 
 exports.getFile = async (req, res) => {
   try {
-    const { filename } = req.params;
-    const filePath = path.join(uploadDir, filename);
+    const { fileid } = req.params;
+    const filePath = path.join(uploadDir, fileid);
 
+    // Check if file exists
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    res.sendFile(filePath);
+    // Get file metadata from the filesystem
+    const stats = fs.statSync(filePath);
+    
+    // Set appropriate headers for file download
+    res.setHeader('Content-Length', stats.size);
+    res.setHeader('Content-Disposition', `attachment; filename=${fileid}`);
+    
+    // Determine content type - if you have specific file types, you can match them here
+    // For PDF files
+    if (fileid.toLowerCase().endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
+    } else {
+      // Default to octet-stream for unknown types
+      res.setHeader('Content-Type', 'application/octet-stream');
+    }
+
+    // Create a read stream and pipe it directly to the response
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+    // Handle potential errors during streaming
+    fileStream.on('error', (err) => {
+      console.error('Error streaming file:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Error streaming file' });
+      }
+    });
   } catch (error) {
     console.error('Error retrieving file:', error);
     res.status(500).json({ error: 'Error retrieving file' });

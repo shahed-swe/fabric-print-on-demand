@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
+const adminRoutes = require('./routes/admin');
 require('dotenv').config();
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(fileUpload({
 
 // Routes
 app.use('/api', apiRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)

@@ -2,9 +2,11 @@ import api from '../config/axios';
 
 export const orderService = {
   createOrder: async (orderData: {
+    userId: string;
     items: any[];
     shippingAddress: any;
     paymentStatus: string;
+    totalAmount: number;
   }) => {
     const response = await api.post('/orders', orderData);
     return response.data;

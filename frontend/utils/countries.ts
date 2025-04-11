@@ -1,3 +1,17 @@
+// Product interface for type safety
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  rating: number;
+  reviews: number;
+  countryCode: string;
+  materialType: string;
+  patterns: string[];
+}
+
 const countries = [
     { name: "Afghanistan", flag: "🇦🇫" },
     { name: "Albania", flag: "🇦🇱" },
@@ -25,7 +39,7 @@ const countries = [
     { name: "Brazil", flag: "🇧🇷" },
     { name: "Brunei", flag: "🇧🇳" },
     { name: "Bulgaria", flag: "🇧🇬" },
-    { name: "Burkina Faso", flag: "🇧🇫" },
+    { name: "Burkina Faso", flag: "🇧" },
     { name: "Burundi", flag: "🇧🇮" },
     { name: "Cambodia", flag: "🇰🇭" },
     { name: "Cameroon", flag: "🇨🇲" },
@@ -195,5 +209,6 @@ const countries = [
     { name: "Zambia", flag: "🇿🇲" },
     { name: "Zimbabwe", flag: "🇿🇼" },
 ];
+
 
 export default countries;

@@ -12,24 +12,25 @@ exports.getCartItems = async (req, res) => {
   }
 };
 
-exports.addToCart = async (req, res) => {
-  try {
-    const newItem = await Cart.create({
-      userId: req.user._id,
-      ...req.body
-    });
-    res.status(201).json(newItem);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
 
 exports.removeFromCart = async (req, res) => {
   try {
     const { id } = req.params;
-    await Cart.findOneAndDelete({ _id: id, userId: req.user._id });
+    console.log(id)
+    await Design.findOneAndDelete({ _id: id });
     res.json({ message: 'Item removed from cart' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
+
+
+exports.removeByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await Design.deleteMany({ userId });
+    res.json({ message: 'All items removed from cart' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+}

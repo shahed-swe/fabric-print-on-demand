@@ -1,42 +1,76 @@
 const Order = require('../models/Order');
+const User = require('../models/User'); // Add User model import
 
 exports.createOrder = async (req, res) => {
+  const { userId, items, paymentStatus, totalAmount } = req.body;
+
+  console.log(req.body)
+
+  if (!userId || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
   try {
-    const { customerId, products, shippingAddress, totalAmount } = req.body;
     const order = await Order.create({
-      customerId,
-      products,
-      shippingAddress,
-      totalAmount
+      userId,
+      items,
+      paymentStatus: paymentStatus || 'pending',
+      status: "processing",
+      totalAmount,
+      createdAt: new Date(),
     });
-    res.status(201).json(order);
+    
+    return res.status(200).json({ message: 'Order placed successfully', order });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error placing order:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('customerId', 'name email')
-      .populate('products.productId');
-    res.json(orders);
+    const orders = await Order.find();
+    
+    // Fetch user details for each order
+    const ordersWithUserDetails = await Promise.all(
+      orders.map(async (order) => {
+        const user = await User.findById(order.userId);
+        return { ...order.toObject(), user };
+      })
+    );
+    
+    return res.status(200).json(ordersWithUserDetails);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching orders:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 exports.updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!id || !status) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
   try {
-    const { id } = req.params;
-    const { status } = req.body;
     const order = await Order.findByIdAndUpdate(
       id,
-      { status },
+      { $set: { status } },
       { new: true }
     );
-    res.json(order);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    
+    return res.status(200).json({ 
+      message: 'Order status updated successfully',
+      order 
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error updating order status:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

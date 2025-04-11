@@ -129,8 +129,14 @@ const Cart = () => {
       
       setShippingAddress(shippingAddressData);
       
-      const { clientSecret } = await paymentService.createPaymentIntent(calculateTotal());
-      setClientSecret(clientSecret);
+      const paymentResponse = await axios.post('/api/create-payment-intent', {
+        amount: calculateTotal(),
+      });
+      if (!paymentResponse.data.clientSecret) {
+        throw new Error('Failed to create payment intent');
+      }
+
+      setClientSecret(paymentResponse.data.clientSecret);
       setShowShippingForm(false);
       setShowPayment(true);
     } catch (error) {
@@ -143,12 +149,15 @@ const Cart = () => {
   const handlePaymentSuccess = async () => {
     try {
       await orderService.createOrder({
+        userId: user?._id ?? '',
         items: cartItems,
         shippingAddress,
-        paymentStatus: 'paid'
+        paymentStatus: 'completed',
+        totalAmount: calculateTotal(),
       });
 
-      await cartService.clearCart();
+
+      await cartService.removeByUserId(user?._id ?? '');
       setCartItems([]);
       setShowPayment(false);
       toast.success('Order placed successfully!');

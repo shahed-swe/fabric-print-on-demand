@@ -16,8 +16,8 @@ router.post('/auth/login', authController.login);
 
 // Cart routes
 router.get('/cart', protect, cartController.getCartItems);
-router.post('/cart', protect, cartController.addToCart);
 router.delete('/cart/:id', protect, cartController.removeFromCart);
+router.delete('/cart/user/:userId', protect, cartController.removeByUserId);
 
 // Category routes
 router.get('/categories', categoryController.getCategories);
@@ -30,6 +30,7 @@ router.get('/designs', protect, designController.getDesigns);
 
 // File routes
 router.post('/upload', protect, fileController.uploadFile);
+router.get('/files/:fileid', protect, fileController.getFile); // Changed from getFiles to getFile
 router.get('/files', protect, fileController.getFiles);
 
 // Order routes

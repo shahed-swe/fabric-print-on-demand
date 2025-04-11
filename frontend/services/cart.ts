@@ -8,18 +8,13 @@ export const cartService = {
     return response.data;
   },
 
-  addToCart: async (item: any) => {
-    const response = await api.post('/cart', item);
-    return response.data;
-  },
-
   removeFromCart: async (itemId: string) => {
     const response = await api.delete(`/cart/${itemId}`);
     return response.data;
   },
 
-  clearCart: async () => {
-    const response = await api.delete('/cart');
+  removeByUserId: async (userId: string) => {
+    const response = await api.delete(`/cart/user/${userId}`);
     return response.data;
-  }
+  },
 };

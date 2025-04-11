@@ -1,33 +1,46 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  customerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  userId: {
+    type: String,
     required: true
   },
-  products: [{
-    productId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
-      required: true
+  items: [{
+    _id: {
+      type: String
     },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1
+    fileId: {
+      type: String,
+    },
+    sizeQuantities: {
+      S: { type: Number, default: 0 },
+      M: { type: Number, default: 0 },
+      L: { type: Number, default: 0 },
+      XL: { type: Number, default: 0 },
+      XXL: { type: Number, default: 0 }
+    },
+    title: {
+      type: String,
     },
     price: {
       type: Number,
-      required: true
+    },
+    createdAt: {
+      type: Date,
     }
   }],
   shippingAddress: {
-    street: String,
+    country: String,
+    isDefault: Boolean,
+    fullName: String,
+    streetAddress: String, 
     city: String,
     state: String,
-    country: String,
-    zipCode: String
+    postalCode: String,
+    phone: String,
+    createdAt: Date,
+    userId: mongoose.Schema.Types.ObjectId,
+    isNewAddress: Boolean
   },
   totalAmount: {
     type: Number,
@@ -36,7 +49,7 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending'
+    default: 'processing'
   },
   paymentStatus: {
     type: String,

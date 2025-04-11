@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      type: user.type,
       token
     });
   } catch (error) {
@@ -34,13 +34,16 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
+    if(user.type == 'Admin') {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        type: user.type,
         token: generateToken(user._id)
       });
     } else {
@@ -50,3 +53,48 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+exports.adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if(user.type !== 'Admin') {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        type: user.type,
+        token: generateToken(user._id)
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.validateAdminToken = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    
+    if (!user || user.type !== 'Admin') {
+      return res.status(401).json({ message: 'Not authorized as admin' });
+    }
+    
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      type: user.type
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

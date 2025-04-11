@@ -3,6 +3,7 @@ const ShippingAddress = require('../models/ShippingAddress');
 exports.getAddresses = async (req, res) => {
   try {
     const {userId} = req.query
+    console.log(userId)
     const addresses = await ShippingAddress.find({ userId });
     res.json(addresses);
   } catch (error) {

@@ -1,9 +1,5 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not configured in the environment variables');
-}
-
 exports.createPaymentIntent = async (req, res) => {
   try {
     const { amount } = req.body;

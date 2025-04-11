@@ -7,6 +7,7 @@ import { FaDownload } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { orderService } from '../services/order';
 import { shippingService } from '../services/shipping';
+import { designService } from '../services/design';
 
 interface Order {
     _id: string;
@@ -56,49 +57,68 @@ const OrdersPage = () => {
         const fetchOrdersAndAddresses = async () => {
             try {
                 const ordersData = await orderService.getOrders();
+                console.log('Orders fetched:', ordersData);
+                
+                // Make sure we have orders data before proceeding
+                if (!ordersData || !Array.isArray(ordersData)) {
+                    console.error('Invalid orders data format:', ordersData);
+                    return;
+                }
+                console.log(user)
+                // Filter orders based on user role
                 const filteredOrders = user?.type === 'Admin' 
                     ? ordersData 
-                    : ordersData.filter((order: Order) => order.user._id === user?.id);
+                    : ordersData.filter((order: Order) => 
+                        order.userId === user?._id || (order.user && order.user._id === user?._id)
+                    );
+                
+                console.log('Filtered orders:', filteredOrders);
                 setOrders(filteredOrders);
 
-                // Fetch shipping addresses
+                // Fetch shipping addresses for each unique user
                 const uniqueUserIds = Array.from(new Set(filteredOrders.map(order => order.userId)));
+                console.log('Unique user IDs:', uniqueUserIds);
+                
                 const addressesMap: { [key: string]: ShippingAddress } = {};
 
                 for (const userId of uniqueUserIds) {
-                    const addresses = await shippingService.getAddresses();
-                    if (addresses.length > 0) {
-                        addressesMap[userId] = addresses[0];
+                    if (!userId) continue; // Skip if userId is undefined
+                    
+                    try {
+                        const addresses = await shippingService.getAddresses(userId);
+                        console.log(`Addresses for user ${userId}:`, addresses);
+                        
+                        if (addresses && addresses.length > 0) {
+                            addressesMap[userId] = addresses[0];
+                        }
+                    } catch (addressError) {
+                        console.error(`Error fetching addresses for user ${userId}:`, addressError);
                     }
                 }
                 
+                console.log('Addresses map:', addressesMap);
                 setShippingAddresses(addressesMap);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                toast.error('Error fetching orders and addresses');
             }
         };
 
-        fetchOrdersAndAddresses();
+        if (user) {
+            fetchOrdersAndAddresses();
+        }
     }, [user]);
 
     const handleDownloadFile = async (fileId: string) => {
         try {
-            const response = await axios.get(`/api/files/${fileId}`, {
-                responseType: 'blob',
-            });
-            if (response.status === 200) {
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', fileId);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-            } else {
-                console.error('File not found');
-                toast.error('File not found');
-            }
+            const blob = await designService.getFile(fileId);
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${fileId}`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success('File downloaded successfully');
         } catch (error) {
             if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
                 console.error('File not found');
@@ -131,6 +151,7 @@ const OrdersPage = () => {
             toast.error('No shipping address found');
         }
     };
+    console.log(orders)
 
     return (
         <div>
