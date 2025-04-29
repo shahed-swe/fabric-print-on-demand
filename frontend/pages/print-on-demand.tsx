@@ -281,20 +281,25 @@ const Index = () => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
+    // Create a new FileReader instance each time
     const reader = new FileReader();
     reader.onload = () => {
-      const img = new Image();
-      img.src = reader.result as string;
-      img.onload = () => {
-        if (editor && editor.canvas) {
-          const fabricImage = new fabric.Image(img, {
-            left: (editor.canvas.width || 200) / 2,
-            top: (editor.canvas.height || 400) / 2,
-            originX: 'center',
-            originY: 'center',
-            scaleX: 150 / img.width,
-            scaleY: 150 / img.height,
-          });
+      // Create a new image element
+      const imgElement = new Image();
+      imgElement.src = reader.result as string;
+      
+      imgElement.onload = () => {
+        // Create a new fabric Image instance using the image element
+        const fabricImage = new fabric.Image(imgElement, {
+          left: (editor.canvas.width || 200) / 2,
+          top: (editor.canvas.height || 400) / 2,
+          originX: 'center',
+          originY: 'center',
+          scaleX: 150 / imgElement.width,
+          scaleY: 150 / imgElement.height,
+        });
+
+        if (editor?.canvas) {
           editor.canvas.add(fabricImage);
           editor.canvas.setActiveObject(fabricImage);
           editor.canvas.renderAll();
@@ -417,9 +422,7 @@ const Index = () => {
         });
       }else{
         await new Promise(resolve => setTimeout(resolve, 1000));
-        handleBack("front")
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        frontCanvas = await html2canvas(document.getElementById("sshot")!, {
+        backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
@@ -428,8 +431,9 @@ const Index = () => {
 
         // Capture back view
         await new Promise(resolve => setTimeout(resolve, 1000));
-        handleBack("back");
-        backCanvas = await html2canvas(document.getElementById("sshot")!, {
+        handleBack("front");
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
@@ -500,7 +504,7 @@ const Index = () => {
       localStorage.removeItem("back");
   
       // Restore original view and state
-      handleBack(currentView);
+      handleBack("front");
       setLoading(false);
     }
   };
