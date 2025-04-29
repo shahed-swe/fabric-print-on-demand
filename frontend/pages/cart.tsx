@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../config/axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import NavBar from '../components/NavBar';
@@ -169,7 +169,7 @@ const Cart = () => {
 
   const handleDownloadFile = async (fileId: string) => {
     try {
-      const response = await axios.get(`/api/files/${fileId}`, {
+      const response = await axios.get(`/files/${fileId}`, {
         responseType: 'blob',
       });
       if (response.status === 200) {
@@ -184,8 +184,8 @@ const Cart = () => {
         console.error('File not found');
         toast.error('File not found');
       }
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
         console.error('File not found');
         toast.error('File not found');
       } else {

@@ -20,6 +20,7 @@ import RightSideComp from "@/components/RightSideComp";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from 'react-toastify';
 import { designService } from '../services/design';
+import TextEditorModal from "@/components/TextEditorModal";
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -34,10 +35,11 @@ const WomenFront = "/images/womens_crew_front.png";
 const WomenBack = "/images/womens_crew_back.png";
 
 const Index = () => {
-  const [back, setBack] = useState("front");
+  const [back, setBack] = useState("back");
   const [color, setColor] = useState("");
   const [image, setImage] = useState<any>(null);
-  const { editor, onReady } = useFabricJSEditor();
+  const { editor: frontEditor, onReady: onFrontReady } = useFabricJSEditor();
+  const { editor: backEditor, onReady: onBackReady } = useFabricJSEditor();
   const [frontData, setFrontData] = useState<string | null>(null);
   const [backData, setBackData] = useState<string | null>(null);
   const [frontPrice, setFrontPrice] = useState(0);
@@ -51,6 +53,10 @@ const Index = () => {
   const [showTextEditor, setShowTextEditor] = useState(false);
   const { user, totalPrice } = useAuth();
 
+  useEffect(()=> {
+    setTimeout(() => {
+    setBack("front");},100)
+  },[])
   // Add text editor position state
   const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
 
@@ -59,7 +65,7 @@ const Index = () => {
 
   // Function to handle text editor positioning
   const handleTextEditorOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (!editor?.canvas) return;
+    if (!frontEditor?.canvas && !backEditor?.canvas) return;
 
     const buttonRect = event.currentTarget.getBoundingClientRect();
     setTextEditorPosition({
@@ -164,19 +170,91 @@ const Index = () => {
     setImage(initialData[0]);
   }, []);
 
-  // Handle canvas data
+  // Handle canvas data - replace the existing useEffect
   useEffect(() => {
-    if (!editor) return;
+    if (!frontEditor || !backEditor) return;
 
-    const json = JSON.stringify(editor.canvas.toJSON());
-    if (back === "back") {
-      setBackData(json);
-      localStorage.setItem("back", json);
-    } else {
+    // Create a function to initialize canvases
+    const initializeCanvases = () => {
+      try {
+        const savedFrontData = localStorage.getItem("front");
+        const savedBackData = localStorage.getItem("back");
+        console.log({savedFrontData, savedBackData});
+
+        // Initialize front canvas
+        if (back == "front" && savedFrontData && frontEditor.canvas) {
+          setTimeout(() => {
+            try {
+              frontEditor.canvas.loadFromJSON(JSON.parse(savedFrontData), () => {
+                frontEditor.canvas.renderAll();
+              });
+            } catch (error) {
+              // console.error("Error loading front canvas:", error);
+            }
+          }, 100);
+        }
+
+        // Initialize back canvas
+        if (back =="back" && savedBackData && backEditor.canvas) {
+          setTimeout(() => {
+            try {
+              backEditor.canvas.loadFromJSON(JSON.parse(savedBackData), () => {
+                backEditor.canvas.renderAll();
+              });
+            } catch (error) {
+              // console.error("Error loading back canvas:", error);
+            }
+          }, 100);
+        }
+      } catch (error) {
+        console.error("Error initializing canvases:", error);
+      }
+    };
+
+    // Initialize canvases after a short delay to ensure DOM is ready
+    setTimeout(initializeCanvases, 100);
+
+    const saveFrontData = () => {
+      if (!frontEditor?.canvas) return;
+      const json = JSON.stringify(frontEditor.canvas.toJSON());
       setFrontData(json);
       localStorage.setItem("front", json);
+    };
+
+    const saveBackData = () => {
+      if (!backEditor?.canvas) return;
+      const json = JSON.stringify(backEditor.canvas.toJSON());
+      setBackData(json);
+      localStorage.setItem("back", json);
+    };
+
+    // Add event listeners with null checks
+    if (frontEditor?.canvas) {
+      frontEditor.canvas.on('object:modified', saveFrontData);
+      frontEditor.canvas.on('object:added', saveFrontData);
+      frontEditor.canvas.on('object:removed', saveFrontData);
     }
-  }, [back, editor]);
+
+    if (backEditor?.canvas) {
+      backEditor.canvas.on('object:modified', saveBackData);
+      backEditor.canvas.on('object:added', saveBackData);
+      backEditor.canvas.on('object:removed', saveBackData);
+    }
+
+    return () => {
+      if (frontEditor?.canvas) {
+        frontEditor.canvas.off('object:modified', saveFrontData);
+        frontEditor.canvas.off('object:added', saveFrontData);
+        frontEditor.canvas.off('object:removed', saveFrontData);
+      }
+
+      if (backEditor?.canvas) {
+        backEditor.canvas.off('object:modified', saveBackData);
+        backEditor.canvas.off('object:added', saveBackData);
+        backEditor.canvas.off('object:removed', saveBackData);
+      }
+    };
+  }, [frontEditor, backEditor]);
 
   // Calculate prices
   useEffect(() => {
@@ -191,32 +269,16 @@ const Index = () => {
     }
   }, [frontData, backData]);
 
+
+  // Modify handleBack to just switch views without transferring data
   const handleBack = (data: string) => {
-    if (data === "back") {
-      const json = JSON.stringify(editor?.canvas.toJSON());
-      setFrontData(json);
-      localStorage.setItem("front", json);
-      editor?.canvas.clear();
-      editor?.canvas.loadFromJSON(
-        backData,
-        editor?.canvas.renderAll.bind(editor?.canvas)
-      );
-    } else {
-      const json = JSON.stringify(editor?.canvas.toJSON());
-      setBackData(json);
-      localStorage.setItem("back", json);
-      editor?.canvas.clear();
-      editor?.canvas.loadFromJSON(
-        frontData,
-        editor?.canvas.renderAll.bind(editor?.canvas)
-      );
-    }
     setBack(data);
     return data;
   };
 
   // Handle file upload
   const handleAddImage = (file: File) => {
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
     const reader = new FileReader();
@@ -244,6 +306,7 @@ const Index = () => {
 
   // Handle URL-based image
   const handleAddImageFromUrl = async (url: string) => {
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor) return;
 
     try {
@@ -299,7 +362,7 @@ const Index = () => {
 
   // Handle screenshot
   const handleSS = async () => {
-    
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor) return;
     
     setLoading(true);
@@ -308,16 +371,6 @@ const Index = () => {
   
     // Store current view and canvas states
     const currentView = back;
-    let frontState;
-    let backState;
-    // Save current canvas state before switching views
-    if (currentView === "front") {
-      frontState = JSON.stringify(editor.canvas.toJSON());
-      localStorage.setItem("front", frontState);
-    } else {
-      backState = JSON.stringify(editor.canvas.toJSON());
-      localStorage.setItem("back", backState);
-    }
     // Get canvas elements
     const canvasContainers = document.querySelectorAll(".canvas-container");
     const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
@@ -346,34 +399,16 @@ const Index = () => {
       // Capture front view
       if(currentView === "front") {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        // const frontState = localStorage.getItem("front");
-        console.log(frontState)
-        if (frontState) {
-          editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
-            editor.canvas.renderAll();
-          });
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
         frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
           scale: 2
         });
-    
-        // Capture back view
         
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("back");
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const backState = localStorage.getItem("back");
-        console.log(backState)
-        if (backState) {
-          editor.canvas.loadFromJSON(JSON.parse(backState), () => {
-            editor.canvas.renderAll();
-          });
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
         backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -384,14 +419,6 @@ const Index = () => {
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("front")
         await new Promise(resolve => setTimeout(resolve, 1000));
-        const frontState = localStorage.getItem("front");
-        console.log(frontState)
-        if (frontState) {
-          editor.canvas.loadFromJSON(JSON.parse(frontState), () => {
-            editor.canvas.renderAll();
-          });
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
         frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -400,17 +427,8 @@ const Index = () => {
         });
 
         // Capture back view
-
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("back");
-        // const backState = localStorage.getItem("back");
-        console.log(backState)
-        if (backState) {
-          editor.canvas.loadFromJSON(JSON.parse(backState), () => {
-            editor.canvas.renderAll();
-          });
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
         backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -421,7 +439,6 @@ const Index = () => {
   
       // Add front view to PDF
       const imgWidth = 210;
-      const pageHeight = 297;
       const imgHeight = frontCanvas ? (frontCanvas.height * imgWidth) / frontCanvas.width : 0;
   
       pdf.setFontSize(16);
@@ -466,9 +483,7 @@ const Index = () => {
         price: totalPrice
       });
 
-      toast.success('Item Added to Cart successfully!', {
-        onClick: () => router.push('/cart')
-      });
+      toast.success('Item Added to Cart successfully!');
 
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -481,19 +496,11 @@ const Index = () => {
       });
       if (upperCanvas) upperCanvas.style.border = upperOriginalBorder;
       if (lowerCanvas) upperCanvas.style.border = lowerOriginalBorder;
+      localStorage.removeItem("front");
+      localStorage.removeItem("back");
   
       // Restore original view and state
       handleBack(currentView);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Restore the canvas state for the current view
-      const finalState = localStorage.getItem(currentView);
-      if (finalState) {
-        editor.canvas.loadFromJSON(JSON.parse(finalState), () => {
-          editor.canvas.renderAll();
-        });
-      }
-  
       setLoading(false);
     }
   };
@@ -514,6 +521,7 @@ const Index = () => {
 
   // Generate image using AI
   const handleGenerateAIImage = async () => {
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !aiImagePrompt) return;
     
     setIsGeneratingImage(true);
@@ -544,6 +552,7 @@ const Index = () => {
 
   // Add deleteSelected function
   const deleteSelected = () => {
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor?.canvas) return;
     
     const activeObjects = editor.canvas.getActiveObjects();
@@ -559,6 +568,7 @@ const Index = () => {
 
   // Add selection event handlers
   useEffect(() => {
+    const editor = back === "front" ? frontEditor : backEditor;
     if (!editor?.canvas) return;
 
     const handleSelection = (e: any) => {
@@ -575,7 +585,7 @@ const Index = () => {
       editor.canvas.off('selection:updated', handleSelection);
       editor.canvas.off('selection:cleared');
     };
-  }, [editor]);
+  }, [frontEditor, backEditor, back]);
 
   return (
     <div>
@@ -627,50 +637,15 @@ const Index = () => {
               />
 
               {/* Text Editor Modal */}
-              {showTextEditor && (
-                <div
-                  ref={textEditorRef}
-                  className="fixed z-50 bg-white rounded-lg shadow-xl border"
-                  style={{
-                    top: textEditorPosition.y,
-                    left: textEditorPosition.x,
-                    maxHeight: '80vh',
-                    overflowY: 'auto',
-                    width: '350px'
-                  }}
-                >
-                  <div className="p-4 border-b flex justify-between items-center">
-                    <h3 className="text-lg font-semibold">Text Editor</h3>
-                    <button
-                      onClick={() => setShowTextEditor(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
-                  </div>
-
-                  <TextStyler
-                    editor={editor}
-                    selectedObject={selectedObject}
-                    onTextAdd={(text) => {
-                      if (!editor?.canvas) return;
-
-                      const textBox = new fabric.IText(text, {
-                        left: editor.canvas.width ? editor.canvas.width / 2 : 100,
-                        top: editor.canvas.height ? editor.canvas.height / 2 : 100,
-                        originX: 'center',
-                        originY: 'center',
-                        fontSize: 20,
-                      });
-
-                      editor.canvas.add(textBox);
-                      editor.canvas.setActiveObject(textBox);
-                      setSelectedObject(textBox);
-                      editor.canvas.renderAll();
-                    }}
-                  />
-                </div>
-              )}
+              <TextEditorModal
+                showTextEditor={showTextEditor}
+                textEditorRef={textEditorRef}
+                textEditorPosition={textEditorPosition}
+                setShowTextEditor={setShowTextEditor}
+                editor={back === "front" ? frontEditor : backEditor}
+                selectedObject={selectedObject}
+                setSelectedObject={setSelectedObject}
+              />
 
               {/* Emoji Picker */}
               {showEmojiPicker && (
@@ -686,6 +661,7 @@ const Index = () => {
                   }}
                 >
                   <EmojiPicker onEmojiClick={(emojiData: any) => {
+                    const editor = back === "front" ? frontEditor : backEditor;
                     if (!editor?.canvas) return;
 
                     const textBox = new fabric.Text(emojiData.emoji, {
@@ -706,13 +682,25 @@ const Index = () => {
               )}
             </div>
             <div className="flex flex-col items-center">
-              <Display
-                back={back}
-                color={color}
-                image={image}
-                Canvas={FabricJSCanvas}
-                onReady={onReady}
-              />
+              {back === "front" ? (
+                <Display
+                  back="front"
+                  color={color}
+                  image={image}
+                  Canvas={FabricJSCanvas}
+                  onReady={onFrontReady}
+                  key="front-canvas"
+                />
+              ) : (
+                <Display
+                  back="back"
+                  color={color}
+                  image={image}
+                  Canvas={FabricJSCanvas}
+                  onReady={onBackReady}
+                  key="back-canvas"
+                />
+              )}
               <div className="mt-6 flex flex-wrap justify-center gap-4">
                 <button
                   disabled={back === "front"}

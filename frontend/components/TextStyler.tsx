@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fabric } from 'fabric';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -14,8 +14,26 @@ interface TextStylerProps {
 }
 
 const fonts = [
-  "Arial", "Times New Roman", "Courier New", "Georgia", "Verdana",
-  "Helvetica", "Comic Sans MS", "Impact", "Trebuchet MS", "Palatino"
+  "Arial", 
+  "Times New Roman", 
+  "Courier New", 
+  "Georgia", 
+  "Verdana",
+  "Helvetica", 
+  "Comic Sans MS", 
+  "Impact", 
+  "Trebuchet MS", 
+  "Palatino",
+  "Garamond",
+  "Brush Script MT",
+  "Lucida Console",
+  "Tahoma",
+  "Calibri",
+  "Optima",
+  "Futura",
+  "Franklin Gothic Medium",
+  "Gill Sans",
+  "Century Gothic"
 ];
 
 const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextAdd }) => {
@@ -56,6 +74,22 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
 
   // Active tab state
   const [activeTab, setActiveTab] = useState('font');
+
+  const [isFontDropdownOpen, setIsFontDropdownOpen] = useState(false);
+  const fontDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fontDropdownRef.current && !fontDropdownRef.current.contains(event.target as Node)) {
+        setIsFontDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Update text properties when selected object changes
   useEffect(() => {
@@ -310,16 +344,50 @@ const TextStyler: React.FC<TextStylerProps> = ({ editor, selectedObject, onTextA
         {/* Font Settings */}
         {activeTab === 'font' && (
           <div className="space-y-4">
-            <select
-              value={fontFamily}
-              onChange={(e) => setFontFamily(e.target.value)}
-              className="w-full p-2 border rounded"
-            >
-              {fonts.map(font => (
-                <option key={font} value={font}>{font}</option>
-              ))}
-            </select>
-            
+            {/* Custom Font Dropdown */}
+            <div className="relative" ref={fontDropdownRef}>
+              <button
+                onClick={() => setIsFontDropdownOpen(!isFontDropdownOpen)}
+                className="w-full p-2 border rounded text-left"
+                style={{ fontFamily }}
+              >
+                {fontFamily}
+                <span className="float-right">
+                  <svg
+                    className="w-4 h-4 inline-block"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+              </button>
+              {isFontDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
+                  {fonts.map((font) => (
+                    <div
+                      key={font}
+                      onClick={() => {
+                        setFontFamily(font);
+                        setIsFontDropdownOpen(false);
+                      }}
+                      className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                      style={{ fontFamily: font }}
+                    >
+                      {font}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block text-sm mb-1">Font Size</label>
               <input
