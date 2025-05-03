@@ -56,7 +56,7 @@ const ShippingAddressForm = ({ onSubmit, onCancel }: ShippingAddressFormProps) =
     e.preventDefault();
     if (selectedAddress === 'new') {
       try {
-        const response = await shippingService.addAddress(formData);
+        const response = await shippingService.addAddress({...formData, userId: user?._id});
         onSubmit({ ...formData, isNewAddress: true });
       } catch (error) {
         console.error('Error adding address:', error);

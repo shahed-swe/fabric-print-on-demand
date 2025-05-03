@@ -3,7 +3,6 @@ const ShippingAddress = require('../models/ShippingAddress');
 exports.getAddresses = async (req, res) => {
   try {
     const {userId} = req.query
-    console.log(userId)
     const addresses = await ShippingAddress.find({ userId });
     res.json(addresses);
   } catch (error) {
@@ -12,9 +11,13 @@ exports.getAddresses = async (req, res) => {
 };
 
 exports.addAddress = async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId in request body' });
+  }
   try {
     const address = await ShippingAddress.create({
-      userId: req.user._id,
+      userId,
       ...req.body
     });
     res.status(201).json(address);
