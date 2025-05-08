@@ -15,9 +15,9 @@ router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
 
 // Cart routes
-router.get('/cart', protect, cartController.getCartItems);
-router.delete('/cart/:id', protect, cartController.removeFromCart);
-router.delete('/cart/user/:userId', protect, cartController.removeByUserId);
+router.get('/cart', cartController.getCartItems);
+router.delete('/cart/:id', cartController.removeFromCart);
+router.delete('/cart/user/:userId', cartController.removeByUserId);
 
 // Category routes
 router.get('/categories', categoryController.getCategories);
@@ -25,25 +25,25 @@ router.post('/categories', protect, categoryController.createCategory);
 router.put('/categories/:id', protect, categoryController.updateCategory);
 
 // Design routes
-router.post('/designs', protect, designController.saveDesign);
-router.get('/designs', protect, designController.getDesigns);
+router.post('/designs', designController.saveDesign);
+router.get('/designs', designController.getDesigns);
 
 // File routes
-router.post('/upload', protect, fileController.uploadFile);
-router.get('/files/:fileid', protect, fileController.getFile); // Changed from getFiles to getFile
-router.get('/files', protect, fileController.getFiles);
+router.post('/upload', fileController.uploadFile);
+router.get('/files/:fileid', fileController.getFile); // Changed from getFiles to getFile
+router.get('/files', fileController.getFiles);
 
 // Order routes
-router.post('/orders', protect, orderController.createOrder);
-router.get('/orders', protect, orderController.getOrders);
-router.put('/orders/:id', protect, orderController.updateOrderStatus);
+router.post('/orders', orderController.createOrder);
+router.get('/orders', orderController.getOrders);
+router.put('/orders/:id', orderController.updateOrderStatus);
 
 // Payment routes
-router.post('/payment/create-intent', protect, paymentController.createPaymentIntent);
+// router.post('/payment/create-intent', protect, paymentController.createPaymentIntent);
 
 // Shipping routes
-router.get('/shipping', protect, shippingController.getAddresses);
-router.post('/shipping', protect, shippingController.addAddress);
+router.get('/shipping', shippingController.getAddresses);
+router.post('/shipping', shippingController.addAddress);
 
 // Ensure all routes have valid callback functions
 router.get('/some-route', protect, (req, res) => {

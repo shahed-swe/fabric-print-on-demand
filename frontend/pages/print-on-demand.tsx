@@ -481,6 +481,7 @@ const Index = () => {
       }
 
       await designService.saveDesign({
+        userId: user?._id,
         fileId: uploadResponse.fileId,
         sizeQuantities,
         title: image.title,

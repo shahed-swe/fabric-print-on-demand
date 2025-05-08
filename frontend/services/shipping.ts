@@ -8,6 +8,7 @@ interface AddressData {
   zipCode: string;
   phone: string;
   country?: string;
+  userId?: string;
 }
 
 export const shippingService = {
@@ -19,6 +20,7 @@ export const shippingService = {
   },
 
   addAddress: async (addressData: AddressData) => {
+    console.log('Adding address:', addressData);
     const response = await api.post('/shipping', {
       ...addressData,
       country: addressData.country || 'US'

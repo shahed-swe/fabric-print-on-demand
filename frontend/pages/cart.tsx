@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from '../config/axios';
+import api from '../config/axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import NavBar from '../components/NavBar';
@@ -11,7 +11,7 @@ import ShippingAddressForm from '../components/ShippingAddressForm';
 import { cartService } from '../services/cart';
 import { orderService } from '../services/order';
 import { shippingService } from '../services/shipping';
-import { paymentService } from '../services/payment';
+import axios from 'axios';
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -117,12 +117,14 @@ const Cart = () => {
   };
 
   const handleShippingSubmit = async (address: any) => {
+    console.log('Shipping address:', address);
     try {
       let shippingAddressData;
       
+      
       if (address.isNewAddress) {
         const { isNewAddress, ...addressToSave } = address;
-        shippingAddressData = await shippingService.addAddress(addressToSave);
+        shippingAddressData = await shippingService.addAddress({...addressToSave, userId: user?._id});
       } else {
         shippingAddressData = address;
       }
@@ -169,7 +171,7 @@ const Cart = () => {
 
   const handleDownloadFile = async (fileId: string) => {
     try {
-      const response = await axios.get(`/files/${fileId}`, {
+      const response = await api.get(`/files/${fileId}`, {
         responseType: 'blob',
       });
       if (response.status === 200) {

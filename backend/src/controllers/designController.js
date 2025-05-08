@@ -2,9 +2,10 @@ const Design = require('../models/Design');
 
 exports.saveDesign = async (req, res) => {
   try {
-    const { fileId, sizeQuantities, title, price } = req.body;
+    const { fileId, sizeQuantities, title, price,userId } = req.body;
+    console.log('Received data:', req.body); // Log the received data
     const design = await Design.create({
-      userId: req.user._id,
+      userId: userId,
       fileId,
       sizeQuantities,
       title,
