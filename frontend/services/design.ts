@@ -2,6 +2,7 @@ import api from '../config/axios';
 
 export const designService = {
   saveDesign: async (designData: {
+    userId?: string;
     fileId: string;
     sizeQuantities: Record<string, number>;
     title: string;
