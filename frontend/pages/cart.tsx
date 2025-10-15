@@ -25,18 +25,19 @@ const Cart = () => {
   const [shippingAddress, setShippingAddress] = useState(null);
 
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const items = await cartService.getCartItems(user?._id);
-        setCartItems(items);
-      } catch (error: any) {
-        console.error('Error fetching cart items:', error);
-        toast.error(error.message || 'Failed to load cart items');
-      }
-    };
+  const fetchCartItems = async () => {
+    if (!user?._id) return; 
+    try {
+      const items = await cartService.getCartItems(user._id);
+      setCartItems(items);
+    } catch (error: any) {
+      console.error('Error fetching cart items:', error);
+      toast.error(error.message || 'Failed to load cart items');
+    }
+  };
 
-    fetchCartItems();
-  }, [user]);
+  fetchCartItems();
+}, [user]);
 
   const handleRemoveItem = async (id: string) => {
     try {
