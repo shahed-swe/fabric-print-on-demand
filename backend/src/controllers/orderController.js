@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const User = require('../models/User'); // Add User model import
+const mongoose = require('mongoose');
 
 exports.createOrder = async (req, res) => {
   const { userId, items, paymentStatus, totalAmount } = req.body;
@@ -34,7 +35,25 @@ exports.getOrders = async (req, res) => {
     // Fetch user details for each order
     const ordersWithUserDetails = await Promise.all(
       orders.map(async (order) => {
-        const user = await User.findById(order.userId);
+        let user = null;
+        
+        // Check if userId is a valid ObjectId (not a guest user)
+        if (order.userId && mongoose.Types.ObjectId.isValid(order.userId) && !order.userId.toString().startsWith('guest_')) {
+          try {
+            user = await User.findById(order.userId);
+          } catch (error) {
+            console.log(`Error finding user: ${order.userId}`, error.message);
+          }
+        } else if (order.userId && order.userId.toString().startsWith('guest_')) {
+          // For guest users, create a guest user object
+          user = {
+            _id: order.userId,
+            name: 'Guest User',
+            email: 'guest@example.com',
+            isGuest: true
+          };
+        }
+        
         return { ...order.toObject(), user };
       })
     );

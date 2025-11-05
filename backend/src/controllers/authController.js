@@ -34,9 +34,9 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if(user.type == 'Admin') {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+    // if(user.type == 'Admin') {
+    //   return res.status(401).json({ message: 'Unauthorized' });
+    // }
 
     if (user && (await bcrypt.compare(password, user.password))) {
       res.json({

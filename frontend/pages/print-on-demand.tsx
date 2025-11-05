@@ -305,7 +305,18 @@ const Index = () => {
           editor.canvas.renderAll();
         }
       };
+
+      imgElement.onerror = (error) => {
+        console.error('Error loading image:', error);
+        toast.error('Failed to load the image. Please try again.');
+      };
     };
+
+    reader.onerror = (error) => {
+      console.error('Error reading file:', error);
+      toast.error('Failed to read the file. Please try again.');
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -374,36 +385,38 @@ const Index = () => {
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
   
-    // Store current view and canvas states
+    // Store current view
     const currentView = back;
-    // Get canvas elements
-    const canvasContainers = document.querySelectorAll(".canvas-container");
-    const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
-    const lowerCanvas = document.querySelector(".lower-canvas") as HTMLElement;
-  
-    // Store original styles
-    const originalStyles = Array.from(canvasContainers).map(container => ({
-      element: container,
-      style: container.getAttribute('style') || '',
-      border: (container as HTMLElement).style.border
-    }));
-    const upperOriginalBorder = upperCanvas?.style.border;
-    const lowerOriginalBorder = lowerCanvas?.style.border;
-  
-    try {
-      // Temporarily remove borders for screenshot
+    
+    // Function to get current view's canvas elements
+    const getCurrentCanvasElements = () => {
+      const canvasContainers = document.querySelectorAll(".canvas-container");
+      const upperCanvas = document.querySelector(".upper-canvas") as HTMLElement;
+      const lowerCanvas = document.querySelector(".lower-canvas") as HTMLElement;
+      return { canvasContainers, upperCanvas, lowerCanvas };
+    };
+
+    // Function to remove borders from current canvas elements
+    const removeBordersFromCurrentCanvas = () => {
+      const { canvasContainers, upperCanvas, lowerCanvas } = getCurrentCanvasElements();
       canvasContainers.forEach(container => {
         (container as HTMLElement).style.border = 'none';
       });
       if (upperCanvas) upperCanvas.style.border = 'none';
-      if (lowerCanvas) upperCanvas.style.border = 'none';
+      if (lowerCanvas) lowerCanvas.style.border = 'none';
+    };
   
+    try {
       const pdf = new jsPDF();
       let frontCanvas;
       let backCanvas;
+      
       // Capture front view
       if(currentView === "front") {
+        // Remove borders for front view
+        removeBordersFromCurrentCanvas();
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
         frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -411,17 +424,26 @@ const Index = () => {
           scale: 2
         });
         
+        // Switch to back view
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("back");
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Remove borders for back view
+        removeBordersFromCurrentCanvas();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
           scale: 2
         });
-      }else{
+      } else {
+        // Remove borders for back view
+        removeBordersFromCurrentCanvas();
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
         backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -429,10 +451,15 @@ const Index = () => {
           scale: 2
         });
 
-        // Capture back view
+        // Switch to front view
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("front");
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Remove borders for front view
+        removeBordersFromCurrentCanvas();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
@@ -494,18 +521,12 @@ const Index = () => {
       console.error("Error generating PDF:", error);
       toast.error("Error generating PDF. Please try again.");
     } finally {
-      // Restore original borders
-      originalStyles.forEach(({ element, style, border }) => {
-        element.setAttribute('style', style);
-        (element as HTMLElement).style.border = border;
-      });
-      if (upperCanvas) upperCanvas.style.border = upperOriginalBorder;
-      if (lowerCanvas) upperCanvas.style.border = lowerOriginalBorder;
+      // Clean up and restore
       localStorage.removeItem("front");
       localStorage.removeItem("back");
   
-      // Restore original view and state
-      handleBack("front");
+      // Restore original view
+      handleBack(currentView);
       setLoading(false);
     }
   };
@@ -737,6 +758,8 @@ const Index = () => {
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleAddImage(e.target.files[0]);
+                    // Clear the input value to allow selecting the same file again
+                    e.target.value = '';
                   }
                 }}
                 className="hidden"

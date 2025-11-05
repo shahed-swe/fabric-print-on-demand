@@ -63,16 +63,44 @@ const NavBar = () => {
       <div className="container mx-auto flex justify-between items-center p-4">
         {/* Logo */}
         <Link href="/">
-          <a className="text-2xl font-bold text-gray-800 flex items-center">
-            <span className="text-orange-500">Fabric</span>
-            <span className="text-gray-700">Print</span>
+          <a className="flex items-center space-x-3 group">
+            {/* Logo Icon */}
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <svg 
+                  className="w-6 h-6 text-white" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path d="M12 2L2 7v10c0 5.55 3.84 10 9 9s9-4.65 9-9V7l-8-5z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8 11l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            </div>
+            
+            {/* Logo Text */}
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <span className="text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">
+                  Custom
+                </span>
+                <span className="text-xl font-bold text-orange-500 ml-1 group-hover:text-orange-600 transition-colors">
+                  Print
+                </span>
+              </div>
+              <span className="text-xs text-gray-500 font-medium tracking-wider uppercase">
+                Service
+              </span>
+            </div>
           </a>
         </Link>
 
         {/* Navigation Links */}
         <div className="flex items-center space-x-6">
           {/* Country Selector */}
-          <div className="relative" ref={countryDropdownRef}>
+          {/* <div className="relative" ref={countryDropdownRef}>
             <button 
               className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
               onClick={() => setShowCountryDropdown(!showCountryDropdown)}
@@ -98,10 +126,10 @@ const NavBar = () => {
                 ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Category Selector */}
-          <div className="relative" ref={categoryDropdownRef}>
+          {/* <div className="relative" ref={categoryDropdownRef}>
             <button
               className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -124,8 +152,12 @@ const NavBar = () => {
                 </Link>
               </div>
             )}
-          </div>
-
+          </div> */}
+          <Link href="/print-on-demand">
+                <a className="text-gray-600 hover:text-orange-500 transition-colors">
+                  Custom Print
+                </a>
+              </Link>
           {isAuthenticated ? (
             <>
               {user && 'name' in user && (
@@ -136,11 +168,7 @@ const NavBar = () => {
                   Orders
                 </a>
               </Link>
-              <Link href="/print-on-demand">
-                <a className="text-gray-600 hover:text-orange-500 transition-colors">
-                  Custom Print
-                </a>
-              </Link>
+              
               <button
                 onClick={logout}
                 className="text-gray-600 hover:text-orange-500 transition-colors"

@@ -14,7 +14,13 @@ import { shippingService } from '../services/shipping';
 import axios from 'axios';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+if (!stripePublishableKey) {
+  console.error('Stripe publishable key is missing. Please check your environment variables.');
+}
+
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
@@ -277,7 +283,7 @@ const Cart = () => {
                     </div>
                   </div>
                 )}
-                {showPayment && clientSecret && (
+                {showPayment && clientSecret && stripePromise && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                   <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                     <h2 className="text-2xl font-bold mb-4">Complete Your Payment</h2>
@@ -288,6 +294,22 @@ const Cart = () => {
                         setShowPayment={setShowPayment}
                       />
                     </Elements>
+                  </div>
+                </div>
+              )}
+              {showPayment && !stripePromise && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                  <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                    <h2 className="text-2xl font-bold mb-4 text-red-600">Payment Error</h2>
+                    <p className="text-red-500 mb-4">
+                      Payment system is not properly configured. Please contact support.
+                    </p>
+                    <button
+                      onClick={() => setShowPayment(false)}
+                      className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               )}
