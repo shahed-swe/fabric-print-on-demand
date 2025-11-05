@@ -15,6 +15,7 @@ interface LeftSideCompProps {
   setShowTextEditor: (show: boolean) => void;
   showEmojiPicker: boolean;
   handleAddImage: (file: File) => void;
+  handleAddSmallImage: (file: File) => void;
   setShowArtModal: (show: boolean) => void;
   deleteSelected: () => void;
   handleGenerateAIImage: () => void;
@@ -34,6 +35,7 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
   setShowTextEditor,
   showEmojiPicker,
   handleAddImage,
+  handleAddSmallImage,
   setShowArtModal,
   deleteSelected,
   handleGenerateAIImage,
@@ -88,13 +90,13 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
           Browse Artwork
         </button>
 
-        <button
-          onClick={() => {}}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+        <label
+          htmlFor="smallImageUpload"
+          className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 cursor-pointer"
         >
           <FontAwesomeIcon icon={faImage} />
           Add Logo
-        </button>
+        </label>
 
         <button
           onClick={deleteSelected}
@@ -190,6 +192,20 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Hidden file inputs */}
+      <input
+        type="file"
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            handleAddSmallImage(e.target.files[0]);
+            e.target.value = '';
+          }
+        }}
+        className="hidden"
+        id="smallImageUpload"
+        accept="image/*"
+      />
     </div>
   );
 };

@@ -320,6 +320,64 @@ const Index = () => {
     reader.readAsDataURL(file);
   };
 
+  // Handle adding small image to top-left corner
+  const handleAddSmallImage = (file: File) => {
+    const editor = back === "front" ? frontEditor : backEditor;
+    if (!editor || !file) return;
+
+    // Create a new FileReader instance each time
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Create a new image element
+      const imgElement = new Image();
+      imgElement.src = reader.result as string;
+      
+      imgElement.onload = () => {
+        // Calculate small size (50x50 pixels max)
+        const maxSize = 50;
+        let scaleX, scaleY;
+        
+        if (imgElement.width > imgElement.height) {
+          // Landscape image
+          scaleX = maxSize / imgElement.width;
+          scaleY = scaleX; // Maintain aspect ratio
+        } else {
+          // Portrait or square image
+          scaleY = maxSize / imgElement.height;
+          scaleX = scaleY; // Maintain aspect ratio
+        }
+
+        // Create a new fabric Image instance positioned at top-right
+        const fabricImage = new fabric.Image(imgElement, {
+          left: (editor.canvas.width || 200) - 20, // 20px from right edge
+          top: 20,  // 20px from top edge
+          originX: 'right',
+          originY: 'top',
+          scaleX: scaleX,
+          scaleY: scaleY,
+        });
+
+        if (editor?.canvas) {
+          editor.canvas.add(fabricImage);
+          editor.canvas.setActiveObject(fabricImage);
+          editor.canvas.renderAll();
+        }
+      };
+
+      imgElement.onerror = (error) => {
+        console.error('Error loading small image:', error);
+        toast.error('Failed to load the small image. Please try again.');
+      };
+    };
+
+    reader.onerror = (error) => {
+      console.error('Error reading file for small image:', error);
+      toast.error('Failed to read the file. Please try again.');
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   // Handle URL-based image
   const handleAddImageFromUrl = async (url: string) => {
     const editor = back === "front" ? frontEditor : backEditor;
@@ -650,6 +708,7 @@ const Index = () => {
                 setShowTextEditor={setShowTextEditor}
                 showEmojiPicker={showEmojiPicker}
                 handleAddImage={handleAddImage}
+                handleAddSmallImage={handleAddSmallImage}
                 setShowArtModal={setShowArtModal}
                 deleteSelected={deleteSelected}
                 handleGenerateAIImage={handleGenerateAIImage}
