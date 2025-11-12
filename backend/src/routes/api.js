@@ -22,11 +22,9 @@ router.delete('/cart/user/:userId', cartController.removeByUserId);
 // Category routes
 router.get('/categories', categoryController.getCategories);
 router.post('/categories', protect, categoryController.createCategory);
-router.put('/categories/:id', protect, categoryController.updateCategory);
-router.delete('/categories/:id', (req, res, next) => {
-  console.log('DELETE /categories/:id route hit with ID:', req.params.id);
-  next();
-}, protect, categoryController.deleteCategory);
+router.route('/categories/:id')
+  .put(protect, categoryController.updateCategory)
+  .delete(categoryController.deleteCategory);
 
 // Design routes
 router.post('/designs', designController.saveDesign);

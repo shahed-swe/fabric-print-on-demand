@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Set default base URL for all requests
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://backend.customprintingservices.com.au',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001',
   headers: {
     'Content-Type': 'application/json',
   },

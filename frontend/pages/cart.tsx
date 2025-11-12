@@ -58,7 +58,6 @@ const Cart = () => {
 
   // Fixed pricing: 45 AUD per design
   const DESIGN_PRICE = 45;
-  const SHIPPING_COST = 10;
 
   const calculateItemTotal = (item: { sizeQuantities: Record<string, number>; title: string }) => {
     const totalQuantity = Object.values(item.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0);
@@ -89,9 +88,8 @@ const Cart = () => {
   };
 
   const calculateTotal = () => {
-    const itemsTotal = cartItems.reduce((total, item) => total + item.price, 0);
-    // Add shipping cost if there are items in cart
-    return cartItems.length > 0 ? itemsTotal + SHIPPING_COST : 0;
+    // Items already include shipping cost from the print-on-demand page
+    return cartItems.reduce((total, item) => total + item.price, 0);
   };
 
   const handleCheckout = async () => {
@@ -242,17 +240,7 @@ const Cart = () => {
             ))}
             <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
                 <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-gray-600">
-                    <span>Subtotal:</span>
-                    <span>AUD ${cartItems.reduce((total, item) => total + item.price, 0).toFixed(2)}</span>
-                  </div>
-                  {cartItems.length > 0 && (
-                    <div className="flex justify-between text-gray-600">
-                      <span>Shipping:</span>
-                      <span>AUD ${SHIPPING_COST.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="border-t pt-3">
+                  <div className="pt-3">
                     <div className="flex justify-between items-center">
                       <div className="text-xl font-semibold">
                         Total: AUD ${calculateTotal().toFixed(2)}
