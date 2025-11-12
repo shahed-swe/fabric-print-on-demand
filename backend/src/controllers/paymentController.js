@@ -15,7 +15,7 @@ exports.createPaymentIntent = async (req, res) => {
     // Create the payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
+      currency: 'aud',
       payment_method_types: ['card']
     });
 

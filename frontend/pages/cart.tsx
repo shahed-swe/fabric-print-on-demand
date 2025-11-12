@@ -56,39 +56,16 @@ const Cart = () => {
     }
   };
 
-  const getStylePremium = (styleName: string): number => {
-    switch (styleName.toLowerCase()) {
-      case "hoodie":
-        return 300;
-      case "long sleeve":
-        return 100;
-      case "mens tank":
-        return -50;
-      default:
-        return 0;
-    }
-  };
-
-  const getBulkDiscount = (quantity: number): number => {
-    if (quantity >= 100) return 0.20;
-    if (quantity >= 50) return 0.15;
-    if (quantity >= 20) return 0.10;
-    if (quantity >= 10) return 0.05;
-    return 0;
-  };
+  // Fixed pricing: 45 AUD per design
+  const DESIGN_PRICE = 45;
+  const SHIPPING_COST = 10;
 
   const calculateItemTotal = (item: { sizeQuantities: Record<string, number>; title: string }) => {
     const totalQuantity = Object.values(item.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0);
     if (totalQuantity === 0) return 0;
 
-    const basePrice = 500; // Base price for t-shirts
-    const stylePremium = getStylePremium(item.title);
-    const pricePerItem = basePrice + stylePremium;
-    const subtotal = pricePerItem * totalQuantity;
-    const discount = getBulkDiscount(totalQuantity);
-    const discountAmount = subtotal * discount;
-
-    return subtotal - discountAmount;
+    // 45 AUD per item
+    return DESIGN_PRICE * totalQuantity;
   };
 
   const handleQuantityChange = async (itemId: string, size: string, quantity: number) => {
@@ -112,7 +89,9 @@ const Cart = () => {
   };
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price, 0);
+    const itemsTotal = cartItems.reduce((total, item) => total + item.price, 0);
+    // Add shipping cost if there are items in cart
+    return cartItems.length > 0 ? itemsTotal + SHIPPING_COST : 0;
   };
 
   const handleCheckout = async () => {
@@ -219,7 +198,7 @@ const Cart = () => {
                 <div>
                   <div className='flex'>
                     <h2 className="text-xl font-semibold mb-2">{item.title}:</h2>
-                    <p className="text-gray-700 ml-3 mt-1 font-semibold">৳{item.price.toFixed(2)}</p>
+                    <p className="text-gray-700 ml-3 mt-1 font-semibold">AUD ${item.price.toFixed(2)}</p>
                   </div>
 
                   <div className="text-gray-700">
@@ -262,17 +241,30 @@ const Cart = () => {
               </div>
             ))}
             <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
-
-                <div className="flex justify-between items-center">
-                  <div className="text-xl font-semibold">
-                    Total: ${calculateTotal()}
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal:</span>
+                    <span>AUD ${cartItems.reduce((total, item) => total + item.price, 0).toFixed(2)}</span>
                   </div>
-                  <button
-                    onClick={handleCheckout}
-                    className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
-                  >
-                    Proceed to Payment
-                  </button>
+                  {cartItems.length > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Shipping:</span>
+                      <span>AUD ${SHIPPING_COST.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between items-center">
+                      <div className="text-xl font-semibold">
+                        Total: AUD ${calculateTotal().toFixed(2)}
+                      </div>
+                      <button
+                        onClick={handleCheckout}
+                        className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
+                      >
+                        Proceed to Payment
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 {showShippingForm && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
