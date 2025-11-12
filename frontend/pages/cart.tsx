@@ -162,6 +162,7 @@ const Cart = () => {
         items: cartItems,
         shippingAddress,
         paymentStatus: 'completed',
+        status: 'Processing',
         totalAmount: calculateTotal(),
       });
 

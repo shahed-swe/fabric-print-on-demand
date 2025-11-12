@@ -129,7 +129,7 @@ const NavBar = () => {
           </div> */}
 
           {/* Category Selector */}
-          {/* <div className="relative" ref={categoryDropdownRef}>
+          <div className="relative" ref={categoryDropdownRef}>
             <button
               className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -152,7 +152,7 @@ const NavBar = () => {
                 </Link>
               </div>
             )}
-          </div> */}
+          </div>
           <Link href="/print-on-demand">
                 <a className="text-gray-600 hover:text-orange-500 transition-colors">
                   Custom Print

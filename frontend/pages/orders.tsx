@@ -153,106 +153,344 @@ const OrdersPage = () => {
     };
     console.log(orders)
 
+    // Helper function to get status color
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'processing':
+                return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'packed':
+                return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+            case 'shipped':
+                return 'bg-purple-100 text-purple-800 border-purple-200';
+            case 'delivered':
+                return 'bg-green-100 text-green-800 border-green-200';
+            default:
+                return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+    };
+
+    // Helper function to format date
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     return (
-        <div>
+        <div className="min-h-screen bg-gray-50">
             <NavBar />
             <div className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-6 text-center">Orders</h1>
+                {/* Header Section */}
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-2">My Orders</h1>
+                    <p className="text-gray-600">Track and manage your custom print orders</p>
+                </div>
+
                 {orders.length === 0 ? (
-                    <p className="text-center text-gray-600">No orders found.</p>
-                ) : (
-                    <table className="min-w-full bg-white">
-                        <thead>
-                            <tr>
-                                <th className="py-2 px-4 border">Order ID</th>
-                                <th className="py-2 px-4 border">User</th>
-                                <th className="py-2 px-4 border">Items</th>
-                                <th className="py-2 px-4 border">Total</th>
-                                <th className="py-2 px-4 border">Status</th>
-                                <th className="py-2 px-4 border">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map(order => (
-                                <tr key={order._id} className="border-t">
-                                    <td className="py-2 px-4 border">{order._id}</td>
-                                    <td className="py-2 px-4 border">{order.user.name}</td>
-                                    <td className="py-2 px-4 border">
-                                        <ul>
-                                            {order.items.map(item => (
-                                                <li key={item._id}>
-                                                    {item.title} - {Object.entries(item.sizeQuantities).map(([size, quantity]) => (
-                                                        <span key={size}>{size}: {quantity} </span>
-                                                    ))}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </td>
-                                    <td className="py-2 px-4 border">{order.items.reduce((total, item) => total + item.price, 0)}</td>
-                                    <td className="py-2 px-4 border">
-                                        {user?.type === "Admin" ? (
-                                            <select
-                                                value={order.status}
-                                                onChange={(e) => handleChangeStatus(order._id, e.target.value)}
-                                                className="border rounded px-2 py-1"
-                                            >
-                                                <option value="Pending">Pending</option>
-                                                <option value="Processing">Processing</option>
-                                                <option value="Shipped">Shipped</option>
-                                                <option value="Delivered">Delivered</option>
-                                            </select>
-                                        ) : (
-                                            order.status
-                                        )}
-                                    </td>
-                                    <td className='py-2 px-4 border'>
-                                        <div className="flex flex-col gap-2">
-                                            {user?.type === "Admin" && (
-                                                <>
-                                                    {order.items.map(item => (
-                                                        <button
-                                                            key={item._id}
-                                                            onClick={() => handleDownloadFile(item.fileId)}
-                                                            className="px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center text-sm"
-                                                        >
-                                                            <FaDownload className="mr-1" /> Design File
-                                                        </button>
-                                                    ))}
-                                                </>
-                                            )}
-                                            <button
-                                                onClick={() => handleShowAddress(order.userId)}
-                                                className="px-2 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 flex items-center text-sm"
-                                                disabled={!shippingAddresses[order.userId]}
-                                            >
-                                                Show Address
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-                {showAddressModal && selectedAddress && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-                            <h3 className="text-xl font-bold mb-4">Shipping Address</h3>
-                            <div className="space-y-2">
-                                <p><span className="font-semibold">Name:</span> {selectedAddress.fullName}</p>
-                                <p><span className="font-semibold">Address:</span> {selectedAddress.streetAddress}</p>
-                                <p><span className="font-semibold">City:</span> {selectedAddress.city}</p>
-                                <p><span className="font-semibold">State:</span> {selectedAddress.state}</p>
-                                <p><span className="font-semibold">Postal Code:</span> {selectedAddress.postalCode}</p>
-                                <p><span className="font-semibold">Phone:</span> {selectedAddress.phone}</p>
+                    <div className="text-center py-12">
+                        <div className="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto">
+                            <div className="mb-4">
+                                <svg className="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
                             </div>
-                            <button
-                                onClick={() => setShowAddressModal(false)}
-                                className="mt-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h3>
+                            <p className="text-gray-600 mb-4">You haven't placed any orders yet. Start creating your custom designs!</p>
+                            <a 
+                                href="/print-on-demand" 
+                                className="inline-block px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition duration-200"
                             >
-                                Close
-                            </button>
+                                Start Designing
+                            </a>
                         </div>
+                    </div>
+                ) : (
+                    <div className="grid gap-6">
+                        {orders.map(order => (
+                            <div key={order._id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+                                {/* Order Header */}
+                                <div className="border-b border-gray-200 p-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="mb-4 sm:mb-0">
+                                            <h3 className="text-lg font-semibold text-gray-900">
+                                                Order #{order._id.slice(-8)}
+                                            </h3>
+                                            <p className="text-sm text-gray-600">
+                                                Customer: {order.user.name}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col sm:items-end">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                Payment: {order.paymentStatus}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Order Body */}
+                                <div className="p-6">
+                                    {/* Order Progress Timeline */}
+                                    <div className="mb-8">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h4 className="text-lg font-semibold text-gray-900">Order Progress</h4>
+                                        </div>
+                                        
+                                        {/* Progress Bar */}
+                                        <div className="mb-6">
+                                            <div className="flex items-center mb-2">
+                                                {['Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
+                                                    const normalizedStatus = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
+                                                    const isCompleted = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) >= index;
+                                                    const isCurrent = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) === index;
+                                                    
+                                                    return (
+                                                        <React.Fragment key={step}>
+                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
+                                                                isCompleted 
+                                                                    ? 'bg-green-500 border-green-500 text-white' 
+                                                                    : isCurrent 
+                                                                        ? 'bg-blue-500 border-blue-500 text-white'
+                                                                        : 'bg-gray-200 border-gray-300 text-gray-500'
+                                                            }`}>
+                                                                {isCompleted ? (
+                                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                ) : (
+                                                                    <span className="text-sm font-semibold">{index + 1}</span>
+                                                                )}
+                                                            </div>
+                                                            {index < 3 && (
+                                                                <div className={`flex-1 h-0.5 ${
+                                                                    ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()) > index 
+                                                                        ? 'bg-green-500' 
+                                                                        : 'bg-gray-300'
+                                                                }`} />
+                                                            )}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="flex items-center">
+                                                {['Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
+                                                    const normalizedStatus = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
+                                                    const isCompleted = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) >= index;
+                                                    const isCurrent = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) === index;
+                                                    
+                                                    return (
+                                                        <React.Fragment key={step}>
+                                                            <div className="w-10 flex-shrink-0">
+                                                                <span className={`text-xs font-medium ${
+                                                                    isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
+                                                                }`}>
+                                                                    {step}
+                                                                </span>
+                                                            </div>
+                                                            {index < 3 && <div className="flex-1" />}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Detailed Timeline */}
+                                        <div className="bg-gray-50 rounded-lg p-4">
+                                            <h5 className="font-semibold text-gray-900 mb-3">Order Timeline</h5>
+                                            <div className="space-y-3">
+                                                {/* Generate mock timeline events based on status */}
+                                                {order.status.toLowerCase() === 'delivered' && (
+                                                    <div className="flex items-start space-x-3">
+                                                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-sm font-medium text-gray-900">Package Delivered</span>
+                                                                <span className="text-xs text-gray-500">Today 18:29</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600">Package delivered! [Your Location]</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {(['shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Order Shipped</span>
+                                                                    <span className="text-xs text-gray-500">Yesterday 07:17</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Your order is on the way to delivery facility</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Departed from Distribution Center</span>
+                                                                    <span className="text-xs text-gray-500">2 days ago 01:18</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Package is being sorted and will soon head to the delivery facility</p>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                
+                                                {(['processing', 'packed', 'shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Order Processing</span>
+                                                                    <span className="text-xs text-gray-500">3 days ago 15:45</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Order will be handed over to printing facility soon</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Order Received</span>
+                                                                    <span className="text-xs text-gray-500">4 days ago 21:14</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Order received and payment confirmed</p>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        {/* Items Section */}
+                                        <div>
+                                            <h4 className="text-md font-semibold text-gray-900 mb-3">Order Items</h4>
+                                            <div className="space-y-3">
+                                                {order.items.map(item => (
+                                                    <div key={item._id} className="bg-gray-50 rounded-lg p-4">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h5 className="font-medium text-gray-900">{item.title}</h5>
+                                                            <span className="text-lg font-semibold text-orange-600">
+                                                                ${item.price}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {Object.entries(item.sizeQuantities).map(([size, quantity]) => (
+                                                                quantity > 0 && (
+                                                                    <span key={size} className="inline-flex items-center px-2 py-1 bg-white rounded-md text-sm text-gray-700 border">
+                                                                        {size}: {quantity}
+                                                                    </span>
+                                                                )
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Total */}
+                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-lg font-semibold text-gray-900">Total:</span>
+                                                    <span className="text-xl font-bold text-orange-600">
+                                                        ${order.items.reduce((total, item) => total + item.price, 0)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Shipping Address & Actions Section */}
+                                        <div className="space-y-4">
+                                            {/* Shipping Address Card */}
+                                            <div>
+                                                <h4 className="text-md font-semibold text-gray-900 mb-3">Shipping Address</h4>
+                                                {shippingAddresses[order.userId] ? (
+                                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                                                        <div className="flex items-start mb-3">
+                                                            <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                            <div className="flex-1">
+                                                                <h5 className="font-semibold text-gray-900 mb-1">
+                                                                    {shippingAddresses[order.userId].fullName}
+                                                                </h5>
+                                                                <p className="text-sm text-gray-700 leading-relaxed">
+                                                                    {shippingAddresses[order.userId].streetAddress}
+                                                                </p>
+                                                                <p className="text-sm text-gray-700">
+                                                                    {shippingAddresses[order.userId].city}, {shippingAddresses[order.userId].state} {shippingAddresses[order.userId].postalCode}
+                                                                </p>
+                                                                <div className="flex items-center mt-2 text-sm text-gray-600">
+                                                                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                    </svg>
+                                                                    {shippingAddresses[order.userId].phone}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                                        <p className="text-sm text-gray-500 text-center">No shipping address available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Admin Actions */}
+                                            {user?.type === "Admin" && (
+                                                <div>
+                                                    <h4 className="text-md font-semibold text-gray-900 mb-3">Admin Actions</h4>
+                                                    
+                                                    {/* Status Update */}
+                                                    <div className="mb-3">
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            Update Status
+                                                        </label>
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => handleChangeStatus(order._id, e.target.value)}
+                                                            className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                                                        >
+                                                            <option value="Pending">Pending</option>
+                                                            <option value="Processing">Processing</option>
+                                                            <option value="Packed">Packed</option>
+                                                            <option value="Shipped">Shipped</option>
+                                                            <option value="Delivered">Delivered</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {/* Download Buttons */}
+                                                    <div className="space-y-2">
+                                                        {order.items.map(item => (
+                                                            <button
+                                                                key={item._id}
+                                                                onClick={() => handleDownloadFile(item.fileId)}
+                                                                className="w-full flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200"
+                                                            >
+                                                                <FaDownload className="mr-2" />
+                                                                Download Design File
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

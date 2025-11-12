@@ -6,6 +6,7 @@ export const orderService = {
     items: any[];
     shippingAddress: any;
     paymentStatus: string;
+    status?: string;
     totalAmount: number;
   }) => {
     const response = await api.post('/orders', orderData);

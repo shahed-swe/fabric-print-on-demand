@@ -10,6 +10,11 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
+    // Validate input
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Please provide name, email, and password' });
+    }
+    
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -26,6 +31,7 @@ exports.register = async (req, res) => {
       token
     });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({ message: error.message });
   }
 };

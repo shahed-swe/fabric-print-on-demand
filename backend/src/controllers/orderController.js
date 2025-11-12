@@ -3,7 +3,7 @@ const User = require('../models/User'); // Add User model import
 const mongoose = require('mongoose');
 
 exports.createOrder = async (req, res) => {
-  const { userId, items, paymentStatus, totalAmount } = req.body;
+  const { userId, items, paymentStatus, totalAmount, status } = req.body;
 
   console.log(req.body)
 
@@ -12,11 +12,19 @@ exports.createOrder = async (req, res) => {
   }
 
   try {
+    // Determine order status based on payment status
+    let orderStatus = status || 'Pending';
+    
+    // If payment is completed, set status to Processing
+    if (paymentStatus === 'completed') {
+      orderStatus = status || 'Processing';
+    }
+    
     const order = await Order.create({
       userId,
       items,
       paymentStatus: paymentStatus || 'pending',
-      status: "processing",
+      status: orderStatus,
       totalAmount,
       createdAt: new Date(),
     });
