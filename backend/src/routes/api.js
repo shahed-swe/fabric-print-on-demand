@@ -23,6 +23,7 @@ router.delete('/cart/user/:userId', cartController.removeByUserId);
 router.get('/categories', categoryController.getCategories);
 router.post('/categories', protect, categoryController.createCategory);
 router.put('/categories/:id', protect, categoryController.updateCategory);
+router.delete('/categories/:id', protect, categoryController.deleteCategory);
 
 // Design routes
 router.post('/designs', designController.saveDesign);

@@ -1,23 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
-
-// Dummy categories data
-const dummyCategories = [
-  { id: 1, name: 'Floral', productsCount: 24, description: 'Floral pattern fabrics', slug: 'floral' },
-  { id: 2, name: 'Abstract', productsCount: 18, description: 'Abstract pattern designs', slug: 'abstract' },
-  { id: 3, name: 'Geometric', productsCount: 15, description: 'Geometric pattern fabrics', slug: 'geometric' },
-  { id: 4, name: 'Solid', productsCount: 32, description: 'Solid color fabrics', slug: 'solid' },
-  { id: 5, name: 'Vintage', productsCount: 9, description: 'Vintage style fabrics', slug: 'vintage' },
-  { id: 6, name: 'Modern', productsCount: 21, description: 'Modern design fabrics', slug: 'modern' },
-  { id: 7, name: 'Kids', productsCount: 17, description: 'Kid-friendly patterns', slug: 'kids' },
-];
+import axios from '../config/axios';
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState({ id: null, name: '', description: '', slug: '' });
+  const [currentCategory, setCurrentCategory] = useState({ _id: null, name: '', description: '', slug: '' });
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -25,17 +14,13 @@ export default function Categories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // In a real app:
-        // const response = await axios.get('/api/admin/categories');
-        // setCategories(response.data);
-        
-        // For demo:
-        setTimeout(() => {
-          setCategories(dummyCategories);
-          setLoading(false);
-        }, 500);
+        const response = await axios.get('/api/categories');
+        console.log('Categories fetched:', response.data);
+        setCategories(response.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching categories:', error);
+        console.error('Error response:', error.response?.data);
         setLoading(false);
       }
     };
@@ -50,7 +35,7 @@ export default function Categories() {
   };
   
   const handleAdd = () => {
-    setCurrentCategory({ id: null, name: '', description: '', slug: '' });
+    setCurrentCategory({ _id: null, name: '', description: '', slug: '' });
     setIsEditMode(false);
     setShowModal(true);
   };
@@ -62,14 +47,16 @@ export default function Categories() {
   
   const confirmDelete = async () => {
     try {
-      // In a real app:
-      // await axios.delete(`/api/admin/categories/${deleteId}`);
-      
-      // For demo:
-      setCategories(categories.filter(cat => cat.id !== deleteId));
+      const response = await axios.delete(`/api/categories/${deleteId}`);
+      console.log('Delete response:', response);
+      setCategories(categories.filter(cat => cat._id !== deleteId));
       setShowDeleteModal(false);
     } catch (error) {
       console.error('Error deleting category:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Delete ID:', deleteId);
+      alert('Error deleting category: ' + (error.response?.data?.message || error.message));
     }
   };
   
@@ -78,30 +65,24 @@ export default function Categories() {
     
     try {
       if (isEditMode) {
-        // In a real app:
-        // await axios.put(`/api/admin/categories/${currentCategory.id}`, currentCategory);
-        
-        // For demo:
-        setCategories(categories.map(cat => 
-          cat.id === currentCategory.id ? currentCategory : cat
+        console.log('Updating category:', currentCategory);
+        const response = await axios.put(`/api/categories/${currentCategory._id}`, currentCategory);
+        console.log('Update response:', response.data);
+        setCategories(categories.map(cat =>
+          cat._id === currentCategory._id ? response.data : cat
         ));
       } else {
-        // In a real app:
-        // const response = await axios.post('/api/admin/categories', currentCategory);
-        // const newCategory = response.data;
-        
-        // For demo:
-        const newCategory = {
-          ...currentCategory,
-          id: Math.max(...categories.map(c => c.id)) + 1,
-          productsCount: 0
-        };
-        setCategories([...categories, newCategory]);
+        console.log('Creating category:', currentCategory);
+        const response = await axios.post(`/api/categories`, currentCategory);
+        console.log('Create response:', response.data);
+        setCategories([...categories, response.data]);
       }
       
       setShowModal(false);
     } catch (error) {
       console.error('Error saving category:', error);
+      console.error('Error response:', error.response?.data);
+      alert('Error saving category: ' + (error.response?.data?.message || error.message));
     }
   };
   
@@ -138,18 +119,13 @@ export default function Categories() {
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {categories.map((category) => (
-                <li key={category.id}>
+                <li key={category._id}>
                   <div className="px-4 py-4 flex items-center sm:px-6">
                     <div className="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                       <div>
                         <h3 className="text-lg font-medium text-gray-800">{category.name}</h3>
                         <p className="mt-1 text-sm text-gray-600">{category.description}</p>
                         <p className="mt-1 text-xs text-gray-500">Slug: {category.slug}</p>
-                      </div>
-                      <div className="mt-4 sm:mt-0 flex items-center">
-                        <div className="bg-gray-100 px-2.5 py-1 rounded-full text-sm text-gray-800">
-                          {category.productsCount} {category.productsCount === 1 ? 'product' : 'products'}
-                        </div>
                       </div>
                     </div>
                     <div className="ml-5 flex-shrink-0 flex space-x-2">
@@ -160,7 +136,7 @@ export default function Categories() {
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => handleDelete(category._id)}
                         className="p-2 text-red-600 hover:text-red-900"
                       >
                         <TrashIcon className="h-5 w-5" />
