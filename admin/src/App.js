@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Orders from './pages/Orders';
+import OrderDetails from './pages/OrderDetails';
 import Customers from './pages/Customers';
 import ProductForm from './pages/ProductForm';
 import Categories from './pages/Categories';
@@ -72,7 +73,15 @@ function App() {
               </Layout>
             </ProtectedRoute>
           } />
-          
+          <Route path="/orders/:orderId" element={
+            <ProtectedRoute>
+              <Layout>
+                <OrderDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+
           <Route path="/customers" element={
             <ProtectedRoute>
               <Layout>
