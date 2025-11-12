@@ -1,73 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
-
-// Dummy orders data
-const dummyOrders = [
-  { 
-    id: 'ORD-1234', 
-    customer: 'John Doe', 
-    email: 'john@example.com',
-    total: 129.99, 
-    status: 'Delivered', 
-    date: '2023-10-15',
-    items: 3
-  },
-  { 
-    id: 'ORD-1235', 
-    customer: 'Jane Smith', 
-    email: 'jane@example.com',
-    total: 89.50, 
-    status: 'Processing', 
-    date: '2023-10-16',
-    items: 2
-  },
-  { 
-    id: 'ORD-1236', 
-    customer: 'Robert Johnson', 
-    email: 'robert@example.com',
-    total: 210.75, 
-    status: 'Shipped', 
-    date: '2023-10-16',
-    items: 1
-  },
-  { 
-    id: 'ORD-1237', 
-    customer: 'Emily Davis', 
-    email: 'emily@example.com',
-    total: 45.25, 
-    status: 'Processing', 
-    date: '2023-10-17',
-    items: 1
-  },
-  { 
-    id: 'ORD-1238', 
-    customer: 'Michael Brown', 
-    email: 'michael@example.com',
-    total: 178.30, 
-    status: 'Pending', 
-    date: '2023-10-17',
-    items: 4
-  },
-  { 
-    id: 'ORD-1239', 
-    customer: 'Sarah Wilson', 
-    email: 'sarah@example.com',
-    total: 67.80, 
-    status: 'Delivered', 
-    date: '2023-10-14',
-    items: 2
-  },
-  { 
-    id: 'ORD-1240', 
-    customer: 'David Miller', 
-    email: 'david@example.com',
-    total: 152.40, 
-    status: 'Cancelled', 
-    date: '2023-10-13',
-    items: 3
-  }
-];
+import axios from '../config/axios';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -78,17 +11,13 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // In a real app:
-        // const response = await axios.get('/api/admin/orders');
-        // setOrders(response.data);
-        
-        // For demo:
-        setTimeout(() => {
-          setOrders(dummyOrders);
-          setLoading(false);
-        }, 600);
+        const response = await axios.get('/api/orders');
+        console.log('Orders fetched:', response.data);
+        setOrders(response.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching orders:', error);
+        console.error('Error response:', error.response?.data);
         setLoading(false);
       }
     };
@@ -117,11 +46,15 @@ export default function Orders() {
   
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    const matchesSearch = searchTerm === '' || 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const orderId = order._id?.toString() || '';
+    const customerName = order.user?.name || 'Unknown';
+    const customerEmail = order.user?.email || '';
+
+    const matchesSearch = searchTerm === '' ||
+      orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+
     return matchesStatus && matchesSearch;
   });
 
@@ -171,12 +104,12 @@ export default function Orders() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {filteredOrders.map((order) => (
-              <li key={order.id}>
-                <a href={`#order-${order.id}`} className="block hover:bg-gray-50">
+              <li key={order._id}>
+                <a href={`#order-${order._id}`} className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-sm font-medium text-primary-600 truncate">{order.id}</p>
+                        <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().substring(0, 8) || 'N/A'}</p>
                         <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>
@@ -188,15 +121,15 @@ export default function Orders() {
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
                         <p className="flex items-center text-sm text-gray-500">
-                          {order.customer}
+                          {order.user?.name || 'Unknown'}
                         </p>
                         <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                          {order.email}
+                          {order.user?.email || 'N/A'}
                         </p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                         <p>
-                          {order.date} · ${order.total.toFixed(2)} · {order.items} item{order.items > 1 ? 's' : ''}
+                          {new Date(order.createdAt).toLocaleDateString()} · ${order.totalAmount?.toFixed(2) || '0.00'} · {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>
