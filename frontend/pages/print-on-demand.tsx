@@ -446,6 +446,90 @@ const Index = () => {
     // Store current view
     const currentView = back;
     
+    // ===== COLLECT ADDED ELEMENTS FROM LOCALSTORAGE =====
+    const addedElements = {
+      front: {
+        texts: [] as any[],
+        images: [] as any[]
+      },
+      back: {
+        texts: [] as any[],
+        images: [] as any[]
+      }
+    };
+    
+    // Get front canvas data from localStorage
+    const savedFrontData = localStorage.getItem("front");
+    if (savedFrontData) {
+      try {
+        const frontCanvasData = JSON.parse(savedFrontData);
+        if (frontCanvasData.objects) {
+          frontCanvasData.objects.forEach((obj: any) => {
+            // Collect text elements
+            if (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') {
+              addedElements.front.texts.push({
+                text: obj.text,
+                fontSize: obj.fontSize,
+                fontFamily: obj.fontFamily,
+                color: obj.fill,
+              });
+            }
+            // Collect image elements
+            if (obj.type === 'image') {
+              addedElements.front.images.push({
+                src: obj.src,
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing front canvas data:", error);
+      }
+    }
+    
+    // Get back canvas data from localStorage
+    const savedBackData = localStorage.getItem("back");
+    if (savedBackData) {
+      try {
+        const backCanvasData = JSON.parse(savedBackData);
+        if (backCanvasData.objects) {
+          backCanvasData.objects.forEach((obj: any) => {
+            // Collect text elements
+            if (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') {
+              addedElements.back.texts.push({
+                text: obj.text,
+                fontSize: obj.fontSize,
+                fontFamily: obj.fontFamily,
+                color: obj.fill,
+              });
+            }
+            // Collect image elements
+            if (obj.type === 'image') {
+              addedElements.back.images.push({
+                src: obj.src,
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing back canvas data:", error);
+      }
+    }
+    
+    // Console log the collected elements
+    console.log('========== ADDED ELEMENTS ==========');
+    console.log('Front Texts:', addedElements.front.texts);
+    console.log('Front Images:', addedElements.front.images);
+    console.log('Back Texts:', addedElements.back.texts);
+    console.log('Back Images:', addedElements.back.images);
+    console.log('Total Elements:', {
+      frontTexts: addedElements.front.texts.length,
+      frontImages: addedElements.front.images.length,
+      backTexts: addedElements.back.texts.length,
+      backImages: addedElements.back.images.length,
+    });
+    console.log('====================================');
+    
     // Function to get current view's canvas elements
     const getCurrentCanvasElements = () => {
       const canvasContainers = document.querySelectorAll(".canvas-container");

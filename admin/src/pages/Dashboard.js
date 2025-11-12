@@ -126,7 +126,7 @@ export default function Dashboard() {
         <div className="stat-card">
           <div>
             <p className="text-sm font-medium text-gray-600 truncate">Total Revenue</p>
-            <p className="mt-1 text-3xl font-semibold text-gray-900">${stats.revenue.toLocaleString()}</p>
+            <p className="mt-1 text-3xl font-semibold text-gray-900">AUD ${stats.revenue.toLocaleString()}</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-800">
             <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -234,7 +234,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                    ${order.total.toFixed(2)}
+                    AUD ${order.total.toFixed(2)}
                   </td>
                 </tr>
               ))}

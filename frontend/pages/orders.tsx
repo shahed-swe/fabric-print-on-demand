@@ -383,7 +383,7 @@ const OrdersPage = () => {
                                                         <div className="flex justify-between items-start mb-2">
                                                             <h5 className="font-medium text-gray-900">{item.title}</h5>
                                                             <span className="text-lg font-semibold text-orange-600">
-                                                                ${item.price}
+                                                                AUD ${item.price.toFixed(2)}
                                                             </span>
                                                         </div>
                                                         <div className="flex flex-wrap gap-2">
@@ -404,7 +404,7 @@ const OrdersPage = () => {
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-lg font-semibold text-gray-900">Total:</span>
                                                     <span className="text-xl font-bold text-orange-600">
-                                                        ${order.items.reduce((total, item) => total + item.price, 0)}
+                                                        AUD ${order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>
