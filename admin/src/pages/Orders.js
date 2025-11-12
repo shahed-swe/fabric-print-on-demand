@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 
 export default function Orders() {
@@ -7,7 +8,8 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -104,37 +106,35 @@ export default function Orders() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {filteredOrders.map((order) => (
-              <li key={order._id}>
-                <a href={`#order-${order._id}`} className="block hover:bg-gray-50">
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().substring(0, 8) || 'N/A'}</p>
-                        <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                          {order.status}
-                        </span>
-                      </div>
-                      <div className="ml-2 flex-shrink-0 flex">
-                        <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-                      </div>
+              <li key={order._id} onClick={() => navigate(`/orders/${order._id}`)} className="hover:bg-gray-50 cursor-pointer transition">
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().substring(0, 8) || 'N/A'}</p>
+                      <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                        {order.status}
+                      </span>
                     </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          {order.user?.name || 'Unknown'}
-                        </p>
-                        <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                          {order.user?.email || 'N/A'}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>
-                          {new Date(order.createdAt).toLocaleDateString()} · ${order.totalAmount?.toFixed(2) || '0.00'} · {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
-                        </p>
-                      </div>
+                    <div className="ml-2 flex-shrink-0 flex">
+                      <ChevronRightIcon className="h-5 w-5 text-gray-400" />
                     </div>
                   </div>
-                </a>
+                  <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="sm:flex">
+                      <p className="flex items-center text-sm text-gray-500">
+                        {order.user?.name || 'Unknown'}
+                      </p>
+                      <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                        {order.user?.email || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                      <p>
+                        {new Date(order.createdAt).toLocaleDateString()} · ${order.totalAmount?.toFixed(2) || '0.00'} · {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
