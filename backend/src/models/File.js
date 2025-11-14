@@ -19,6 +19,10 @@ const fileSchema = new mongoose.Schema({
   mimetype: {
     type: String
   },
+  bucket: {
+    type: String,
+    default: 'fabric-designs'
+  },
   uploadedAt: {
     type: Date,
     default: Date.now

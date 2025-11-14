@@ -4,6 +4,7 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
+const { initializeBucket } = require('./config/minio');
 require('dotenv').config();
 
 const app = express();
@@ -32,8 +33,13 @@ app.use('/api/admin', adminRoutes);
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => console.log('✓ Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
+
+// Initialize MinIO bucket
+initializeBucket()
+  .then(() => console.log('✓ MinIO initialized'))
+  .catch((err) => console.error('MinIO initialization error:', err));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

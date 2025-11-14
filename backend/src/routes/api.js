@@ -32,8 +32,9 @@ router.get('/designs', designController.getDesigns);
 
 // File routes
 router.post('/upload', fileController.uploadFile);
-router.get('/files/:fileid', fileController.getFile); // Changed from getFiles to getFile
+router.get('/files/:fileid', fileController.getFile);
 router.get('/files', fileController.getFiles);
+router.delete('/files/:fileid', fileController.deleteFile);
 
 // Order routes
 router.post('/orders', orderController.createOrder);
