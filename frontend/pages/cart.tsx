@@ -56,14 +56,14 @@ const Cart = () => {
     }
   };
 
-  // Fixed pricing: 45 AUD per design
-  const DESIGN_PRICE = 45;
+  // Fixed pricing: $30 per design
+  const DESIGN_PRICE = 30;
 
   const calculateItemTotal = (item: { sizeQuantities: Record<string, number>; title: string }) => {
     const totalQuantity = Object.values(item.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0);
     if (totalQuantity === 0) return 0;
 
-    // 45 AUD per item
+    // $30 per item
     return DESIGN_PRICE * totalQuantity;
   };
 
@@ -196,7 +196,7 @@ const Cart = () => {
                 <div>
                   <div className='flex'>
                     <h2 className="text-xl font-semibold mb-2">{item.title}:</h2>
-                    <p className="text-gray-700 ml-3 mt-1 font-semibold">AUD ${item.price.toFixed(2)}</p>
+                    <p className="text-gray-700 ml-3 mt-1 font-semibold">${item.price.toFixed(2)}</p>
                   </div>
 
                   <div className="text-gray-700">
@@ -243,7 +243,7 @@ const Cart = () => {
                   <div className="pt-3">
                     <div className="flex justify-between items-center">
                       <div className="text-xl font-semibold">
-                        Total: AUD ${calculateTotal().toFixed(2)}
+                        Total: ${calculateTotal().toFixed(2)}
                       </div>
                       <button
                         onClick={handleCheckout}

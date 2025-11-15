@@ -29,7 +29,7 @@ export default async function handler(
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
-      currency: 'aud',
+      currency: 'usd',
       payment_method_types: ['card'],
     });
 

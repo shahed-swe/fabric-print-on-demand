@@ -26,15 +26,15 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   // Calculate total quantity
   const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + qty, 0);
 
-  // Fixed pricing: 45 AUD per design + 10 AUD shipping
-  const DESIGN_PRICE = 45;
-  const SHIPPING_COST = 10;
+  // Fixed pricing: $30 per design + $7 shipping
+  const DESIGN_PRICE = 30;
+  const SHIPPING_COST = 7;
 
   // Calculate total price
   const calculateTotalPrice = () => {
     if (totalQuantity === 0) return 0;
     
-    // 45 AUD per item + 10 AUD shipping (one-time)
+    // $30 per item + $7 shipping (one-time)
     const itemsTotal = DESIGN_PRICE * totalQuantity;
     return itemsTotal + SHIPPING_COST;
   };
@@ -53,7 +53,7 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
       <div className="space-y-3">
         <div className="flex justify-between text-gray-600">
           <span>Price per Design:</span>
-          <span>AUD ${DESIGN_PRICE.toFixed(2)}</span>
+          <span>${DESIGN_PRICE.toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
@@ -63,18 +63,18 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
 
         <div className="flex justify-between text-gray-600">
           <span>Subtotal:</span>
-          <span>AUD ${(DESIGN_PRICE * totalQuantity).toFixed(2)}</span>
+          <span>${(DESIGN_PRICE * totalQuantity).toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
           <span>Shipping Cost:</span>
-          <span>AUD ${SHIPPING_COST.toFixed(2)}</span>
+          <span>${SHIPPING_COST.toFixed(2)}</span>
         </div>
 
         <div className="border-t pt-3 mt-3">
           <div className="flex justify-between font-bold text-lg text-orange-500">
             <span>Total Price:</span>
-            <span>AUD ${totalPrice.toFixed(2)}</span>
+            <span>${totalPrice.toFixed(2)}</span>
           </div>
         </div>
       </div>
