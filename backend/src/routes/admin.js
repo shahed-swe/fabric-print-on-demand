@@ -9,6 +9,8 @@ const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const shippingController = require('../controllers/shippingController');
 const productController = require('../controllers/productController');
+const customerController = require('../controllers/customerController');
+const dashboardController = require('../controllers/dashboardController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -34,5 +36,16 @@ router.route('/categories/:id')
 // Order routes (admin)
 router.get('/orders', protect, orderController.getOrders);
 router.put('/orders/:id', protect, orderController.updateOrderStatus);
+
+// Customer routes (admin)
+router.get('/customers', protect, customerController.getCustomers);
+router.get('/customers/:id', protect, customerController.getCustomer);
+router.put('/customers/:id', protect, customerController.updateCustomer);
+router.put('/customers/:id/password', protect, customerController.changeCustomerPassword);
+
+// Dashboard routes (admin)
+router.get('/dashboard/stats', protect, dashboardController.getDashboardStats);
+router.get('/dashboard/sales', protect, dashboardController.getSalesData);
+router.get('/dashboard/categories', protect, dashboardController.getCategoryData);
 
 module.exports = router;

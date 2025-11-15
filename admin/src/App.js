@@ -12,7 +12,7 @@ import OrderDetails from './pages/OrderDetails';
 import Customers from './pages/Customers';
 import ProductForm from './pages/ProductForm';
 import Categories from './pages/Categories';
-import Designs from './pages/Designs';
+// import Designs from './pages/Designs';
 import StockManagement from './pages/StockManagement';
 
 // Layout
@@ -107,13 +107,13 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/designs" element={
+          {/* <Route path="/designs" element={
             <ProtectedRoute>
               <Layout>
                 <Designs />
               </Layout>
             </ProtectedRoute>
-          } />
+          } /> */}
         </Routes>
       </Router>
     </AuthProvider>

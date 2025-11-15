@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
-import axios from 'axios';
+import axios from '../config/axios';
 
 // Register the chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
@@ -10,8 +10,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState({
     revenue: 0,
     orders: 0,
+    deliveredOrders: 0,
     customers: 0,
-    pendingShipments: 0
+    pendingShipments: 0,
+    ordersByStatus: {}
   });
   const [salesData, setSalesData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
@@ -19,64 +21,53 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real application, these would be API calls to your backend
-    const fetchDashboardData = async () => {
-      try {
-        // Simulating API calls with setTimeout
-        setTimeout(() => {
-          setStats({
-            revenue: 15890.75,
-            orders: 124,
-            customers: 89,
-            pendingShipments: 12
-          });
-          
-          setSalesData([
-            { name: 'Jan', sales: 4000 },
-            { name: 'Feb', sales: 3000 },
-            { name: 'Mar', sales: 5000 },
-            { name: 'Apr', sales: 2780 },
-            { name: 'May', sales: 1890 },
-            { name: 'Jun', sales: 2390 },
-            { name: 'Jul', sales: 3490 },
-          ]);
-          
-          setCategoryData([
-            { name: 'Cotton', value: 400 },
-            { name: 'Silk', value: 300 },
-            { name: 'Linen', value: 300 },
-            { name: 'Polyester', value: 200 },
-            { name: 'Other', value: 100 },
-          ]);
-          
-          setRecentOrders([
-            { id: 'ORD-1234', customer: 'John Doe', total: 129.99, status: 'Delivered', date: '2023-10-15' },
-            { id: 'ORD-1235', customer: 'Jane Smith', total: 89.50, status: 'Processing', date: '2023-10-16' },
-            { id: 'ORD-1236', customer: 'Robert Johnson', total: 210.75, status: 'Shipped', date: '2023-10-16' },
-            { id: 'ORD-1237', customer: 'Emily Davis', total: 45.25, status: 'Processing', date: '2023-10-17' },
-            { id: 'ORD-1238', customer: 'Michael Brown', total: 178.30, status: 'Pending', date: '2023-10-17' },
-          ]);
-          
-          setLoading(false);
-        }, 600);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-        setLoading(false);
-      }
-    };
-    
     fetchDashboardData();
   }, []);
 
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch dashboard stats
+      const statsResponse = await axios.get('/admin/dashboard/stats');
+      setStats({
+        revenue: statsResponse.data.revenue,
+        orders: statsResponse.data.orders,
+        deliveredOrders: statsResponse.data.deliveredOrders || 0,
+        customers: statsResponse.data.customers,
+        pendingShipments: statsResponse.data.pendingShipments,
+        ordersByStatus: statsResponse.data.ordersByStatus || {}
+      });
+      setRecentOrders(statsResponse.data.recentOrders || []);
+      
+      // Fetch sales data
+      const salesResponse = await axios.get('/admin/dashboard/sales?period=monthly');
+      setSalesData(salesResponse.data || []);
+      
+      // Fetch category data
+      const categoryResponse = await axios.get('/admin/dashboard/categories');
+      setCategoryData(categoryResponse.data || []);
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'Delivered':
+    const statusLower = status?.toLowerCase();
+    switch(statusLower) {
+      case 'delivered':
         return 'bg-green-100 text-green-800';
-      case 'Shipped':
+      case 'shipped':
         return 'bg-blue-100 text-blue-800';
-      case 'Processing':
+      case 'processing':
+      case 'packed':
         return 'bg-yellow-100 text-yellow-800';
-      case 'Pending':
+      case 'pending':
+        return 'bg-orange-100 text-orange-800';
+      case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -126,7 +117,8 @@ export default function Dashboard() {
         <div className="stat-card">
           <div>
             <p className="text-sm font-medium text-gray-600 truncate">Total Revenue</p>
-            <p className="mt-1 text-3xl font-semibold text-gray-900">${stats.revenue.toLocaleString()}</p>
+            <p className="mt-1 text-3xl font-semibold text-gray-900">${parseFloat(stats.revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            <p className="text-xs text-gray-500 mt-1">From delivered orders</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-800">
             <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,6 +131,9 @@ export default function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-600 truncate">Total Orders</p>
             <p className="mt-1 text-3xl font-semibold text-gray-900">{stats.orders}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.deliveredOrders || 0} delivered
+            </p>
           </div>
           <div className="ml-4 flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-800">
             <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -226,7 +221,7 @@ export default function Dashboard() {
                     {order.customer}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.date}
+                    {new Date(order.date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
@@ -234,7 +229,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                    ${order.total.toFixed(2)}
+                    ${order.total}
                   </td>
                 </tr>
               ))}

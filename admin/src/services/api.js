@@ -18,7 +18,7 @@ export const orderApi = {
 
 // Customers API
 export const customerApi = {
-  getAll: () => axiosInstance.get('/admin/customers'),
+  getAll: (params) => axiosInstance.get('/admin/customers', { params }),
   getById: (id) => axiosInstance.get(`/admin/customers/${id}`),
 };
 
