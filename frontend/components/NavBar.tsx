@@ -10,10 +10,8 @@ const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const [cartItems, setCartItems] = useState(0);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false); // New state for category dropdown
   const [selectedCountry, setSelectedCountry] = useState(countries[13]); // Default to USA
   const countryDropdownRef = useRef<HTMLDivElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -38,12 +36,6 @@ const NavBar = () => {
         !countryDropdownRef.current.contains(event.target as Node)
       ) {
         setShowCountryDropdown(false);
-      }
-      if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowCategoryDropdown(false);
       }
     };
 
@@ -128,31 +120,12 @@ const NavBar = () => {
             )}
           </div> */}
 
-          {/* Category Selector */}
-          <div className="relative" ref={categoryDropdownRef}>
-            <button
-              className="flex items-center space-x-1 text-gray-600 hover:text-orange-500 transition-colors"
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-            >
-              <span>Categories</span>
-              <FaChevronDown className="text-xs" />
-            </button>
-
-            {showCategoryDropdown && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                <Link href="/categories/islamic">
-                  <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Islamic
-                  </a>
-                </Link>
-                <Link href="/categories/sports">
-                  <a className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Sports
-                  </a>
-                </Link>
-              </div>
-            )}
-          </div>
+          {/* Products Link */}
+          <Link href="/products">
+            <a className="text-gray-600 hover:text-orange-500 transition-colors">
+              Products
+            </a>
+          </Link>
           <Link href="/print-on-demand">
                 <a className="text-gray-600 hover:text-orange-500 transition-colors">
                   Custom Print

@@ -14,7 +14,7 @@ export default function Categories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('/api/categories');
+        const response = await axios.get('/categories');
         console.log('Categories fetched:', response.data);
         setCategories(response.data);
         setLoading(false);
@@ -47,7 +47,7 @@ export default function Categories() {
   
   const confirmDelete = async () => {
     try {
-      const response = await axios.delete(`/api/categories/${deleteId}`);
+      const response = await axios.delete(`/categories/${deleteId}`);
       console.log('Delete response:', response);
       setCategories(categories.filter(cat => cat._id !== deleteId));
       setShowDeleteModal(false);
@@ -66,14 +66,14 @@ export default function Categories() {
     try {
       if (isEditMode) {
         console.log('Updating category:', currentCategory);
-        const response = await axios.put(`/api/categories/${currentCategory._id}`, currentCategory);
+        const response = await axios.put(`/categories/${currentCategory._id}`, currentCategory);
         console.log('Update response:', response.data);
         setCategories(categories.map(cat =>
           cat._id === currentCategory._id ? response.data : cat
         ));
       } else {
         console.log('Creating category:', currentCategory);
-        const response = await axios.post(`/api/categories`, currentCategory);
+        const response = await axios.post(`/categories`, currentCategory);
         console.log('Create response:', response.data);
         setCategories([...categories, response.data]);
       }

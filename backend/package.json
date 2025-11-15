@@ -5,7 +5,10 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "seed:categories": "node src/scripts/categorySeeder.js",
+    "seed:products": "node src/scripts/productSeeder.js",
+    "seed:all": "node src/scripts/seedAll.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

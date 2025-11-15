@@ -8,6 +8,7 @@ const fileController = require('../controllers/fileController');
 const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const shippingController = require('../controllers/shippingController');
+const productController = require('../controllers/productController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -25,6 +26,12 @@ router.post('/categories', protect, categoryController.createCategory);
 router.route('/categories/:id')
   .put(protect, categoryController.updateCategory)
   .delete(categoryController.deleteCategory);
+
+// Product routes (public - for customers)
+router.get('/products', productController.getProducts);
+router.get('/products/featured', productController.getFeaturedProducts);
+router.get('/products/category/:categoryId', productController.getProductsByCategory);
+router.get('/products/:id', productController.getProduct);
 
 // Design routes
 router.post('/designs', designController.saveDesign);

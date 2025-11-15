@@ -1,61 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
-
-// For demo purposes, using dummy data
-const dummyProducts = [
-  {
-    id: 1,
-    name: 'Floral Print Fabric',
-    price: 24.99,
-    material: 'Cotton',
-    image: 'https://images.unsplash.com/photo-1590422405310-11641013a0dd?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    stock: 45,
-    category: 'Floral',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Abstract Pattern Textile',
-    price: 19.99,
-    material: 'Polyester',
-    image: 'https://images.unsplash.com/photo-1528459061998-56fd57ad86e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    stock: 32,
-    category: 'Abstract',
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Premium Cotton Blend',
-    price: 29.99,
-    material: 'Cotton',
-    image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    stock: 18,
-    category: 'Solid',
-    status: 'active',
-  },
-  {
-    id: 4,
-    name: 'Geometric Design Fabric',
-    price: 34.99,
-    material: 'Polyester',
-    image: 'https://images.unsplash.com/photo-1579493933704-420751d7b88f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    stock: 27,
-    category: 'Geometric',
-    status: 'active',
-  },
-  {
-    id: 5,
-    name: 'Vintage Lace Material',
-    price: 27.50,
-    material: 'Cotton',
-    image: 'https://images.unsplash.com/photo-1573495627361-d9b87960b12d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-    stock: 12,
-    category: 'Vintage',
-    status: 'inactive',
-  },
-];
+import { PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import axios from '../config/axios';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -69,28 +15,51 @@ export default function Products() {
     type: 'success', // 'success', 'error', 'warning'
   });
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [limit] = useState(20);
+  
+  // Filter states
+  const [sortBy, setSortBy] = useState('newest');
+  const [statusFilter, setStatusFilter] = useState('');
+  
   const navigate = useNavigate();
   
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        // In a real app, you would fetch from your API
-        // const response = await axios.get('/api/admin/products');
-        // setProducts(response.data);
-        
-        // For demo purposes:
-        setTimeout(() => {
-          setProducts(dummyProducts);
-          setLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setLoading(false);
-      }
-    };
-    
     fetchProducts();
-  }, []);
+  }, [currentPage, searchTerm, sortBy, statusFilter]);
+  
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        limit: limit,
+        sortBy: sortBy,
+      };
+      
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+      
+      const response = await axios.get('/admin/products', { params });
+      setProducts(response.data.products || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotalProducts(response.data.total || 0);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
   
   const handleEdit = (id) => {
     navigate(`/products/edit/${id}`);
@@ -103,20 +72,20 @@ export default function Products() {
   
   const confirmDelete = async () => {
     try {
-      // In a real app:
-      // await axios.delete(`/api/admin/products/${productToDelete}`);
+      await axios.delete(`/admin/products/${productToDelete}`);
       
-      // For demo:
-      setProducts(products.filter(product => product.id !== productToDelete));
       setNotification({
         message: 'Product deleted successfully',
         type: 'success',
       });
       setShowNotification(true);
+      
+      // Refetch products after deletion
+      fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
       setNotification({
-        message: 'Failed to delete product',
+        message: error.response?.data?.message || 'Failed to delete product',
         type: 'error',
       });
       setShowNotification(true);
@@ -130,19 +99,11 @@ export default function Products() {
     setDeleteDialogOpen(false);
     setProductToDelete(null);
   };
-  
-  const filteredProducts = searchTerm 
-    ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : products;
 
   const getStatusBadgeClass = (status) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800'
-      : 'bg-gray-100 text-gray-800';
+    if (status === 'active') return 'bg-green-100 text-green-800';
+    if (status === 'inactive') return 'bg-gray-100 text-gray-800';
+    return 'bg-yellow-100 text-yellow-800'; // draft
   };
 
   return (
@@ -150,7 +111,12 @@ export default function Products() {
       <div className="py-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Products</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Showing {products.length} of {totalProducts} products
+            </p>
+          </div>
           <button
             onClick={() => navigate('/products/new')}
             className="mt-3 md:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -160,19 +126,94 @@ export default function Products() {
           </button>
         </div>
 
-        {/* Search field */}
-        <div className="mb-6">
-          <div className="relative rounded-md shadow-sm">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+        {/* Filters and Search */}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Search field */}
+          <div className="md:col-span-2">
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              </div>
+              <input
+                type="text"
+                className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
+                placeholder="Search products by name, SKU, or tags"
+                value={searchTerm}
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
             </div>
-            <input
-              type="text"
-              className="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-              placeholder="Search products by name, material, or category"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
+          </div>
+
+          {/* Sort By */}
+          <div>
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="name-asc">Name: A-Z</option>
+              <option value="name-desc">Name: Z-A</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="md:col-span-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setStatusFilter('');
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1 rounded-md text-sm ${
+                  statusFilter === '' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => {
+                  setStatusFilter('active');
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1 rounded-md text-sm ${
+                  statusFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => {
+                  setStatusFilter('draft');
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1 rounded-md text-sm ${
+                  statusFilter === 'draft' ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Draft
+              </button>
+              <button
+                onClick={() => {
+                  setStatusFilter('inactive');
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1 rounded-md text-sm ${
+                  statusFilter === 'inactive' ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Inactive
+              </button>
+            </div>
           </div>
         </div>
         
@@ -180,55 +221,85 @@ export default function Products() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-6 text-center">
-            <p className="text-gray-500">No products found. Try adjusting your search or add a new product.</p>
+            <p className="text-gray-500">No products found. Try adjusting your filters or add a new product.</p>
           </div>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {filteredProducts.map((product) => (
-                <li key={product.id}>
+          <>
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <ul className="divide-y divide-gray-200">
+                {products.map((product) => {
+                const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
+                const totalStock = product.sizes?.reduce((sum, size) => sum + size.stockQuantity, 0) || 0;
+                
+                return (
+                <li key={product._id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12">
-                        <img className="h-12 w-12 rounded-md object-cover" src={product.image} alt={product.name} />
+                      <div className="flex-shrink-0 h-16 w-16">
+                        <img 
+                          className="h-16 w-16 rounded-md object-cover" 
+                          src={primaryImage?.url || 'https://via.placeholder.com/150'} 
+                          alt={product.name} 
+                        />
                       </div>
                       <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-medium text-primary-600 truncate">{product.name}</p>
-                            <div className="flex mt-1">
-                              <span className="text-sm text-gray-500 mr-4">{product.material}</span>
-                              <span className="text-sm text-gray-500">{product.category}</span>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-primary-600 truncate">{product.name}</p>
+                              {product.featured && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                  ⭐ Featured
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex mt-1 gap-3">
+                              {product.sku && (
+                                <span className="text-xs text-gray-400">SKU: {product.sku}</span>
+                              )}
+                              <span className="text-sm text-gray-500">{product.material}</span>
+                              <span className="text-sm text-gray-500">{product.category?.name || product.category}</span>
+                              <span className="text-xs text-gray-400">{product.subcategory}</span>
                             </div>
                           </div>
                           <div>
                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(product.status)}`}>
-                              {product.status === 'active' ? 'Active' : 'Inactive'}
+                              {product.status === 'active' ? 'Active' : product.status === 'inactive' ? 'Inactive' : 'Draft'}
                             </span>
                           </div>
                         </div>
                         <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-800">
+                          <div className="sm:flex sm:gap-6">
+                            <p className="flex items-center text-sm text-gray-800 font-semibold">
                               ${product.price.toFixed(2)}
                             </p>
+                            {product.sizes && product.sizes.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500">Sizes:</span>
+                                {product.sizes.map((size, idx) => (
+                                  <span key={idx} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                                    {size.size}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             <p className={`mt-2 flex items-center text-sm ${
-                              product.stock < 20 ? 'text-red-600 font-bold' : 'text-gray-500'
-                            } sm:mt-0 sm:ml-6`}>
-                              Stock: {product.stock}
+                              totalStock < 20 ? 'text-red-600 font-bold' : 'text-gray-500'
+                            } sm:mt-0`}>
+                              Total Stock: {totalStock}
                             </p>
                           </div>
                           <div className="mt-2 flex items-center text-sm sm:mt-0">
                             <button
-                              onClick={() => handleEdit(product.id)}
+                              onClick={() => handleEdit(product._id)}
                               className="text-primary-600 hover:text-primary-900 mr-4"
                             >
                               <PencilIcon className="h-5 w-5" />
                             </button>
                             <button
-                              onClick={() => handleDelete(product.id)}
+                              onClick={() => handleDelete(product._id)}
                               className="text-red-600 hover:text-red-900"
                             >
                               <TrashIcon className="h-5 w-5" />
@@ -239,9 +310,97 @@ export default function Products() {
                     </div>
                   </div>
                 </li>
-              ))}
+              )})}
             </ul>
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-md">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                    currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                    currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing page <span className="font-medium">{currentPage}</span> of{' '}
+                    <span className="font-medium">{totalPages}</span> ({totalProducts} total products)
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 text-sm font-medium ${
+                        currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="sr-only">Previous</span>
+                      <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    
+                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === pageNum
+                              ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 text-sm font-medium ${
+                        currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="sr-only">Next</span>
+                      <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 

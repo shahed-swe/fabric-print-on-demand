@@ -14,7 +14,7 @@ export default function OrderDetails() {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       try {
-        const response = await axios.get(`/api/orders`);
+        const response = await axios.get(`/orders`);
         const foundOrder = response.data.find(o => o._id === orderId);
         if (foundOrder) {
           setOrder(foundOrder);
@@ -35,7 +35,7 @@ export default function OrderDetails() {
 
     try {
       setUpdating(true);
-      await axios.put(`/api/orders/${orderId}`, { status: newStatus });
+      await axios.put(`/orders/${orderId}`, { status: newStatus });
       setOrder({ ...order, status: newStatus });
       alert('Order status updated successfully');
     } catch (error) {

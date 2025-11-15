@@ -13,6 +13,7 @@ import Customers from './pages/Customers';
 import ProductForm from './pages/ProductForm';
 import Categories from './pages/Categories';
 import Designs from './pages/Designs';
+import StockManagement from './pages/StockManagement';
 
 // Layout
 import Layout from './components/Layout';
@@ -62,6 +63,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <ProductForm />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/stock-management" element={
+            <ProtectedRoute>
+              <Layout>
+                <StockManagement />
               </Layout>
             </ProtectedRoute>
           } />

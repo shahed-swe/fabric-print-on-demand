@@ -12,12 +12,14 @@ import {
   XMarkIcon,
   ArrowLeftOnRectangleIcon,
   UserCircleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
-  { name: 'Products', href: '/products', icon: ShoppingBagIcon },
+  { name: 'Inventory', href: '/products', icon: ShoppingBagIcon },
+  { name: 'Stock Management', href: '/stock-management', icon: CubeIcon },
   { name: 'Orders', href: '/orders', icon: ShoppingCartIcon },
   { name: 'Customers', href: '/customers', icon: UsersIcon },
   { name: 'Categories', href: '/categories', icon: TagIcon },

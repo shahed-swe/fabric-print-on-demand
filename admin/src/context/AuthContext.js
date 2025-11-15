@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const validateToken = async () => {
     try {
-      const response = await axios.get('/api/admin/validate-token');
+      const response = await axios.get('/admin/validate-token');
       setUser(response.data);
     } catch (error) {
       console.error('Token validation failed:', error);
@@ -32,8 +32,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/api/admin/auth/login', { email, password });
-      const { token } = response.data;
+      const response = await axios.post('/admin/auth/login', { email, password });
+      const { token, user } = response.data;
       
       // Store token in localStorage
       localStorage.setItem('adminToken', token);
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       // Fetch user data with the token to ensure we have the latest data
-      const userResponse = await axios.get('/api/admin/validate-token');
+      const userResponse = await axios.get('/admin/validate-token');
       const userData = userResponse.data;
       
       // Store user data

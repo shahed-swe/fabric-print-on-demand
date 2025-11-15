@@ -17,7 +17,7 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('/api/orders');
+        const response = await axios.get('/orders');
         console.log('Orders fetched:', response.data);
         setOrders(response.data);
         setLoading(false);
