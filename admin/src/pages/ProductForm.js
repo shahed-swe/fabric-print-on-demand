@@ -97,6 +97,8 @@ export default function ProductForm() {
   const [loading, setLoading] = useState(isEditMode);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [categories, setCategories] = useState([]);
 
@@ -367,11 +369,60 @@ export default function ProductForm() {
     e.preventDefault();
     setSaving(true);
     setError('');
+    setUploadProgress(0);
 
     try {
+      // Upload images to MinIO first
+      setUploadingImages(true);
+      const uploadedImages = [];
+      const totalImages = formData.images.filter(img => img.file).length;
+      let uploadedCount = 0;
+      
+      for (let i = 0; i < formData.images.length; i++) {
+        const img = formData.images[i];
+        
+        // If image has a file property, it needs to be uploaded
+        if (img.file) {
+          try {
+            const formDataUpload = new FormData();
+            formDataUpload.append('file', img.file);
+            
+            const uploadResponse = await axios.post('/upload', formDataUpload, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            });
+            
+            uploadedImages.push({
+              url: uploadResponse.data.url,
+              alt: img.alt || img.file.name,
+              isPrimary: img.isPrimary,
+              sortOrder: img.sortOrder || i
+            });
+            
+            uploadedCount++;
+            setUploadProgress(Math.round((uploadedCount / totalImages) * 100));
+          } catch (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            throw new Error(`Failed to upload image: ${img.alt || 'Unknown'}`);
+          }
+        } else {
+          // Image already exists (editing mode)
+          uploadedImages.push({
+            url: img.url,
+            alt: img.alt,
+            isPrimary: img.isPrimary,
+            sortOrder: img.sortOrder || i
+          });
+        }
+      }
+      
+      setUploadingImages(false);
+
       // Prepare data for API
       const productData = {
         ...formData,
+        images: uploadedImages, // Use uploaded images
         basePrice: parseFloat(formData.basePrice) || 0,
         price: parseFloat(formData.price),
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -399,8 +450,10 @@ export default function ProductForm() {
       navigate('/products');
     } catch (error) {
       console.error('Error saving product:', error);
-      setError(error.response?.data?.message || 'Failed to save product');
+      setError(error.response?.data?.message || error.message || 'Failed to save product');
       setSaving(false);
+      setUploadingImages(false);
+      setUploadProgress(0);
     }
   };
 
@@ -1100,10 +1153,22 @@ export default function ProductForm() {
           </button>
           <button
             type="submit"
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
             disabled={saving}
           >
-            {saving ? 'Saving...' : isEditMode ? 'Update Product' : 'Create Product'}
+            {uploadingImages ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Uploading images... {uploadProgress}%
+              </span>
+            ) : saving ? (
+              'Saving...'
+            ) : (
+              isEditMode ? 'Update Product' : 'Create Product'
+            )}
           </button>
         </div>
       </form>

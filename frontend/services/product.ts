@@ -31,6 +31,11 @@ export const productService = {
     }
   },
 
+  // Alias for getProductById
+  async getProduct(id: string) {
+    return this.getProductById(id);
+  },
+
   async getFeaturedProducts() {
     try {
       const response = await axios.get('/products/featured');

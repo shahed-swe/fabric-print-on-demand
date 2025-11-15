@@ -19,25 +19,25 @@ const initializeBucket = async () => {
     if (!exists) {
       await minioClient.makeBucket(bucketName, 'us-east-1');
       console.log(`✓ Bucket "${bucketName}" created successfully`);
-      
-      // Set bucket policy to allow public read access (optional)
-      const policy = {
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: { AWS: ['*'] },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${bucketName}/*`]
-          }
-        ]
-      };
-      
-      await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
-      console.log(`✓ Bucket policy set for "${bucketName}"`);
     } else {
       console.log(`✓ Bucket "${bucketName}" already exists`);
     }
+    
+    // Always set bucket policy to allow public read access
+    const policy = {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Principal: { AWS: ['*'] },
+          Action: ['s3:GetObject'],
+          Resource: [`arn:aws:s3:::${bucketName}/*`]
+        }
+      ]
+    };
+    
+    await minioClient.setBucketPolicy(bucketName, JSON.stringify(policy));
+    console.log(`✓ Bucket policy set for "${bucketName}" - public read access enabled`);
   } catch (err) {
     console.error('Error initializing MinIO bucket:', err);
     throw err;
