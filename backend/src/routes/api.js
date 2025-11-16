@@ -39,6 +39,7 @@ router.get('/products/:id', productController.getProduct);
 // Design routes
 router.post('/designs', designController.saveDesign);
 router.get('/designs', designController.getDesigns);
+router.get('/designs/:id', designController.getDesignById);
 
 // File routes
 router.post('/upload', fileController.uploadFile);

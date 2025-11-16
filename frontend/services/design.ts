@@ -1,5 +1,45 @@
 import api from '../config/axios';
 
+interface TextElement {
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  textAlign?: string;
+  underline?: boolean;
+  linethrough?: boolean;
+  left?: number;
+  top?: number;
+  angle?: number;
+  scaleX?: number;
+  scaleY?: number;
+}
+
+interface ImageElement {
+  fileId?: string; // MinIO fileId
+  src?: string; // Fallback for base64
+  left?: number;
+  top?: number;
+  scaleX?: number;
+  scaleY?: number;
+  angle?: number;
+  width?: number;
+  height?: number;
+}
+
+interface DesignElements {
+  front: {
+    texts: TextElement[];
+    images: ImageElement[];
+  };
+  back: {
+    texts: TextElement[];
+    images: ImageElement[];
+  };
+}
+
 export const designService = {
   saveDesign: async (designData: {
     userId?: string;
@@ -7,6 +47,7 @@ export const designService = {
     sizeQuantities: Record<string, number>;
     title: string;
     price: number;
+    elements?: DesignElements;
   }) => {
     const response = await api.post('/designs', designData);
     return response.data;

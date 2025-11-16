@@ -83,7 +83,20 @@ exports.getCustomers = async (req, res) => {
 // @access  Private/Admin
 exports.getCustomer = async (req, res) => {
   try {
-    const customer = await User.findById(req.params.id).select('-password');
+    const { id } = req.params;
+    
+    // Check if it's a guest user
+    if (id.startsWith('guest_')) {
+      return res.json({
+        _id: id,
+        name: 'Guest User',
+        email: 'guest@example.com',
+        isGuest: true,
+        createdAt: new Date()
+      });
+    }
+    
+    const customer = await User.findById(id).select('-password');
     
     if (!customer) {
       return res.status(404).json({ message: 'Customer not found' });

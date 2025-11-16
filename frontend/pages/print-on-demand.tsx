@@ -218,14 +218,14 @@ const Index = () => {
 
     const saveFrontData = () => {
       if (!frontEditor?.canvas) return;
-      const json = JSON.stringify(frontEditor.canvas.toJSON());
+      const json = JSON.stringify(frontEditor.canvas.toJSON(['minioFileId']));
       setFrontData(json);
       localStorage.setItem("front", json);
     };
 
     const saveBackData = () => {
       if (!backEditor?.canvas) return;
-      const json = JSON.stringify(backEditor.canvas.toJSON());
+      const json = JSON.stringify(backEditor.canvas.toJSON(['minioFileId']));
       setBackData(json);
       localStorage.setItem("back", json);
     };
@@ -279,105 +279,129 @@ const Index = () => {
   };
 
   // Handle file upload
-  const handleAddImage = (file: File) => {
+  const handleAddImage = async (file: File) => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
-    // Create a new FileReader instance each time
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Create a new image element
-      const imgElement = new Image();
-      imgElement.src = reader.result as string;
-      
-      imgElement.onload = () => {
-        // Create a new fabric Image instance using the image element
-        const fabricImage = new fabric.Image(imgElement, {
-          left: (editor.canvas.width || 200) / 2,
-          top: (editor.canvas.height || 400) / 2,
-          originX: 'center',
-          originY: 'center',
-          scaleX: 150 / imgElement.width,
-          scaleY: 150 / imgElement.height,
-        });
+    try {
+      // Upload image to MinIO first
+      const uploadResponse = await designService.uploadFile(file);
+      const minioFileId = uploadResponse.fileId;
 
-        if (editor?.canvas) {
-          editor.canvas.add(fabricImage);
-          editor.canvas.setActiveObject(fabricImage);
-          editor.canvas.renderAll();
-        }
+      // Create a new FileReader instance to display the image
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Create a new image element
+        const imgElement = new Image();
+        imgElement.src = reader.result as string;
+        
+        imgElement.onload = () => {
+          // Create a new fabric Image instance using the image element
+          const fabricImage = new fabric.Image(imgElement, {
+            left: (editor.canvas.width || 200) / 2,
+            top: (editor.canvas.height || 400) / 2,
+            originX: 'center',
+            originY: 'center',
+            scaleX: 150 / imgElement.width,
+            scaleY: 150 / imgElement.height,
+          });
+
+          // Store MinIO fileId in the fabric object
+          (fabricImage as any).minioFileId = minioFileId;
+
+          if (editor?.canvas) {
+            editor.canvas.add(fabricImage);
+            editor.canvas.setActiveObject(fabricImage);
+            editor.canvas.renderAll();
+          }
+        };
+
+        imgElement.onerror = (error) => {
+          console.error('Error loading image:', error);
+          toast.error('Failed to load the image. Please try again.');
+        };
       };
 
-      imgElement.onerror = (error) => {
-        console.error('Error loading image:', error);
-        toast.error('Failed to load the image. Please try again.');
+      reader.onerror = (error) => {
+        console.error('Error reading file:', error);
+        toast.error('Failed to read the file. Please try again.');
       };
-    };
 
-    reader.onerror = (error) => {
-      console.error('Error reading file:', error);
-      toast.error('Failed to read the file. Please try again.');
-    };
-
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading image to MinIO:', error);
+      toast.error('Failed to upload image. Please try again.');
+    }
   };
 
   // Handle adding small image to top-left corner
-  const handleAddSmallImage = (file: File) => {
+  const handleAddSmallImage = async (file: File) => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
-    // Create a new FileReader instance each time
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Create a new image element
-      const imgElement = new Image();
-      imgElement.src = reader.result as string;
-      
-      imgElement.onload = () => {
-        // Calculate small size (50x50 pixels max)
-        const maxSize = 50;
-        let scaleX, scaleY;
+    try {
+      // Upload image to MinIO first
+      const uploadResponse = await designService.uploadFile(file);
+      const minioFileId = uploadResponse.fileId;
+
+      // Create a new FileReader instance each time
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Create a new image element
+        const imgElement = new Image();
+        imgElement.src = reader.result as string;
         
-        if (imgElement.width > imgElement.height) {
-          // Landscape image
-          scaleX = maxSize / imgElement.width;
-          scaleY = scaleX; // Maintain aspect ratio
-        } else {
-          // Portrait or square image
-          scaleY = maxSize / imgElement.height;
-          scaleX = scaleY; // Maintain aspect ratio
-        }
+        imgElement.onload = () => {
+          // Calculate small size (50x50 pixels max)
+          const maxSize = 50;
+          let scaleX, scaleY;
+          
+          if (imgElement.width > imgElement.height) {
+            // Landscape image
+            scaleX = maxSize / imgElement.width;
+            scaleY = scaleX; // Maintain aspect ratio
+          } else {
+            // Portrait or square image
+            scaleY = maxSize / imgElement.height;
+            scaleX = scaleY; // Maintain aspect ratio
+          }
 
-        // Create a new fabric Image instance positioned at top-right
-        const fabricImage = new fabric.Image(imgElement, {
-          left: (editor.canvas.width || 200) - 20, // 20px from right edge
-          top: 20,  // 20px from top edge
-          originX: 'right',
-          originY: 'top',
-          scaleX: scaleX,
-          scaleY: scaleY,
-        });
+          // Create a new fabric Image instance positioned at top-right
+          const fabricImage = new fabric.Image(imgElement, {
+            left: (editor.canvas.width || 200) - 20, // 20px from right edge
+            top: 20,  // 20px from top edge
+            originX: 'right',
+            originY: 'top',
+            scaleX: scaleX,
+            scaleY: scaleY,
+          });
 
-        if (editor?.canvas) {
-          editor.canvas.add(fabricImage);
-          editor.canvas.setActiveObject(fabricImage);
-          editor.canvas.renderAll();
-        }
+          // Store MinIO fileId in the fabric object
+          (fabricImage as any).minioFileId = minioFileId;
+
+          if (editor?.canvas) {
+            editor.canvas.add(fabricImage);
+            editor.canvas.setActiveObject(fabricImage);
+            editor.canvas.renderAll();
+          }
+        };
+
+        imgElement.onerror = (error) => {
+          console.error('Error loading small image:', error);
+          toast.error('Failed to load the small image. Please try again.');
+        };
       };
 
-      imgElement.onerror = (error) => {
-        console.error('Error loading small image:', error);
-        toast.error('Failed to load the small image. Please try again.');
+      reader.onerror = (error) => {
+        console.error('Error reading file for small image:', error);
+        toast.error('Failed to read the file. Please try again.');
       };
-    };
 
-    reader.onerror = (error) => {
-      console.error('Error reading file for small image:', error);
-      toast.error('Failed to read the file. Please try again.');
-    };
-
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error uploading logo to MinIO:', error);
+      toast.error('Failed to upload logo. Please try again.');
+    }
   };
 
   // Handle URL-based image
@@ -386,9 +410,17 @@ const Index = () => {
     if (!editor) return;
 
     try {
-      // Use our proxy API to avoid CORS issues
+      // First, fetch the image and convert to blob
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      const blob = await response.blob();
       
+      // Upload blob to MinIO
+      const file = new File([blob], 'artwork-image.png', { type: blob.type });
+      const uploadResponse = await designService.uploadFile(file);
+      const minioFileId = uploadResponse.fileId;
+
+      // Now display the image on canvas
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = proxyUrl;
@@ -420,6 +452,9 @@ const Index = () => {
             scaleY: 150 / img.height,
           });
 
+          // Store MinIO fileId in the fabric object
+          (fabricImage as any).minioFileId = minioFileId;
+
           editor.canvas.add(fabricImage);
           editor.canvas.setActiveObject(fabricImage);
           editor.canvas.renderAll();
@@ -440,6 +475,13 @@ const Index = () => {
   const handleSS = async () => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor) return;
+    
+    // Validate that at least one size has quantity > 0
+    const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
+    if (totalQuantity === 0) {
+      toast.error('Please select at least one size and quantity before adding to cart');
+      return;
+    }
     
     setLoading(true);
     editor.canvas.discardActiveObject();
@@ -467,19 +509,36 @@ const Index = () => {
         const frontCanvasData = JSON.parse(savedFrontData);
         if (frontCanvasData.objects) {
           frontCanvasData.objects.forEach((obj: any) => {
-            // Collect text elements
+            // Collect text elements with all styling
             if (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') {
               addedElements.front.texts.push({
                 text: obj.text,
                 fontSize: obj.fontSize,
                 fontFamily: obj.fontFamily,
                 color: obj.fill,
+                fontWeight: obj.fontWeight,
+                fontStyle: obj.fontStyle,
+                textAlign: obj.textAlign,
+                underline: obj.underline,
+                linethrough: obj.linethrough,
+                left: obj.left,
+                top: obj.top,
+                angle: obj.angle || 0,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
               });
             }
-            // Collect image elements
+            // Collect image elements with MinIO fileId instead of base64
             if (obj.type === 'image') {
               addedElements.front.images.push({
-                src: obj.src,
+                fileId: obj.minioFileId, // Use stored MinIO fileId
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
+                angle: obj.angle || 0,
+                width: obj.width,
+                height: obj.height,
               });
             }
           });
@@ -496,19 +555,36 @@ const Index = () => {
         const backCanvasData = JSON.parse(savedBackData);
         if (backCanvasData.objects) {
           backCanvasData.objects.forEach((obj: any) => {
-            // Collect text elements
+            // Collect text elements with all styling
             if (obj.type === 'text' || obj.type === 'i-text' || obj.type === 'textbox') {
               addedElements.back.texts.push({
                 text: obj.text,
                 fontSize: obj.fontSize,
                 fontFamily: obj.fontFamily,
                 color: obj.fill,
+                fontWeight: obj.fontWeight,
+                fontStyle: obj.fontStyle,
+                textAlign: obj.textAlign,
+                underline: obj.underline,
+                linethrough: obj.linethrough,
+                left: obj.left,
+                top: obj.top,
+                angle: obj.angle || 0,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
               });
             }
-            // Collect image elements
+            // Collect image elements with MinIO fileId instead of base64
             if (obj.type === 'image') {
               addedElements.back.images.push({
-                src: obj.src,
+                fileId: obj.minioFileId, // Use stored MinIO fileId
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX || 1,
+                scaleY: obj.scaleY || 1,
+                angle: obj.angle || 0,
+                width: obj.width,
+                height: obj.height,
               });
             }
           });
@@ -660,7 +736,8 @@ const Index = () => {
         fileId: uploadResponse.fileId,
         sizeQuantities,
         title: image.title,
-        price: designPrice
+        price: designPrice,
+        elements: addedElements // Send the collected elements
       });
 
       incrementCart();

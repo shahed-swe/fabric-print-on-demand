@@ -40,6 +40,7 @@ router.put('/orders/:id', protect, orderController.updateOrderStatus);
 // Customer routes (admin)
 router.get('/customers', protect, customerController.getCustomers);
 router.get('/customers/:id', protect, customerController.getCustomer);
+router.get('/users/:id', protect, customerController.getCustomer); // Alias for user lookup
 router.put('/customers/:id', protect, customerController.updateCustomer);
 router.put('/customers/:id/password', protect, customerController.changeCustomerPassword);
 
@@ -47,5 +48,9 @@ router.put('/customers/:id/password', protect, customerController.changeCustomer
 router.get('/dashboard/stats', protect, dashboardController.getDashboardStats);
 router.get('/dashboard/sales', protect, dashboardController.getSalesData);
 router.get('/dashboard/categories', protect, dashboardController.getCategoryData);
+
+// Design routes (admin)
+router.get('/designs', protect, designController.getAllDesigns);
+router.get('/designs/:id', protect, designController.getDesignById);
 
 module.exports = router;

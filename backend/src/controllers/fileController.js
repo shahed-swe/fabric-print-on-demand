@@ -58,17 +58,35 @@ exports.getFile = async (req, res) => {
     
     // Set appropriate headers
     res.setHeader('Content-Length', fileBuffer.length);
-    res.setHeader('Content-Disposition', `attachment; filename=${fileid}`);
     
-    // Set content type based on file info or file extension
+    // Determine content type
+    let contentType = 'application/octet-stream';
     if (fileInfo && fileInfo.mimetype) {
-      res.setHeader('Content-Type', fileInfo.mimetype);
+      contentType = fileInfo.mimetype;
     } else if (fileid.toLowerCase().endsWith('.pdf')) {
-      res.setHeader('Content-Type', 'application/pdf');
-    } else if (fileid.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/)) {
-      res.setHeader('Content-Type', 'image/' + fileid.split('.').pop());
+      contentType = 'application/pdf';
+    } else if (fileid.toLowerCase().match(/\.(jpg|jpeg)$/)) {
+      contentType = 'image/jpeg';
+    } else if (fileid.toLowerCase().endsWith('.png')) {
+      contentType = 'image/png';
+    } else if (fileid.toLowerCase().endsWith('.gif')) {
+      contentType = 'image/gif';
+    } else if (fileid.toLowerCase().endsWith('.webp')) {
+      contentType = 'image/webp';
+    }
+    
+    res.setHeader('Content-Type', contentType);
+    
+    // For images, use inline disposition to allow viewing in browser
+    if (contentType.startsWith('image/')) {
+      res.setHeader('Content-Disposition', `inline; filename=${fileid}`);
     } else {
-      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename=${fileid}`);
+    }
+    
+    // Enable caching for images
+    if (contentType.startsWith('image/')) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     }
     
     // Send the file buffer

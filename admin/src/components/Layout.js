@@ -23,7 +23,7 @@ const navigation = [
   { name: 'Orders', href: '/orders', icon: ShoppingCartIcon },
   { name: 'Customers', href: '/customers', icon: UsersIcon },
   { name: 'Categories', href: '/categories', icon: TagIcon },
-  // { name: 'Designs', href: '/designs', icon: PaintBrushIcon },
+  { name: 'Design Elements', href: '/design-elements', icon: PaintBrushIcon },
 ];
 
 export default function Layout({ children }) {

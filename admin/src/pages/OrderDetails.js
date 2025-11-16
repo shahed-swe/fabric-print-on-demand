@@ -269,6 +269,30 @@ export default function OrderDetails() {
                           <p className="text-sm text-gray-500 mt-1">File ID: {item.designId.fileId}</p>
                         )}
 
+                        {/* Design Elements Summary */}
+                        {itemType === 'design' && item.designId?.elements && (
+                          <div className="mt-2 text-sm text-gray-600">
+                            <div className="flex gap-4">
+                              {(item.designId.elements.front?.texts?.length > 0 || item.designId.elements.front?.images?.length > 0) && (
+                                <span className="text-green-600">
+                                  Front: {item.designId.elements.front.texts?.length || 0} texts, {item.designId.elements.front.images?.length || 0} images
+                                </span>
+                              )}
+                              {(item.designId.elements.back?.texts?.length > 0 || item.designId.elements.back?.images?.length > 0) && (
+                                <span className="text-purple-600">
+                                  Back: {item.designId.elements.back.texts?.length || 0} texts, {item.designId.elements.back.images?.length || 0} images
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => navigate(`/design-elements?designId=${item.designId._id}`)}
+                              className="mt-2 text-blue-600 hover:text-blue-800 text-xs font-medium underline"
+                            >
+                              View Design Details
+                            </button>
+                          </div>
+                        )}
+
                         {/* Design Size Quantities */}
                         {itemType === 'design' && item.designId?.sizeQuantities && (
                           <div className="flex flex-wrap gap-2 mt-3">

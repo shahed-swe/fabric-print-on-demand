@@ -204,19 +204,23 @@ const Cart = () => {
         };
         
         // Only add designId if it's a design
-        if (item.itemType === 'design' && item.designId?._id) {
-          orderItem.designId = item.designId._id;
+        if (item.itemType === 'design' && item.designId) {
+          // Handle both populated (object) and unpopulated (string) designId
+          orderItem.designId = typeof item.designId === 'object' ? item.designId._id : item.designId;
         }
         
         // Only add productId and product details if it's a product
-        if (item.itemType === 'product' && item.productId?._id) {
-          orderItem.productId = item.productId._id;
+        if (item.itemType === 'product' && item.productId) {
+          // Handle both populated (object) and unpopulated (string) productId
+          orderItem.productId = typeof item.productId === 'object' ? item.productId._id : item.productId;
           if (item.size) orderItem.size = item.size;
           if (item.color) orderItem.color = item.color;
         }
         
         return orderItem;
       });
+
+      console.log('Order items being sent:', orderItems); // Debug log
 
       await orderService.createOrder({
         userId: user?._id ?? '',
