@@ -649,12 +649,16 @@ const Index = () => {
         throw new Error('File upload failed');
       }
 
+      // Calculate price from actual size quantities ($30 per item)
+      const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
+      const designPrice = 30 * totalQuantity;
+
       await designService.saveDesign({
         userId: user?._id,
         fileId: uploadResponse.fileId,
         sizeQuantities,
         title: image.title,
-        price: totalPrice
+        price: designPrice
       });
 
       toast.success('Item Added to Cart successfully!');

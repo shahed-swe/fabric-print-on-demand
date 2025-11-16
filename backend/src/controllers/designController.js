@@ -13,13 +13,18 @@ exports.saveDesign = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    // Create the design
+    // Calculate total quantity and correct price
+    const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
+    const DESIGN_PRICE = 30;
+    const calculatedPrice = DESIGN_PRICE * totalQuantity;
+
+    // Create the design with calculated price
     const design = await Design.create({
       userId,
       fileId,
       sizeQuantities,
       title,
-      price
+      price: calculatedPrice
     });
 
     // Add design to cart
@@ -29,11 +34,11 @@ exports.saveDesign = async (req, res) => {
       cart = new Cart({ userId, items: [] });
     }
 
-    // Add design to cart as a cart item
+    // Add design to cart as a cart item with correct quantity and price
     cart.items.push({
       designId: design._id,
-      quantity: 1,
-      price: price,
+      quantity: totalQuantity,
+      price: calculatedPrice,
       itemType: 'design'
     });
 

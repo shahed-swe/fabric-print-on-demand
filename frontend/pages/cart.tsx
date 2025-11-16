@@ -39,17 +39,7 @@ const Cart = () => {
       const response = await cartService.getCartItems(user._id);
       const items = response.items || [];
       
-      // Fix pricing for custom designs: should be $30 per item
-      const fixedItems = items.map((item: any) => {
-        if (item.itemType === 'design' && item.quantity) {
-          const correctPrice = 30 * item.quantity;
-          // If price is different, we'll update it on the backend when user edits
-          return { ...item, price: correctPrice };
-        }
-        return item;
-      });
-      
-      setCartItems(fixedItems);
+      setCartItems(items);
     } catch (error: any) {
       console.error('Error fetching cart items:', error);
       toast.error(error.message || 'Failed to load cart items');
@@ -120,20 +110,9 @@ const Cart = () => {
 
       const response = await cartService.updateDesignSizes(itemId, tempSizeQuantities, user._id);
       
-      // Update cart items with the response
+      // Update cart items with the response from backend
       if (response.cart?.items) {
-        const items = response.cart.items;
-        
-        // Ensure pricing is correct for custom designs
-        const fixedItems = items.map((item: any) => {
-          if (item.itemType === 'design' && item.quantity) {
-            const correctPrice = 30 * item.quantity;
-            return { ...item, price: correctPrice };
-          }
-          return item;
-        });
-        
-        setCartItems(fixedItems);
+        setCartItems(response.cart.items);
       }
       
       setEditingSizes(null);
@@ -215,7 +194,9 @@ const Cart = () => {
         const orderItem: any = {
           itemType: item.itemType,
           quantity: item.quantity,
-          price: item.price
+          // For products: store total price (unit price × quantity)
+          // For designs: price is already total
+          price: item.itemType === 'product' ? item.price * item.quantity : item.price
         };
         
         // Only add designId if it's a design

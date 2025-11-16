@@ -293,9 +293,9 @@ export default function OrderDetails() {
                             ${(item.price / item.quantity).toFixed(2)} each
                           </div>
                         )}
-                        {itemType === 'design' && (
+                        {itemType === 'design' && item.quantity && (
                           <div className="text-xs text-gray-500 mt-1">
-                            $30.00 per item
+                            ${(item.price / item.quantity).toFixed(2)} per item
                           </div>
                         )}
                       </div>
