@@ -214,8 +214,6 @@ const Cart = () => {
         return orderItem;
       });
 
-      console.log('Sending order items:', orderItems);
-
       await orderService.createOrder({
         userId: user?._id ?? '',
         items: orderItems,

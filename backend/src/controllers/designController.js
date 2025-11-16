@@ -7,7 +7,6 @@ const Cart = require('../models/Cart');
 exports.saveDesign = async (req, res) => {
   try {
     const { fileId, sizeQuantities, title, price, userId } = req.body;
-    console.log('Received design data:', req.body);
 
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
