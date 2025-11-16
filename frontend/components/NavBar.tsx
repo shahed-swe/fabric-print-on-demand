@@ -2,32 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { FaShoppingCart, FaChevronDown } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import axios from 'axios';
 import countries from '../utils/countries';
 import { cartService } from '@/services/cart';
 
 const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
-  const [cartItems, setCartItems] = useState(0);
+  const { cartCount } = useCart();
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countries[13]); // Default to USA
   const countryDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      if (!user) return;
-
-      try {
-        const response = await cartService.getCartItems(user?._id);
-        console.log(response)
-        setCartItems(response.length);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchCartItems();
-  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -166,9 +151,9 @@ const NavBar = () => {
           <Link href="/cart">
             <a className="relative group">
               <FaShoppingCart className="text-2xl text-gray-600 hover:text-orange-500 transition-colors" />
-              {cartItems > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItems}
+                  {cartCount}
                 </span>
               )}
             </a>

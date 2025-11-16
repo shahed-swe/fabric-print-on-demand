@@ -18,6 +18,7 @@ import axios from 'axios';
 import LeftSideComp from "@/components/LeftSideComp";
 import RightSideComp from "@/components/RightSideComp";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { toast } from 'react-toastify';
 import { designService } from '../services/design';
 import TextEditorModal from "@/components/TextEditorModal";
@@ -52,6 +53,7 @@ const Index = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const { user, totalPrice } = useAuth();
+  const { incrementCart } = useCart();
 
   useEffect(()=> {
     setTimeout(() => {
@@ -661,6 +663,7 @@ const Index = () => {
         price: designPrice
       });
 
+      incrementCart();
       toast.success('Item Added to Cart successfully!');
 
     } catch (error) {

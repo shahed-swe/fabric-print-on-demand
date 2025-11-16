@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { FaTrash, FaDownload, FaEdit } from 'react-icons/fa';
 import CheckoutForm from '../components/CheckoutForm';
 import { toast } from 'react-toastify';
@@ -25,6 +26,7 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 const Cart = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const { user } = useAuth();
+  const { refreshCart } = useCart();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showShippingForm, setShowShippingForm] = useState(false);
@@ -40,6 +42,7 @@ const Cart = () => {
       const items = response.items || [];
       
       setCartItems(items);
+      refreshCart(); // Update cart count in navbar
     } catch (error: any) {
       console.error('Error fetching cart items:', error);
       toast.error(error.message || 'Failed to load cart items');
@@ -54,6 +57,7 @@ const Cart = () => {
     try {
       await cartService.removeFromCart(itemId, user._id);
       setCartItems(cartItems.filter(item => item._id !== itemId));
+      refreshCart(); // Update cart count in navbar
       toast.success('Item removed successfully');
     } catch (error) {
       console.error('Error removing item:', error);
@@ -226,6 +230,7 @@ const Cart = () => {
 
       await cartService.removeByUserId(user?._id ?? '');
       setCartItems([]);
+      refreshCart(); // Reset cart count to 0
       setShowPayment(false);
       toast.success('Order placed successfully!');
     } catch (error) {

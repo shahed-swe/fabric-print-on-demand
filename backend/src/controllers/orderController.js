@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const User = require('../models/User'); // Add User model import
 const Product = require('../models/Product');
+const { sendOrderInvoice } = require('../services/emailService');
 const mongoose = require('mongoose');
 
 exports.createOrder = async (req, res) => {
@@ -66,6 +67,22 @@ exports.createOrder = async (req, res) => {
       status: orderStatus,
       totalAmount,
       createdAt: new Date(),
+    });
+
+    // Populate items for email
+    const populatedOrder = await Order.findById(order._id)
+      .populate('items.designId')
+      .populate('items.productId');
+
+    // Get user details for email
+    let user = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId) && !userId.toString().startsWith('guest_')) {
+      user = await User.findById(userId);
+    }
+
+    // Send invoice email (don't wait for it, send async)
+    sendOrderInvoice(populatedOrder, user).catch(err => {
+      console.error('Failed to send invoice email:', err);
     });
     
     return res.status(200).json({ message: 'Order placed successfully', order });

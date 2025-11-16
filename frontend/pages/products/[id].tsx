@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { productService } from '@/services/product';
 import { cartService } from '@/services/cart';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { toast } from 'react-toastify';
 import { 
   FaShoppingCart, 
@@ -56,6 +57,7 @@ const ProductDetails = () => {
   const router = useRouter();
   const { id } = router.query;
   const { user } = useAuth();
+  const { incrementCart } = useCart();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,6 +131,7 @@ const ProductDetails = () => {
         selectedColor
       );
       toast.success('Product added to cart successfully!');
+      incrementCart();
       // Optionally redirect to cart
       // router.push('/cart');
     } catch (error: any) {
