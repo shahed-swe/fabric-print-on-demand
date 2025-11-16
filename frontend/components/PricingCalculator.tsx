@@ -26,17 +26,15 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   // Calculate total quantity
   const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + qty, 0);
 
-  // Fixed pricing: $30 per design + $7 shipping
+  // Fixed pricing: $30 per design
   const DESIGN_PRICE = 30;
-  const SHIPPING_COST = 7;
 
-  // Calculate total price
+  // Calculate total price (without shipping - will be added in cart)
   const calculateTotalPrice = () => {
     if (totalQuantity === 0) return 0;
     
-    // $30 per item + $7 shipping (one-time)
-    const itemsTotal = DESIGN_PRICE * totalQuantity;
-    return itemsTotal + SHIPPING_COST;
+    // $30 per item (shipping will be calculated in cart)
+    return DESIGN_PRICE * totalQuantity;
   };
 
   const totalPrice = calculateTotalPrice();
@@ -61,21 +59,15 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
           <span>{totalQuantity} {totalQuantity === 1 ? 'piece' : 'pieces'}</span>
         </div>
 
-        <div className="flex justify-between text-gray-600">
-          <span>Subtotal:</span>
-          <span>${(DESIGN_PRICE * totalQuantity).toFixed(2)}</span>
-        </div>
-
-        <div className="flex justify-between text-gray-600">
-          <span>Shipping Cost:</span>
-          <span>${SHIPPING_COST.toFixed(2)}</span>
-        </div>
-
         <div className="border-t pt-3 mt-3">
           <div className="flex justify-between font-bold text-lg text-orange-500">
-            <span>Total Price:</span>
+            <span>Subtotal:</span>
             <span>${totalPrice.toFixed(2)}</span>
           </div>
+        </div>
+
+        <div className="text-sm text-gray-500 italic mt-2">
+          Shipping cost will be calculated at checkout
         </div>
       </div>
     </div>

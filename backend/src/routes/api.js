@@ -17,7 +17,10 @@ router.post('/auth/login', authController.login);
 
 // Cart routes
 router.get('/cart', cartController.getCartItems);
-router.delete('/cart/:id', cartController.removeFromCart);
+router.post('/cart', cartController.addToCart);
+router.put('/cart/design/:itemId/sizes', cartController.updateDesignSizes);
+router.put('/cart/:itemId', cartController.updateCartItem);
+router.delete('/cart/:itemId', cartController.removeFromCart);
 router.delete('/cart/user/:userId', cartController.removeByUserId);
 
 // Category routes

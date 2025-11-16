@@ -3,9 +3,9 @@ const User = require('../models/User'); // Add User model import
 const mongoose = require('mongoose');
 
 exports.createOrder = async (req, res) => {
-  const { userId, items, paymentStatus, totalAmount, status } = req.body;
+  const { userId, items, paymentStatus, totalAmount, status, shippingAddress } = req.body;
 
-  console.log(req.body)
+  console.log('Creating order with data:', req.body)
 
   if (!userId || !items || items.length === 0) {
     return res.status(400).json({ error: 'Invalid request' });
@@ -23,6 +23,7 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       userId,
       items,
+      shippingAddress,
       paymentStatus: paymentStatus || 'pending',
       status: orderStatus,
       totalAmount,
@@ -38,7 +39,11 @@ exports.createOrder = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const orders = await Order.find()
+      .populate('items.designId')
+      .populate('items.productId');
+    
+    console.log('Sample order items:', orders[0]?.items[0]);
     
     // Fetch user details for each order
     const ordersWithUserDetails = await Promise.all(
@@ -62,7 +67,10 @@ exports.getOrders = async (req, res) => {
           };
         }
         
-        return { ...order.toObject(), user };
+        const orderObj = order.toObject();
+        console.log('Sample order item after toObject:', orderObj.items[0]);
+        
+        return { ...orderObj, user };
       })
     );
     

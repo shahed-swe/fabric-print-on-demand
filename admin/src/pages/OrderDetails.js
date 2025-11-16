@@ -219,33 +219,90 @@ export default function OrderDetails() {
 
             {order.items && order.items.length > 0 ? (
               <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item._id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{item.title || 'Product'}</h4>
-                        {item.fileId && (
-                          <p className="text-sm text-gray-500 mt-1">File ID: {item.fileId}</p>
+                {order.items.map((item, index) => {
+                  // Infer itemType if missing (for backward compatibility)
+                  const itemType = item.itemType || (item.productId ? 'product' : 'design');
+                  
+                  return (
+                  <div key={item._id || index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-start gap-3">
+                      {/* Item Image/Icon */}
+                      {itemType === 'product' && item.productId ? (
+                        <img
+                          src={item.productId.images?.find(img => img.isPrimary)?.url || item.productId.images?.[0]?.url || 'https://via.placeholder.com/80'}
+                          alt={item.productId.name}
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                          </svg>
+                        </div>
+                      )}
+
+                      <div className="flex-1">
+                        {/* Item Type Badge */}
+                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
+                          itemType === 'design' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {itemType === 'design' ? 'Custom Design' : 'Product'}
+                        </span>
+
+                        {/* Item Title */}
+                        <h4 className="font-semibold text-gray-900">
+                          {itemType === 'product' ? item.productId?.name : item.designId?.title || 'Custom Design'}
+                        </h4>
+
+                        {/* Product Details */}
+                        {itemType === 'product' && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            {item.size && <span>Size: {item.size}</span>}
+                            {item.size && item.color && <span className="mx-2">•</span>}
+                            {item.color && <span>Color: {item.color}</span>}
+                            <div className="mt-1">Quantity: {item.quantity}</div>
+                          </div>
+                        )}
+
+                        {/* Design File ID */}
+                        {itemType === 'design' && item.designId?.fileId && (
+                          <p className="text-sm text-gray-500 mt-1">File ID: {item.designId.fileId}</p>
+                        )}
+
+                        {/* Design Size Quantities */}
+                        {itemType === 'design' && item.designId?.sizeQuantities && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {Object.entries(item.designId.sizeQuantities).map(([size, quantity]) => (
+                              quantity > 0 && (
+                                <span key={size} className="inline-flex items-center px-3 py-1 bg-white rounded-md text-sm text-gray-700 border border-gray-200">
+                                  {size}: {quantity}
+                                </span>
+                              )
+                            ))}
+                          </div>
                         )}
                       </div>
-                      <span className="text-lg font-bold text-primary-600">
-                        ${item.price?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
 
-                    {item.sizeQuantities && Object.keys(item.sizeQuantities).length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {Object.entries(item.sizeQuantities).map(([size, quantity]) => (
-                          quantity > 0 && (
-                            <span key={size} className="inline-flex items-center px-3 py-1 bg-white rounded-md text-sm text-gray-700 border border-gray-200">
-                              {size}: {quantity}
-                            </span>
-                          )
-                        ))}
+                      {/* Price */}
+                      <div className="text-right">
+                        <span className="text-lg font-bold text-primary-600">
+                          ${item.price?.toFixed(2) || '0.00'}
+                        </span>
+                        {itemType === 'product' && item.quantity > 1 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            ${(item.price / item.quantity).toFixed(2)} each
+                          </div>
+                        )}
+                        {itemType === 'design' && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            $30.00 per item
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
 
                 {/* Total */}
                 <div className="border-t-2 pt-4 mt-4">

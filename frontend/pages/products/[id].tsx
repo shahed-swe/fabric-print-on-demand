@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { productService } from '@/services/product';
 import { cartService } from '@/services/cart';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'react-toastify';
 import { 
   FaShoppingCart, 
   FaHeart, 
@@ -101,27 +102,38 @@ const ProductDetails = () => {
   };
 
   const handleAddToCart = async () => {
+    if (!user) {
+      toast.error('Please login to add items to cart');
+      router.push('/login');
+      return;
+    }
+
     if (!selectedSize) {
-      alert('Please select a size');
+      toast.warning('Please select a size');
       return;
     }
     if (product?.colors && product.colors.length > 0 && !selectedColor) {
-      alert('Please select a color');
+      toast.warning('Please select a color');
       return;
     }
 
     try {
       setAddingToCart(true);
       await cartService.addToCart(
+        user._id,
+        'product',
         product!._id,
         quantity,
+        product!.price,
         selectedSize,
         selectedColor
       );
-      alert('Product added to cart!');
+      toast.success('Product added to cart successfully!');
+      // Optionally redirect to cart
+      // router.push('/cart');
     } catch (error: any) {
       console.error('Error adding to cart:', error);
-      alert(error.response?.data?.message || 'Failed to add to cart');
+      toast.error(error.response?.data?.message || 'Failed to add to cart');
     } finally {
       setAddingToCart(false);
     }

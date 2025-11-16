@@ -6,27 +6,33 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
   items: [{
-    _id: {
-      type: String
-    },
-    fileId: {
+    // Item type to distinguish between design and product
+    itemType: {
       type: String,
+      enum: ['design', 'product'],
+      required: true
     },
-    sizeQuantities: {
-      S: { type: Number, default: 0 },
-      M: { type: Number, default: 0 },
-      L: { type: Number, default: 0 },
-      XL: { type: Number, default: 0 },
-      XXL: { type: Number, default: 0 }
+    // For custom designs
+    designId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Design'
     },
-    title: {
-      type: String,
+    // For regular products
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product'
+    },
+    // Product-specific fields
+    size: String,
+    color: String,
+    // Common fields
+    quantity: {
+      type: Number,
+      required: true
     },
     price: {
       type: Number,
-    },
-    createdAt: {
-      type: Date,
+      required: true
     }
   }],
   shippingAddress: {
