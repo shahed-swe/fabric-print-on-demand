@@ -90,6 +90,22 @@ const productSchema = new mongoose.Schema({
   // Legacy field for backward compatibility
   imageUrl: String,
   
+  // Custom Logo & Image
+  logo: {
+    fileId: String, // MinIO file ID
+    url: String,
+    filename: String
+  },
+  customImage: {
+    fileId: String, // MinIO file ID
+    url: String,
+    filename: String
+  },
+  haveCustomPrint: {
+    type: Boolean,
+    default: false
+  },
+  
   // Size Chart
   sizeChart: {
     measurements: [{

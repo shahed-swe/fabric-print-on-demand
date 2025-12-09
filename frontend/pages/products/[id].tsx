@@ -51,6 +51,9 @@ interface Product {
   tags?: string[];
   status?: string;
   featured?: boolean;
+  haveCustomPrint?: boolean;
+  logo?: { fileId: string; url: string; filename: string };
+  customImage?: { fileId: string; url: string; filename: string };
 }
 
 const ProductDetails = () => {
@@ -426,6 +429,17 @@ const ProductDetails = () => {
 
             {/* Add to Cart & Wishlist */}
             <div className="flex gap-3">
+              {product.haveCustomPrint && (
+                <button
+                  onClick={() => router.push(`/print-on-demand?productId=${product._id}`)}
+                  className="flex-1 bg-blue-500 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Custom
+                </button>
+              )}
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || addingToCart || !selectedSize}

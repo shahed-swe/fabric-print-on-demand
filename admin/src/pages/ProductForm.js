@@ -85,6 +85,9 @@ export default function ProductForm() {
     sizes: [],
     colors: [],
     images: [],
+    logo: null,
+    customImage: null,
+    haveCustomPrint: false,
     sizeChart: { measurements: [] },
     careInstructions: [''],
     features: [''],
@@ -140,6 +143,9 @@ export default function ProductForm() {
         try {
           const response = await axios.get(`/admin/products/${id}`);
           const product = response.data;
+          console.log('Loaded product:', product);
+          console.log('Logo:', product.logo);
+          console.log('Custom Image:', product.customImage);
           setFormData({
             ...product,
             category: product.category?._id || '',
@@ -149,6 +155,8 @@ export default function ProductForm() {
             sizes: product.sizes || [],
             colors: product.colors || [],
             images: product.images || [],
+            logo: (product.logo && product.logo.url) ? product.logo : null,
+            customImage: (product.customImage && product.customImage.url) ? product.customImage : null,
             sizeChart: product.sizeChart || { measurements: [] },
             printableAreas: product.printableAreas || []
           });
@@ -416,6 +424,68 @@ export default function ProductForm() {
           });
         }
       }
+
+      // Upload logo if exists
+      let uploadedLogo = null;
+      if (formData.logo?.file) {
+        try {
+          const logoFormData = new FormData();
+          logoFormData.append('file', formData.logo.file);
+          
+          const logoResponse = await axios.post('/upload', logoFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          
+          uploadedLogo = {
+            fileId: logoResponse.data.filename,
+            url: logoResponse.data.url,
+            filename: logoResponse.data.filename
+          };
+        } catch (uploadError) {
+          console.error('Error uploading logo:', uploadError);
+          throw new Error('Failed to upload logo');
+        }
+      } else if (formData.logo?.url) {
+        // Logo already exists (editing mode)
+        uploadedLogo = {
+          fileId: formData.logo.fileId,
+          url: formData.logo.url,
+          filename: formData.logo.filename
+        };
+      }
+
+      // Upload custom image if exists
+      let uploadedCustomImage = null;
+      if (formData.customImage?.file) {
+        try {
+          const customImageFormData = new FormData();
+          customImageFormData.append('file', formData.customImage.file);
+          
+          const customImageResponse = await axios.post('/upload', customImageFormData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
+          
+          uploadedCustomImage = {
+            fileId: customImageResponse.data.filename,
+            url: customImageResponse.data.url,
+            filename: customImageResponse.data.filename
+          };
+        } catch (uploadError) {
+          console.error('Error uploading custom image:', uploadError);
+          throw new Error('Failed to upload custom image');
+        }
+      } else if (formData.customImage?.url) {
+        // Custom image already exists (editing mode)
+        uploadedCustomImage = {
+          fileId: formData.customImage.fileId,
+          url: formData.customImage.url,
+          filename: formData.customImage.filename
+        };
+      }
       
       setUploadingImages(false);
 
@@ -423,6 +493,8 @@ export default function ProductForm() {
       const productData = {
         ...formData,
         images: uploadedImages, // Use uploaded images
+        logo: uploadedLogo,
+        customImage: uploadedCustomImage,
         basePrice: parseFloat(formData.basePrice) || 0,
         price: parseFloat(formData.price),
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -489,7 +561,7 @@ export default function ProductForm() {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">
-          {['basic', 'variants', 'images', 'details', 'seo'].map((tab) => (
+          {['basic', 'variants', 'images', 'custom', 'details', 'seo'].map((tab) => (
             <button
               key={tab}
               type="button"
@@ -874,6 +946,172 @@ export default function ProductForm() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Custom Tab */}
+          {activeTab === 'custom' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                
+                {/* Logo Upload */}
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Logo
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors">
+                    <div className="space-y-1 text-center">
+                      {formData.logo && (formData.logo.preview || formData.logo.url) ? (
+                        <div className="relative">
+                          <img
+                            src={formData.logo.preview || formData.logo.url}
+                            alt="Logo preview"
+                            className="mx-auto h-32 w-auto object-contain"
+                            onError={(e) => {
+                              console.error('Logo image failed to load:', formData.logo);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, logo: null })}
+                            className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                          >
+                            Remove Logo
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600">
+                            <label
+                              htmlFor="logo-upload"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none"
+                            >
+                              <span>Upload logo</span>
+                              <input
+                                id="logo-upload"
+                                name="logo-upload"
+                                type="file"
+                                className="sr-only"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) {
+                                    setFormData({
+                                      ...formData,
+                                      logo: {
+                                        file,
+                                        preview: URL.createObjectURL(file),
+                                        filename: file.name
+                                      }
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Image Upload */}
+                <div className="sm:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Image
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-primary-400 transition-colors">
+                    <div className="space-y-1 text-center">
+                      {formData.customImage && (formData.customImage.preview || formData.customImage.url) ? (
+                        <div className="relative">
+                          <img
+                            src={formData.customImage.preview || formData.customImage.url}
+                            alt="Custom image preview"
+                            className="mx-auto h-32 w-auto object-contain"
+                            onError={(e) => {
+                              console.error('Custom image failed to load:', formData.customImage);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, customImage: null })}
+                            className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                          >
+                            Remove Image
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600">
+                            <label
+                              htmlFor="custom-image-upload"
+                              className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none"
+                            >
+                              <span>Upload image</span>
+                              <input
+                                id="custom-image-upload"
+                                name="custom-image-upload"
+                                type="file"
+                                className="sr-only"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files[0];
+                                  if (file) {
+                                    setFormData({
+                                      ...formData,
+                                      customImage: {
+                                        file,
+                                        preview: URL.createObjectURL(file),
+                                        filename: file.name
+                                      }
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Have Custom Print Checkbox */}
+              <div className="flex items-center">
+                <input
+                  id="haveCustomPrint"
+                  name="haveCustomPrint"
+                  type="checkbox"
+                  checked={formData.haveCustomPrint}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="haveCustomPrint" className="ml-2 block text-sm text-gray-900">
+                  This product supports custom print-on-demand
+                </label>
+              </div>
+
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-blue-700">
+                      Upload a logo and custom image for this product. These can be used for branding or custom product variations. Check the box above if this product supports custom printing.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

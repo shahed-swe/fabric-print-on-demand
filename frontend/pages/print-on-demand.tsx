@@ -22,6 +22,8 @@ import { useCart } from "@/context/CartContext";
 import { toast } from 'react-toastify';
 import { designService } from '../services/design';
 import TextEditorModal from "@/components/TextEditorModal";
+import { useRouter } from 'next/router';
+import { productService } from '@/services/product';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -36,6 +38,9 @@ const WomenFront = "/images/womens_crew_front.png";
 const WomenBack = "/images/womens_crew_back.png";
 
 const Index = () => {
+  const router = useRouter();
+  const { productId } = router.query;
+  
   const [back, setBack] = useState("back");
   const [color, setColor] = useState("");
   const [image, setImage] = useState<any>(null);
@@ -54,10 +59,13 @@ const Index = () => {
   const [showTextEditor, setShowTextEditor] = useState(false);
   const { user, totalPrice } = useAuth();
   const { incrementCart } = useCart();
+  const [productData, setProductData] = useState<any>(null);
+  const [loadingProduct, setLoadingProduct] = useState(false);
 
   useEffect(()=> {
     setTimeout(() => {
     setBack("front");},100)
+    
   },[])
   // Add text editor position state
   const [textEditorPosition, setTextEditorPosition] = useState({ x: 0, y: 0 });
@@ -98,6 +106,82 @@ const Index = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Use ref to track if product images have been loaded (persists across re-renders)
+  const productImagesLoadedRef = useRef(false);
+
+  // Load product data and add logo/custom image to canvas
+  useEffect(() => {
+    if (productId && frontEditor?.canvas && backEditor?.canvas && !productImagesLoadedRef.current) {
+      localStorage.removeItem("front");
+      localStorage.removeItem("back");
+      loadProductAndAddImages();
+    }
+  }, [productId, frontEditor, backEditor]);
+
+  const loadProductAndAddImages = async () => {
+    try {
+      setLoadingProduct(true);
+      const product = await productService.getProduct(productId as string);
+      setProductData(product);
+      console.log('Loaded product for customization:', product);
+
+      // Clear localStorage to prevent loading old canvas data
+      localStorage.removeItem("front");
+      localStorage.removeItem("back");
+      console.log('LocalStorage cleared');
+
+      // Clear all objects from both canvases before loading new ones
+      if (frontEditor?.canvas) {
+        try {
+          frontEditor.canvas.getObjects().forEach(obj => frontEditor.canvas.remove(obj));
+          frontEditor.canvas.renderAll();
+          console.log('Front canvas cleared');
+        } catch (error) {
+          console.log('Error clearing front canvas:', error);
+        }
+      }
+      if (backEditor?.canvas) {
+        try {
+          backEditor.canvas.getObjects().forEach(obj => backEditor.canvas.remove(obj));
+          backEditor.canvas.renderAll();
+          console.log('Back canvas cleared');
+        } catch (error) {
+          console.log('Error clearing back canvas:', error);
+        }
+      }
+
+      // Ensure we're on front view
+      setBack("front");
+      // Wait a bit for the canvas to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Add logo to front canvas if exists (small image, top-right)
+      if (product.logo && product.logo.url && frontEditor?.canvas) {
+        await handleAddSmallImageFromUrl(product.logo.url);
+        console.log('Logo added to front canvas');
+      }
+
+      // Add custom image to front canvas if exists (larger image, centered)
+      if (product.customImage && product.customImage.url && frontEditor?.canvas) {
+        await handleAddImageFromUrl(product.customImage.url);
+        console.log('Custom image added to front canvas');
+      }
+
+      // Mark as loaded to prevent re-loading
+      productImagesLoadedRef.current = true;
+      
+      if (product.logo || product.customImage) {
+        toast.success('Product images loaded successfully');
+      }
+
+      setLoadingProduct(false);
+    } catch (error) {
+      console.error('Error loading product:', error);
+      toast.error('Failed to load product data');
+      setLoadingProduct(false);
+    }
+  };
 
   // State for artwork
   const [showArtModal, setShowArtModal] = useState(false);
@@ -468,6 +552,71 @@ const Index = () => {
     } catch (error) {
       console.error('Error adding image from URL:', error);
       toast.error('Failed to add the image. Please try again.');
+    }
+  };
+
+  // Handle URL-based small image (for logos)
+  const handleAddSmallImageFromUrl = async (url: string) => {
+    const editor = back === "front" ? frontEditor : backEditor;
+    if (!editor) return;
+
+    try {
+      // First, fetch the image and convert to blob
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      const blob = await response.blob();
+      
+      // Upload blob to MinIO
+      const file = new File([blob], 'logo-image.png', { type: blob.type });
+      const uploadResponse = await designService.uploadFile(file);
+      const minioFileId = uploadResponse.fileId;
+
+      // Now display the image on canvas
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = proxyUrl;
+
+      img.onload = () => {
+        if (editor && editor.canvas) {
+          // Calculate small size (50x50 pixels max)
+          const maxSize = 50;
+          let scaleX, scaleY;
+          
+          if (img.width > img.height) {
+            // Landscape image
+            scaleX = maxSize / img.width;
+            scaleY = scaleX; // Maintain aspect ratio
+          } else {
+            // Portrait or square image
+            scaleY = maxSize / img.height;
+            scaleX = scaleY; // Maintain aspect ratio
+          }
+
+          const fabricImage = new fabric.Image(img, {
+            left: (editor.canvas.width || 200) - 20, // 20px from right edge
+            top: 20,  // 20px from top edge
+            originX: 'right',
+            originY: 'top',
+            scaleX: scaleX,
+            scaleY: scaleY,
+          });
+
+          // Store MinIO fileId in the fabric object
+          (fabricImage as any).minioFileId = minioFileId;
+
+          editor.canvas.add(fabricImage);
+          editor.canvas.setActiveObject(fabricImage);
+          editor.canvas.renderAll();
+        }
+      };
+
+      img.onerror = (error) => {
+        console.error('Error loading logo:', error);
+        toast.error('Failed to load the logo. Please try again.');
+      };
+    } catch (error) {
+      console.error('Error adding logo from URL:', error);
+      toast.error('Failed to add the logo. Please try again.');
     }
   };
 
@@ -846,9 +995,9 @@ const Index = () => {
         position: 'relative',
         width: '100%',
         height: '100%',
-        overflow: loading ? 'hidden' : 'auto'
+        overflow: (loading || loadingProduct) ? 'hidden' : 'auto'
       }}>
-        {loading && (
+        {(loading || loadingProduct) && (
           <div style={{
             position: 'absolute',
             top: 0,
@@ -863,7 +1012,9 @@ const Index = () => {
             zIndex: 1000
           }}>
             <ClipLoader color="#000000" loading={true} size={50} />
-            <div style={{ marginTop: '1rem' }}>Loading...</div>
+            <div style={{ marginTop: '1rem' }}>
+              {loadingProduct ? 'Loading product...' : 'Loading...'}
+            </div>
           </div>
         )}
         <div className="container mx-auto px-4 py-8">

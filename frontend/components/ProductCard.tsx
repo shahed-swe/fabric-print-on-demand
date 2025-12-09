@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaStar, FaShoppingCart } from 'react-icons/fa';
+import { useRouter } from 'next/router';
+import { FaStar, FaShoppingCart, FaPencilAlt } from 'react-icons/fa';
 
 interface ProductCardProps {
   product: {
@@ -16,10 +17,12 @@ interface ProductCardProps {
     featured?: boolean;
     status?: string;
     material?: string;
+    haveCustomPrint?: boolean;
   };
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const router = useRouter();
   const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0];
   const totalStock = product.sizes?.reduce((sum, size) => sum + size.stockQuantity, 0) || 0;
   const isOutOfStock = totalStock === 0;
@@ -161,14 +164,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             )}
           </div>
 
-          {/* Add to Cart Button */}
-          {!isOutOfStock && (
-            <Link href={`/products/${product._id}`}>
-              <a className="bg-orange-500 text-white p-2 rounded-full hover:bg-orange-600 transition-colors">
-                <FaShoppingCart className="w-5 h-5" />
-              </a>
-            </Link>
-          )}
+          {/* Buttons */}
+          <div className="flex gap-2">
+            {/* Custom Button */}
+            {product.haveCustomPrint && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push(`/print-on-demand?productId=${product._id}`);
+                }}
+                className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
+                title="Customize"
+              >
+                <FaPencilAlt className="w-5 h-5" />
+              </button>
+            )}
+            
+            {/* Add to Cart Button */}
+            {!isOutOfStock && (
+              <Link href={`/products/${product._id}`}>
+                <a className="bg-orange-500 text-white p-2 rounded-full hover:bg-orange-600 transition-colors">
+                  <FaShoppingCart className="w-5 h-5" />
+                </a>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>

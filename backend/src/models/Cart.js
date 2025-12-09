@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 
 const cartSchema = new mongoose.Schema({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String, // Changed from ObjectId to String to support both guest users and logged-in users
     required: true
   },
   items: [{
