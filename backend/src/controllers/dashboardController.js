@@ -36,7 +36,16 @@ exports.getDashboardStats = async (req, res) => {
     // Fetch user details for recent orders
     const recentOrdersWithUsers = await Promise.all(
       recentOrders.map(async (order) => {
-        const user = await User.findById(order.userId);
+        let user = null;
+        // Only fetch user if userId is a valid ObjectId (not a guest ID)
+        if (order.userId && !order.userId.startsWith('guest_')) {
+          try {
+            user = await User.findById(order.userId);
+          } catch (error) {
+            // Invalid ObjectId, treat as guest
+            user = null;
+          }
+        }
         return {
           id: order.orderNumber || order._id,
           customer: user?.name || 'Guest',

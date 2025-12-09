@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema({
     postalCode: String,
     phone: String,
     createdAt: Date,
-    userId: mongoose.Schema.Types.ObjectId,
+    userId: String, // Changed from ObjectId to String to support guest users
     isNewAddress: Boolean
   },
   totalAmount: {
