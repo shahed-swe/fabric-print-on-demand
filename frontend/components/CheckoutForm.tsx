@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 interface CheckoutFormProps {
   clientSecret: string;
@@ -13,7 +13,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  const cardElementOptions = {
+  const elementOptions = {
     style: {
       base: {
         fontSize: '16px',
@@ -26,7 +26,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
         color: '#9e2146',
       },
     },
-    hidePostalCode: true,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,11 +33,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
     if (!stripe || !elements) return;
 
     setProcessing(true);
-    const cardElement = elements.getElement(CardElement);
+    const cardNumberElement = elements.getElement(CardNumberElement);
 
     const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
       payment_method: {
-        card: cardElement!,
+        card: cardNumberElement!,
       },
     });
 
@@ -52,19 +51,34 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
 
   return (
     <form onSubmit={handleSubmit}>
-      <CardElement options={cardElementOptions} />
-      {error && <div className="text-red-500 mt-2 text-sm">{error}</div>}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+        <CardNumberElement options={elementOptions} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+          <CardExpiryElement options={elementOptions} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Security Code</label>
+          <CardCvcElement options={elementOptions} />
+        </div>
+      </div>
+
+      {error && <div className="text-red-500 mb-3 text-sm">{error}</div>}
       <div className='grid grid-cols-2 gap-4'>
         <button
           type="submit"
           disabled={!stripe || processing}
-          className="mt-4 px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 disabled:bg-gray-400"
+          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 disabled:bg-gray-400"
         >
           {processing ? 'Processing...' : 'Pay Now'}
         </button>
         <button
           onClick={() => setShowPayment(false)}
-          className="mt-4 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
+          className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200"
         >
           Cancel
         </button>
