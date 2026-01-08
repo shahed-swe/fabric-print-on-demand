@@ -6,7 +6,9 @@ const mongoose = require('mongoose');
 
 exports.createOrder = async (req, res) => {
   const { userId, items, paymentStatus, totalAmount, status, shippingAddress } = req.body;
-  console.log(items)
+  console.log('Creating order with:');
+  console.log('- totalAmount:', totalAmount);
+  console.log('- items:', items);
   if (!userId || !items || items.length === 0) {
     return res.status(400).json({ error: 'Invalid request' });
   }

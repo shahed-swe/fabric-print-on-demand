@@ -396,8 +396,16 @@ export default function OrderDetails() {
                   <span className="text-gray-600">Items:</span>
                   <span className="text-gray-900 font-medium">{order.items?.length || 0}</span>
                 </div>
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between">
+                <div className="border-t pt-2 mt-2 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal:</span>
+                    <span className="text-gray-900">${itemTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Delivery Charge:</span>
+                    <span className="text-gray-900">$7.00</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t">
                     <span className="font-semibold text-gray-900">Total:</span>
                     <span className="font-bold text-primary-600">${order.totalAmount?.toFixed(2) || itemTotal.toFixed(2)}</span>
                   </div>

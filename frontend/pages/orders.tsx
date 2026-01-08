@@ -63,6 +63,7 @@ interface ShippingAddress {
 const OrdersPage = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [shippingAddresses, setShippingAddresses] = useState<{ [key: string]: ShippingAddress }>({});
+    const [loading, setLoading] = useState(true);
     const { user } = useAuth();
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [selectedAddress, setSelectedAddress] = useState<ShippingAddress | null>(null);
@@ -70,6 +71,7 @@ const OrdersPage = () => {
     useEffect(() => {
         const fetchOrdersAndAddresses = async () => {
             try {
+                setLoading(true);
                 const ordersData = await orderService.getOrders();
                 console.log('Orders fetched:', ordersData);
                 
@@ -114,6 +116,8 @@ const OrdersPage = () => {
                 setShippingAddresses(addressesMap);
             } catch (error) {
                 console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -206,7 +210,16 @@ const OrdersPage = () => {
                     <p className="text-gray-600">Track and manage your custom print orders</p>
                 </div>
 
-                {orders.length === 0 ? (
+                {loading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="text-center">
+                            <div className="inline-block">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+                            </div>
+                            <p className="text-gray-600 text-lg">Loading your orders...</p>
+                        </div>
+                    </div>
+                ) : orders.length === 0 ? (
                     <div className="text-center py-12">
                         <div className="bg-white rounded-lg shadow-md p-8 max-w-md mx-auto">
                             <div className="mb-4">
@@ -475,10 +488,20 @@ const OrdersPage = () => {
                                             
                                             {/* Total */}
                                             <div className="mt-4 pt-4 border-t border-gray-200">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-sm text-gray-600">Subtotal:</span>
+                                                    <span className="text-sm text-gray-600">
+                                                        ${order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <span className="text-sm text-gray-600">Delivery Charge:</span>
+                                                    <span className="text-sm text-gray-600">$7.00</span>
+                                                </div>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-lg font-semibold text-gray-900">Total:</span>
                                                     <span className="text-xl font-bold text-orange-600">
-                                                        ${order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                                                        ${order.totalAmount.toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>

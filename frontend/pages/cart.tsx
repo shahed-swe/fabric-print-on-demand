@@ -221,6 +221,7 @@ const Cart = () => {
       });
 
       console.log('Order items being sent:', orderItems); // Debug log
+      console.log('Total amount:', calculateTotal()); // Debug log
 
       await orderService.createOrder({
         userId: user?._id ?? '',
