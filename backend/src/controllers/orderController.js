@@ -68,6 +68,11 @@ exports.createOrder = async (req, res) => {
       paymentStatus: paymentStatus || 'pending',
       status: orderStatus,
       totalAmount,
+      statusHistory: [{
+        status: orderStatus,
+        changedAt: new Date(),
+        changedBy: 'System'
+      }],
       createdAt: new Date(),
     });
 
@@ -179,6 +184,14 @@ exports.updateOrderStatus = async (req, res) => {
 
     // Update order status
     order.status = status;
+    
+    // Add to status history
+    order.statusHistory.push({
+      status: status,
+      changedAt: new Date(),
+      changedBy: 'Admin' // Could be enhanced to use req.user.name if you have auth
+    });
+    
     await order.save();
     
     return res.status(200).json({ 
