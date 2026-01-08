@@ -547,15 +547,17 @@ const OrdersPage = () => {
 
                                                     {/* Download Buttons */}
                                                     <div className="space-y-2">
-                                                        {order.items.map(item => (
-                                                            <button
-                                                                key={item._id}
-                                                                onClick={() => handleDownloadFile(item.fileId)}
-                                                                className="w-full flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200"
-                                                            >
-                                                                <FaDownload className="mr-2" />
-                                                                Download Design File
-                                                            </button>
+                                                        {order.items
+                                                            .filter(item => item.itemType === 'design' && item.designId?.fileId)
+                                                            .map(item => (
+                                                                <button
+                                                                    key={item._id}
+                                                                    onClick={() => item.designId && handleDownloadFile(item.designId.fileId)}
+                                                                    className="w-full flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200"
+                                                                >
+                                                                    <FaDownload className="mr-2" />
+                                                                    Download Design File
+                                                                </button>
                                                         ))}
                                                     </div>
                                                 </div>

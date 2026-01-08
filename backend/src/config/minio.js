@@ -9,6 +9,8 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_SECRET_KEY || 'minioadmin123'
 });
 
+const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+
 const bucketName = process.env.MINIO_BUCKET_NAME || 'fabric-designs';
 
 // Initialize bucket
@@ -59,7 +61,7 @@ const uploadFile = async (fileBuffer, fileName, contentType = 'application/octet
     return {
       bucket: bucketName,
       fileName: fileName,
-      url: `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`
+      url: `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`
     };
   } catch (err) {
     console.error('Error uploading file to MinIO:', err);
@@ -98,7 +100,7 @@ const deleteFile = async (fileName) => {
 
 // Get file URL
 const getFileUrl = (fileName) => {
-  return `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
+  return `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
 };
 
 // List all files in bucket
