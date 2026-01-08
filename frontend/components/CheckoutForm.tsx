@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 interface CheckoutFormProps {
   clientSecret: string;
@@ -13,17 +13,33 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const cardElementOptions = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424242',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+    hidePostalCode: true,
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
 
     setProcessing(true);
-    const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/order-confirmation`,
+    const cardElement = elements.getElement(CardElement);
+
+    const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement!,
       },
-      redirect: 'if_required',
     });
 
     if (paymentError) {
@@ -36,8 +52,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
 
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      <CardElement options={cardElementOptions} />
+      {error && <div className="text-red-500 mt-2 text-sm">{error}</div>}
       <div className='grid grid-cols-2 gap-4'>
         <button
           type="submit"
