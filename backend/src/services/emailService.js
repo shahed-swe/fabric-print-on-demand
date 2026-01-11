@@ -192,4 +192,73 @@ const sendOrderInvoice = async (order, user) => {
 module.exports = {
   sendOrderInvoice,
   generateInvoiceHTML,
+  sendPasswordResetEmail,
+};
+
+const sendPasswordResetEmail = async (email, name, resetUrl) => {
+  try {
+    const mailOptions = {
+      from: `"Fabric Print on Demand" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #f97316; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+            .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }
+            .button { display: inline-block; background-color: #f97316; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; font-size: 12px; color: #999; margin-top: 20px; }
+            .warning { background-color: #fef2f2; padding: 12px; border-left: 4px solid #f97316; margin: 15px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Password Reset Request</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${name},</p>
+              
+              <p>We received a request to reset your password. Click the button below to reset your password:</p>
+              
+              <center>
+                <a href="${resetUrl}" class="button">Reset Your Password</a>
+              </center>
+              
+              <p>Or copy and paste this link in your browser:</p>
+              <p style="word-break: break-all; color: #0066cc; text-decoration: underline;">
+                ${resetUrl}
+              </p>
+              
+              <div class="warning">
+                <strong>⚠️ Important:</strong> This link will expire in 15 minutes. If you didn't request this password reset, please ignore this email.
+              </div>
+              
+              <p>If you have any questions or need further assistance, please don't hesitate to contact our support team.</p>
+              
+              <p>Best regards,<br>
+              The Fabric Print on Demand Team</p>
+            </div>
+            <div class="footer">
+              <p>&copy; 2024 Fabric Print on Demand. All rights reserved.</p>
+              <p>This email was sent to ${email}</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
 };
