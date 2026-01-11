@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon, ChevronLeftIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
+import { formatOrderIdDisplay, getOrderIdComponents } from '../utils/orderIdGenerator';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -231,8 +232,15 @@ export default function Orders() {
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().substring(0, 8) || 'N/A'}</p>
-                        <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                        <div>
+                          <p className="text-sm font-medium text-primary-600 truncate">{formatOrderIdDisplay(order, order.user).customId}</p>
+                          <p className="text-xs text-gray-500 mt-1">ID: {order._id?.toString().substring(0, 8).toUpperCase() || 'N/A'}</p>
+                          <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                            <span>Order: {getOrderIdComponents(order, order.user).orderDate}</span>
+                            <span>Delivery: {getOrderIdComponents(order, order.user).deliveryDate}</span>
+                          </div>
+                        </div>
+                        <span className={`ml-4 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>
                       </div>

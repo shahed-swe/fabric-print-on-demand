@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import axios from '../config/axios';
+import { formatOrderIdDisplay, getOrderIdComponents } from '../utils/orderIdGenerator';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
@@ -120,9 +121,16 @@ export default function OrderDetails() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="mb-4 md:mb-0">
             <h1 className="text-3xl font-bold text-gray-900">
-              Order #{order._id?.toString().substring(0, 8) || 'N/A'}
+              Order #{formatOrderIdDisplay(order, order.user).customId}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
+              System ID: {order._id?.toString().substring(0, 8).toUpperCase() || 'N/A'}
+            </p>
+            <div className="flex gap-4 mt-2 text-sm text-gray-600">
+              <span>Order Date: <span className="font-semibold">{getOrderIdComponents(order, order.user).orderDate}</span></span>
+              <span>Delivery Date: <span className="font-semibold">{getOrderIdComponents(order, order.user).deliveryDate}</span></span>
+            </div>
+            <p className="text-gray-600 mt-3">
               Customer: <span className="font-semibold">{order.user?.name || 'Unknown'}</span>
             </p>
             <p className="text-gray-600">

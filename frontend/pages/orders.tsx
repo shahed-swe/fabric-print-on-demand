@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { orderService } from '../services/order';
 import { shippingService } from '../services/shipping';
 import { designService } from '../services/design';
+import { formatOrderIdDisplay, getOrderIdComponents } from '../utils/orderIdGenerator';
 
 interface Order {
     _id: string;
@@ -245,9 +246,18 @@ const OrdersPage = () => {
                                 <div className="border-b border-gray-200 p-6">
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                                         <div className="mb-4 sm:mb-0">
-                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                Order #{order._id.slice(-8)}
-                                            </h3>
+                                            <div className="mb-2">
+                                                <h3 className="text-lg font-semibold text-gray-900">
+                                                    Order #{formatOrderIdDisplay(order, order.user).customId}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    System ID: {order._id.slice(-8).toUpperCase()}
+                                                </p>
+                                                <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                                                    <span>Order Date: {getOrderIdComponents(order, order.user).orderDate}</span>
+                                                    <span>Delivery Date: {getOrderIdComponents(order, order.user).deliveryDate}</span>
+                                                </div>
+                                            </div>
                                             <p className="text-sm text-gray-600">
                                                 Customer: {order.user.name}
                                             </p>

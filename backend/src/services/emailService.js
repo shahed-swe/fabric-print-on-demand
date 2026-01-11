@@ -171,6 +171,11 @@ const generateInvoiceHTML = (order, user) => {
 
 const sendOrderInvoice = async (order, user) => {
   try {
+    if (!transporter) {
+      console.warn('Email not configured. Skipping invoice email.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const invoiceHTML = generateInvoiceHTML(order, user);
     
     const mailOptions = {
@@ -189,14 +194,13 @@ const sendOrderInvoice = async (order, user) => {
   }
 };
 
-module.exports = {
-  sendOrderInvoice,
-  generateInvoiceHTML,
-  sendPasswordResetEmail,
-};
-
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
   try {
+    if (!transporter) {
+      console.warn('Email not configured. Cannot send password reset email.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
     const mailOptions = {
       from: `"Fabric Print on Demand" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -261,4 +265,10 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
     console.error('Error sending password reset email:', error);
     throw error;
   }
+};
+
+module.exports = {
+  sendOrderInvoice,
+  generateInvoiceHTML,
+  sendPasswordResetEmail,
 };
