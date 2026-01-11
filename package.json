@@ -5,7 +5,7 @@
     "scripts": {
         "frontend": "cd frontend && npm run dev",
         "backend": "cd backend && npm run dev",
-        "admin": "cd admin && export PORT=3001 && npm run start",
+        "admin": "cd admin && npm run start",
         "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../admin && npm install",
         "start:all": "npm-run-all --parallel admin backend frontend"
     },

@@ -17,11 +17,20 @@ export const authService = {
   },
 
   resetPassword: async (token: string, newPassword: string, confirmPassword: string) => {
+    console.log('Auth service - resetPassword called with token:', token?.substring(0, 20) + '...');
     const response = await api.post('/auth/reset-password', {
       token,
       newPassword,
       confirmPassword
     });
+    console.log('Auth service - Response:', response.data);
+    return response.data;
+  },
+
+  validateResetToken: async (token: string) => {
+    console.log('Auth service - validateResetToken called with token:', token?.substring(0, 20) + '...');
+    const response = await api.post('/auth/validate-reset-token', { token });
+    console.log('Auth service - Token validation response:', response.data);
     return response.data;
   },
 

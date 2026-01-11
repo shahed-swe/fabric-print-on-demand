@@ -14,14 +14,37 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tokenValid, setTokenValid] = useState(true);
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Wait for router to be ready and token to be loaded
+    if (!router.isReady) {
+      return;
+    }
+
+    console.log('Reset password - Token:', token);
+    
     if (!token) {
       setTokenValid(false);
       setError('Invalid or missing reset token');
+    } else {
+      // Validate token with backend
+      validateToken();
     }
-  }, [token]);
+  }, [router.isReady, token]);
+
+  const validateToken = async () => {
+    try {
+      console.log('Validating token with backend...');
+      const result = await authService.validateResetToken(token as string);
+      console.log('✅ Token validation successful!', result);
+      setTokenValid(true);
+    } catch (err: any) {
+      console.error('❌ Token validation failed:', err);
+      setTokenValid(false);
+      setError(err.message || 'Invalid or expired reset token');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +53,11 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
+      console.log('=== RESET PASSWORD FORM SUBMISSION ===');
+      console.log('Token:', token);
+      console.log('Token type:', typeof token);
+      console.log('Token length:', token?.length);
+
       if (!formData.newPassword || !formData.confirmPassword) {
         setError('Please enter both passwords');
         setLoading(false);
@@ -48,11 +76,14 @@ const ResetPassword = () => {
         return;
       }
 
+      console.log('Calling resetPassword with token:', token);
       await authService.resetPassword(
         token as string,
         formData.newPassword,
         formData.confirmPassword
       );
+      console.log('✅ Password reset successful!');
+      console.log('=====================================\n');
 
       setSuccess('Password has been reset successfully. Redirecting to login...');
       setFormData({
@@ -65,11 +96,28 @@ const ResetPassword = () => {
         router.push('/login');
       }, 2000);
     } catch (err: any) {
+      console.error('❌ Reset password error:', err);
+      console.log('=====================================\n');
       setError(err.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }
   };
+
+  if (tokenValid === null) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+            </div>
+            <p className="text-center text-gray-600 mt-4">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!tokenValid) {
     return (

@@ -177,32 +177,44 @@ const sendOrderInvoice = async (order, user) => {
     }
 
     const invoiceHTML = generateInvoiceHTML(order, user);
+    const fromEmail = process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER || 'noreply@fabricpod.com';
+    const fromName = process.env.BREVO_FROM_NAME || 'Fabric Print on Demand';
     
     const mailOptions = {
-      from: `"Fabric Print on Demand" <${process.env.EMAIL_USER}>`,
+      from: `"${fromName}" <${fromEmail}>`,
       to: user?.email || order.shippingAddress?.email || 'customer@example.com',
       subject: `Order Confirmation - Order #${order._id.toString().slice(-8).toUpperCase()}`,
       html: invoiceHTML,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Invoice email sent:', info.messageId);
+    console.log('✅ Invoice email sent:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending invoice email:', error);
+    console.error('❌ Error sending invoice email:', error.message);
     return { success: false, error: error.message };
   }
 };
 
 const sendPasswordResetEmail = async (email, name, resetUrl) => {
   try {
+    console.log('\n========== SENDING PASSWORD RESET EMAIL ==========');
+    console.log('Transporter available:', transporter ? 'YES ✅' : 'NO ❌');
+    
     if (!transporter) {
-      console.warn('Email not configured. Cannot send password reset email.');
+      console.warn('⚠️  Email not configured. Cannot send password reset email.');
+      console.log('==================================================\n');
       return { success: false, error: 'Email service not configured' };
     }
 
+    const fromEmail = process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER || 'noreply@fabricpod.com';
+    const fromName = process.env.BREVO_FROM_NAME || 'Fabric Print on Demand';
+    console.log('From:', `${fromName} <${fromEmail}>`);
+    console.log('To:', email);
+    console.log('Name:', name);
+
     const mailOptions = {
-      from: `"Fabric Print on Demand" <${process.env.EMAIL_USER}>`,
+      from: `"${fromName}" <${fromEmail}>`,
       to: email,
       subject: 'Password Reset Request',
       html: `
@@ -258,11 +270,16 @@ const sendPasswordResetEmail = async (email, name, resetUrl) => {
       `,
     };
 
+    console.log('Sending email via Brevo SMTP...');
     const info = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent:', info.messageId);
+    console.log('✅ Password reset email sent successfully!');
+    console.log('Message ID:', info.messageId);
+    console.log('==================================================\n');
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error('❌ Error sending password reset email:', error.message);
+    console.error('Full error:', error);
+    console.log('==================================================\n');
     throw error;
   }
 };

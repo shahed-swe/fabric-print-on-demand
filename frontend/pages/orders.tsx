@@ -38,6 +38,11 @@ interface Order {
     }[];
     paymentStatus: string;
     status: string;
+    statusHistory?: Array<{
+        status: string;
+        changedAt: string;
+        changedBy?: string;
+    }>;
     shippingAddress: {
         fullName: string;
         streetAddress: string;
@@ -48,6 +53,7 @@ interface Order {
     };
     userId: string;
     totalAmount: number;
+    createdAt: string;
 }
 
 interface ShippingAddress {
