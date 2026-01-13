@@ -34,10 +34,11 @@ router.route('/categories/:id')
   .delete(categoryController.deleteCategory);
 
 // Product routes (public - for customers)
-router.get('/products', productController.getProducts);
+// NOTE: Specific routes must come BEFORE parameterized routes to avoid shadowing
 router.get('/products/featured', productController.getFeaturedProducts);
 router.get('/products/category/:categoryId', productController.getProductsByCategory);
 router.get('/products/:id', productController.getProduct);
+router.get('/products', productController.getProducts);
 
 // Design routes
 router.post('/designs', designController.saveDesign);

@@ -1,6 +1,6 @@
 const path = require('path');
 const File = require('../models/File');
-const { uploadFile: uploadToMinio, downloadFile: downloadFromMinio, deleteFile: deleteFromMinio, getFileUrl } = require('../config/minio');
+const { uploadFile: uploadToDisk, downloadFile: downloadFromDisk, deleteFile: deleteFromDisk, getFileUrl } = require('../config/fileStorage');
 
 exports.uploadFile = async (req, res) => {
   try {
@@ -13,26 +13,25 @@ exports.uploadFile = async (req, res) => {
     const file = req.files.file;
     const filename = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
     
-    // Upload to MinIO
-    const uploadResult = await uploadToMinio(file.data, filename, file.mimetype);
+    // Upload to disk
+    const uploadResult = await uploadToDisk(file.data, filename, file.mimetype);
     
     // Store file information in MongoDB
     const fileInfo = await File.create({
       filename,
       originalName: file.name,
-      path: uploadResult.url,  // Store MinIO URL
+      path: uploadResult.url,  // Store file URL
       size: file.size,
       mimetype: file.mimetype,
-      bucket: uploadResult.bucket,
       uploadedAt: new Date(),
       uploadedBy: req.user?._id
     });
 
-    console.log('File uploaded successfully to MinIO:', filename);
+    console.log('File uploaded successfully to disk:', filename);
     res.status(200).json({ 
       fileId: filename,
       url: uploadResult.url,
-      bucket: uploadResult.bucket
+      filename: filename
     });
   } catch (error) {
     console.error('Upload error:', error);
@@ -48,10 +47,10 @@ exports.getFile = async (req, res) => {
   try {
     const { fileid } = req.params;
     
-    console.log('Retrieving file from MinIO:', fileid);
+    console.log('Retrieving file from disk:', fileid);
     
-    // Download file from MinIO
-    const fileBuffer = await downloadFromMinio(fileid);
+    // Download file from disk
+    const fileBuffer = await downloadFromDisk(fileid);
     
     // Try to get file info from database for metadata
     const fileInfo = await File.findOne({ filename: fileid });
@@ -80,14 +79,20 @@ exports.getFile = async (req, res) => {
     // For images, use inline disposition to allow viewing in browser
     if (contentType.startsWith('image/')) {
       res.setHeader('Content-Disposition', `inline; filename=${fileid}`);
+      // Enable aggressive caching for images since they are immutable
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+      // Add ETag for conditional requests
+      res.setHeader('ETag', `"${Buffer.from(fileid).toString('base64')}"`);
     } else {
       res.setHeader('Content-Disposition', `attachment; filename=${fileid}`);
-    }
-    
-    // Enable caching for images
-    if (contentType.startsWith('image/')) {
+      // Standard caching for other files
       res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours
     }
+    
+    // Add CORS headers explicitly for images
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     // Send the file buffer
     res.send(fileBuffer);
@@ -119,10 +124,10 @@ exports.deleteFile = async (req, res) => {
   try {
     const { fileid } = req.params;
     
-    console.log('Deleting file from MinIO:', fileid);
+    console.log('Deleting file from disk:', fileid);
     
-    // Delete from MinIO
-    await deleteFromMinio(fileid);
+    // Delete from disk
+    await deleteFromDisk(fileid);
     
     // Delete from database
     await File.deleteOne({ filename: fileid });

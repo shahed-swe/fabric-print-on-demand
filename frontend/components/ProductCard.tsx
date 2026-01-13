@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FaStar, FaShoppingCart, FaPencilAlt } from 'react-icons/fa';
+import ImageLoader from './ImageLoader';
 
 interface ProductCardProps {
   product: {
@@ -29,17 +30,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const discount = product.basePrice && product.basePrice > product.price 
     ? Math.round(((product.basePrice - product.price) / product.basePrice) * 100)
     : 0;
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <div className="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
       {/* Product Image */}
       <Link href={`/products/${product._id}`}>
         <a className="block relative overflow-hidden bg-gray-100">
-          <div className="aspect-w-1 aspect-h-1 w-full">
-            <img
-              src={primaryImage?.url || 'https://via.placeholder.com/400'}
+          <div className="aspect-w-1 aspect-h-1 w-full h-64">
+            <ImageLoader
+              src={primaryImage?.url || ''}
               alt={primaryImage?.alt || product.name}
-              className="w-full h-64 object-cover object-center group-hover:scale-110 transition-transform duration-300"
+              className="w-full h-64 group-hover:scale-110 transition-transform duration-300"
+              objectFit="cover"
+              priority={false}
+              onLoad={() => setImageLoaded(true)}
             />
           </div>
           

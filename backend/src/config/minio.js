@@ -58,10 +58,17 @@ const uploadFile = async (fileBuffer, fileName, contentType = 'application/octet
     await minioClient.putObject(bucketName, fileName, fileBuffer, fileBuffer.length, metaData);
     
     console.log(`✓ File uploaded successfully: ${fileName}`);
+    
+    // Generate URL that routes through the API proxy instead of direct MinIO access
+    // This avoids CORS issues and works even when MinIO is not directly accessible from frontend
+    const apiBaseUrl = process.env.MINIO_API_PROXY_URL || 
+                       process.env.API_URL || 
+                       `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}`;
+    
     return {
       bucket: bucketName,
       fileName: fileName,
-      url: `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`
+      url: `${apiBaseUrl}/files/${fileName}`
     };
   } catch (err) {
     console.error('Error uploading file to MinIO:', err);
@@ -98,9 +105,13 @@ const deleteFile = async (fileName) => {
   }
 };
 
-// Get file URL
+// Get file URL - for API proxy
 const getFileUrl = (fileName) => {
-  return `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`;
+  // Return API proxy URL instead of direct MinIO URL
+  const apiBaseUrl = process.env.MINIO_API_PROXY_URL || 
+                     process.env.API_URL || 
+                     `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}`;
+  return `${apiBaseUrl}/files/${fileName}`;
 };
 
 // List all files in bucket

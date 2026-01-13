@@ -1,12 +1,13 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
-const { initializeBucket } = require('./config/minio');
+const { uploadsDir } = require('./config/fileStorage');
 
 const app = express();
 
@@ -28,6 +29,9 @@ app.use(fileUpload({
   },
 }));
 
+// Serve uploaded files as static files
+app.use('/uploads', express.static(uploadsDir));
+
 // Routes
 app.use('/api', apiRoutes);
 app.use('/api/admin', adminRoutes);
@@ -37,10 +41,8 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✓ Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Initialize MinIO bucket
-initializeBucket()
-  .then(() => console.log('✓ MinIO initialized'))
-  .catch((err) => console.error('MinIO initialization error:', err));
+// Initialize file storage (creates uploads directory)
+console.log(`✓ File storage initialized at: ${uploadsDir}`);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

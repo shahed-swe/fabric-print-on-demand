@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import ImageLoader from '@/components/ImageLoader';
 import { productService } from '@/services/product';
 import { cartService } from '@/services/cart';
 import { useAuth } from '@/context/AuthContext';
@@ -220,10 +221,12 @@ const ProductDetails = () => {
           <div className="space-y-4">
             {/* Main Image Canvas */}
             <div className="relative bg-gray-100 rounded-lg overflow-hidden aspect-square">
-              <img
-                src={selectedImage || 'https://via.placeholder.com/600'}
+              <ImageLoader
+                src={selectedImage || ''}
                 alt={product.name}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full"
+                objectFit="cover"
+                priority={true}
               />
               
               {/* Badges */}
@@ -264,10 +267,12 @@ const ProductDetails = () => {
                         : 'border-gray-200 hover:border-orange-300'
                     }`}
                   >
-                    <img
+                    <ImageLoader
                       src={image.url}
                       alt={image.alt || `${product.name} - Image ${idx + 1}`}
-                      className="w-full h-full object-cover object-center"
+                      className="w-full h-full"
+                      objectFit="cover"
+                      priority={false}
                     />
                   </button>
                 ))}
