@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { FaShoppingCart, FaChevronDown } from 'react-icons/fa';
+import { FaShoppingCart, FaChevronDown, FaUser, FaClipboardList, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
@@ -11,8 +11,10 @@ const NavBar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { cartCount } = useCart();
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(countries[13]); // Default to USA
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -21,6 +23,13 @@ const NavBar = () => {
         !countryDropdownRef.current.contains(event.target as Node)
       ) {
         setShowCountryDropdown(false);
+      }
+      
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowUserDropdown(false);
       }
     };
 
@@ -118,21 +127,66 @@ const NavBar = () => {
               </Link>
           {isAuthenticated ? (
             <>
-              {user && 'name' in user && (
-                <span className="text-gray-600">Welcome, {user.name}</span>
-              )}
-              <Link href="/orders">
-                <a className="text-gray-600 hover:text-orange-500 transition-colors">
-                  Orders
-                </a>
-              </Link>
-              
-              <button
-                onClick={logout}
-                className="text-gray-600 hover:text-orange-500 transition-colors"
-              >
-                Logout
-              </button>
+              {/* User Dropdown Menu */}
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-orange-500 transition-colors rounded-lg hover:bg-gray-50"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    {user && 'name' in user ? user.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <FaChevronDown className="text-xs" />
+                </button>
+
+                {showUserDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                    {/* User Info Header */}
+                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-3 text-white">
+                      <p className="font-semibold text-sm">
+                        {user && 'name' in user ? user.name : 'User'}
+                      </p>
+                      <p className="text-xs text-orange-100">
+                        {user && 'email' in user ? user.email : ''}
+                      </p>
+                    </div>
+
+                    {/* Dropdown Items */}
+                    <div className="py-2">
+                      <Link href="/profile">
+                        <a
+                          onClick={() => setShowUserDropdown(false)}
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors border-b border-gray-100"
+                        >
+                          <FaUser className="w-4 h-4" />
+                          <span>My Profile</span>
+                        </a>
+                      </Link>
+
+                      <Link href="/orders">
+                        <a
+                          onClick={() => setShowUserDropdown(false)}
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors border-b border-gray-100"
+                        >
+                          <FaClipboardList className="w-4 h-4" />
+                          <span>My Orders</span>
+                        </a>
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          logout();
+                          setShowUserDropdown(false);
+                        }}
+                        className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <FaSignOutAlt className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>

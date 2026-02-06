@@ -9,6 +9,7 @@ const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const shippingController = require('../controllers/shippingController');
 const productController = require('../controllers/productController');
+const profileController = require('../controllers/profileController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -58,6 +59,13 @@ router.put('/orders/:id', orderController.updateOrderStatus);
 // Shipping routes
 router.get('/shipping', shippingController.getAddresses);
 router.post('/shipping', shippingController.addAddress);
+
+// Profile routes
+router.get('/profile', protect, profileController.getProfile);
+router.post('/profile/check-email', protect, profileController.checkEmailExists);
+router.put('/profile', protect, profileController.updateProfile);
+router.put('/profile/password', protect, profileController.updatePassword);
+router.post('/profile/picture', protect, profileController.uploadProfilePicture);
 
 // Ensure all routes have valid callback functions
 router.get('/some-route', protect, (req, res) => {
