@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { compressImageWithDimensions } from '../utils/imageCompressor';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -15,6 +15,11 @@ const getHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
+interface ErrorResponse {
+  message?: string;
+  error?: string;
+}
+
 export const profileService = {
   getProfile: async () => {
     try {
@@ -23,7 +28,8 @@ export const profileService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch profile' };
+      const axiosError = error as AxiosError<ErrorResponse>;
+      throw axiosError.response?.data || { message: 'Failed to fetch profile' };
     }
   },
 
@@ -38,7 +44,8 @@ export const profileService = {
       );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to check email' };
+      const axiosError = error as AxiosError<ErrorResponse>;
+      throw axiosError.response?.data || { message: 'Failed to check email' };
     }
   },
 
@@ -49,7 +56,8 @@ export const profileService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to update profile' };
+      const axiosError = error as AxiosError<ErrorResponse>;
+      throw axiosError.response?.data || { message: 'Failed to update profile' };
     }
   },
 
@@ -64,7 +72,8 @@ export const profileService = {
       });
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to update password' };
+      const axiosError = error as AxiosError<ErrorResponse>;
+      throw axiosError.response?.data || { message: 'Failed to update password' };
     }
   },
 
@@ -88,7 +97,8 @@ export const profileService = {
       );
       return response.data;
     } catch (error) {
-      throw error.response?.data || { message: 'Failed to upload profile picture' };
+      const axiosError = error as AxiosError<ErrorResponse>;
+      throw axiosError.response?.data || { message: 'Failed to upload profile picture' };
     }
   },
 };
