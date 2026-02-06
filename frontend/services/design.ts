@@ -44,6 +44,7 @@ export const designService = {
   saveDesign: async (designData: {
     userId?: string;
     fileId: string;
+    frontImageFileId?: string | null;
     sizeQuantities: Record<string, number>;
     title: string;
     price: number;

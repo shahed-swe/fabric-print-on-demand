@@ -869,6 +869,32 @@ const Index = () => {
       const pdfBlob = pdf.output('blob');
       const file = new File([pdfBlob], 't-shirt-design.pdf', { type: 'application/pdf' });
 
+      // Upload front image separately using canvas.toBlob()
+      let frontImageFileId = null;
+      try {
+        const frontImageBlob = await new Promise<Blob>((resolve, reject) => {
+          frontCanvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to convert canvas to blob'));
+              }
+            },
+            'image/png',
+            1.0
+          );
+        });
+
+        const frontImageFile = new File([frontImageBlob], 'front-design.png', { type: 'image/png' });
+        const frontImageResponse = await designService.uploadFile(frontImageFile);
+        frontImageFileId = frontImageResponse.fileId;
+        console.log('Front image uploaded successfully with fileId:', frontImageFileId);
+      } catch (error) {
+        console.error('Error uploading front image:', error);
+        toast.warning('Front image upload failed, but design will be saved');
+      }
+
       // Use the design service instead of direct axios calls
       const uploadResponse = await designService.uploadFile(file);
       
@@ -883,6 +909,7 @@ const Index = () => {
       await designService.saveDesign({
         userId: user?._id,
         fileId: uploadResponse.fileId,
+        frontImageFileId: frontImageFileId, // Include the front image file ID
         sizeQuantities,
         title: image.title,
         price: designPrice,

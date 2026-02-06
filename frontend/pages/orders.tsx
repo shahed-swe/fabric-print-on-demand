@@ -406,6 +406,15 @@ const OrdersPage = () => {
                                                                     alt={item.productId.name}
                                                                     className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                                                                 />
+                                                            ) : itemType === 'design' && item.designId?.frontImageFileId ? (
+                                                                <img
+                                                                    src={`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.customprintingservices.com.au/api'}/files/${item.designId.frontImageFileId}`}
+                                                                    alt="Design front view"
+                                                                    className="w-16 h-16 object-cover rounded-lg border border-purple-200"
+                                                                    onError={(e) => {
+                                                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80';
+                                                                    }}
+                                                                />
                                                             ) : (
                                                                 <div className="w-16 h-16 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center flex-shrink-0">
                                                                     <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

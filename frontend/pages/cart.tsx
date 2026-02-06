@@ -301,11 +301,22 @@ const Cart = () => {
                   {/* Design Preview */}
                   {item.itemType === 'design' && (
                     <div className="flex-shrink-0">
-                      <div className="w-32 h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
-                        <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                      </div>
+                      {item.designId?.frontImageFileId ? (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.customprintingservices.com.au/api'}/files/${item.designId.frontImageFileId}`}
+                          alt="Design front view"
+                          className="w-32 h-32 object-cover rounded-lg border border-purple-200"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-32 h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
+                          <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   )}
 
