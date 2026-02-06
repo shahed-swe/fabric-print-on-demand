@@ -18,6 +18,8 @@ interface RightSideCompProps {
   handleSizeQuantityChange: (size: keyof SizeQuantities, quantity: number) => void;
   getTotalQuantity: () => number;
   handleSS: () => void;
+  isLoading?: boolean;
+  loadingStatus?: string;
 }
 
 const RightSideComp: React.FC<RightSideCompProps> = ({
@@ -27,7 +29,9 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
   backPrice,
   handleSizeQuantityChange,
   getTotalQuantity,
-  handleSS
+  handleSS,
+  isLoading = false,
+  loadingStatus = ''
 }) => {
   const { isAuthenticated } = useAuth();
 
@@ -87,11 +91,14 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
           <div className="flex gap-4 pt-4">
             <button
               onClick={handleSS}
-              // disabled={!isAuthenticated}
-              // className={`w-full px-6 py-3 rounded-lg transition-colors ${isAuthenticated ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-              className={`w-full px-6 py-3 rounded-lg transition-colors bg-green-500 text-white hover:bg-green-600`}
+              disabled={isLoading}
+              className={`w-full px-6 py-3 rounded-lg transition-colors font-medium text-lg ${
+                isLoading
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-green-500 text-white hover:bg-green-600 active:scale-95'
+              }`}
             >
-              Add To Cart
+              {isLoading ? 'Processing...' : 'Add To Cart'}
             </button>
           </div>
         </div>
