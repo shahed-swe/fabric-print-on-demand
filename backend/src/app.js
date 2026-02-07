@@ -30,9 +30,6 @@ app.use(fileUpload({
   },
 }));
 
-// Serve uploaded files as static files
-app.use('/uploads', express.static(uploadsDir));
-
 // Routes
 app.use('/api', apiRoutes);
 app.use('/api/admin', adminRoutes);
@@ -42,8 +39,10 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✓ Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Initialize file storage (creates uploads directory)
-console.log(`✓ File storage initialized at: ${uploadsDir}`);
+// Initialize MinIO file storage
+initializeBucket()
+  .then(() => console.log('✓ MinIO bucket initialized'))
+  .catch((err) => console.error('MinIO initialization error:', err));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
