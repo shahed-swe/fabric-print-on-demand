@@ -59,6 +59,7 @@ router.put('/orders/:id', orderController.updateOrderStatus);
 // Shipping routes
 router.get('/shipping', shippingController.getAddresses);
 router.post('/shipping', shippingController.addAddress);
+router.delete('/shipping/:addressId', shippingController.deleteAddress);
 
 // Profile routes
 router.get('/profile', protect, profileController.getProfile);

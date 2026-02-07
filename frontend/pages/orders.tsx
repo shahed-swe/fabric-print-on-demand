@@ -329,7 +329,14 @@ const OrdersPage = () => {
                                                                 <span className="text-sm font-medium text-gray-900">Package Delivered</span>
                                                                 <span className="text-xs text-gray-500">Today 18:29</span>
                                                             </div>
-                                                            <p className="text-sm text-gray-600">Package delivered! [Your Location]</p>
+                                                            <p className="text-sm text-gray-600">
+                                                              Package delivered! 
+                                                              {shippingAddresses[order.userId] ? (
+                                                                <span> at {shippingAddresses[order.userId].city}, {shippingAddresses[order.userId].state}</span>
+                                                              ) : (
+                                                                <span> [Location information not available]</span>
+                                                              )}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 )}

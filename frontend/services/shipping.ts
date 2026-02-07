@@ -26,5 +26,10 @@ export const shippingService = {
       country: addressData.country || 'US'
     });
     return response.data;
+  },
+
+  deleteAddress: async (addressId: string) => {
+    const response = await api.delete(`/shipping/${addressId}`);
+    return response.data;
   }
 };

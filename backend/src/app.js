@@ -1,3 +1,6 @@
+// Load environment variables FIRST before anything else
+require('dotenv').config();
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -5,7 +8,6 @@ const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const { initializeBucket } = require('./config/minio');
-require('dotenv').config();
 
 const app = express();
 

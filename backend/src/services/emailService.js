@@ -174,7 +174,7 @@ const sendOrderInvoice = async (order, user) => {
     const invoiceHTML = generateInvoiceHTML(order, user);
     
     const mailOptions = {
-      from: `"Fabric Print on Demand" <${process.env.EMAIL_USER}>`,
+      from: `"${process.env.BREVO_FROM_NAME || 'Fabric Print on Demand'}" <${process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER}>`,
       to: user?.email || order.shippingAddress?.email || 'customer@example.com',
       subject: `Order Confirmation - Order #${order._id.toString().slice(-8).toUpperCase()}`,
       html: invoiceHTML,
