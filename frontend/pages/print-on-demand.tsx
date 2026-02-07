@@ -25,6 +25,7 @@ import TextEditorModal from "@/components/TextEditorModal";
 import { useRouter } from 'next/router';
 import { productService } from '@/services/product';
 import ProcessingLoader from '@/components/ProcessingLoader';
+import { compressImageWithDimensions } from '@/utils/imageCompressor';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -395,8 +396,11 @@ const Index = () => {
     if (!editor || !file) return;
 
     try {
+      // Compress the image before processing
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
+      
       // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Create a new FileReader instance to display the image
@@ -438,7 +442,7 @@ const Index = () => {
         toast.error('Failed to read the file. Please try again.');
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     } catch (error) {
       console.error('Error uploading image to MinIO:', error);
       toast.error('Failed to upload image. Please try again.');
@@ -451,8 +455,11 @@ const Index = () => {
     if (!editor || !file) return;
 
     try {
+      // Compress the small image (even smaller dimensions)
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
+      
       // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Create a new FileReader instance each time
@@ -508,7 +515,7 @@ const Index = () => {
         toast.error('Failed to read the file. Please try again.');
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     } catch (error) {
       console.error('Error uploading logo to MinIO:', error);
       toast.error('Failed to upload logo. Please try again.');
@@ -526,9 +533,12 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Upload blob to MinIO
+      // Compress the blob before uploading
       const file = new File([blob], 'artwork-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
+      
+      // Upload blob to MinIO
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Now display the image on canvas
@@ -593,9 +603,12 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Upload blob to MinIO
+      // Compress the small image (even smaller dimensions)
       const file = new File([blob], 'logo-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
+      
+      // Upload blob to MinIO
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Now display the image on canvas
