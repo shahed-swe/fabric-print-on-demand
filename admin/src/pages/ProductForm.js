@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { PhotoIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 import axios from '../config/axios';
 import ReactQuill from 'react-quill';
+import ImageCompression from 'browser-image-compression';
 import 'react-quill/dist/quill.snow.css';
 
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
@@ -184,19 +185,88 @@ export default function ProductForm() {
   };
 
   // Image handling
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file, index) => ({
-      url: URL.createObjectURL(file),
-      alt: file.name,
-      isPrimary: formData.images.length === 0 && index === 0,
-      sortOrder: formData.images.length + index,
-      file // Store file for upload
-    }));
+    const compressedImages = [];
+
+    for (const file of files) {
+      try {
+        // Skip if file is already small
+        if (file.size <= 1024 * 1024) {
+          // File is 1MB or less, add as-is
+          compressedImages.push({
+            url: URL.createObjectURL(file),
+            alt: file.name,
+            isPrimary: formData.images.length === 0 && compressedImages.length === 0,
+            sortOrder: formData.images.length + compressedImages.length,
+            file
+          });
+        } else {
+          // Compress image
+          const options = {
+            maxSizeMB: 0.95, // Keep it under 1MB
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            quality: 0.8
+          };
+
+          const compressedBlob = await ImageCompression.compress(file, options);
+          const compressedFile = new File([compressedBlob], file.name, {
+            type: file.type || 'image/jpeg',
+            lastModified: Date.now()
+          });
+
+          compressedImages.push({
+            url: URL.createObjectURL(compressedFile),
+            alt: file.name,
+            isPrimary: formData.images.length === 0 && compressedImages.length === 0,
+            sortOrder: formData.images.length + compressedImages.length,
+            file: compressedFile
+          });
+        }
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        // If compression fails, add original file
+        compressedImages.push({
+          url: URL.createObjectURL(file),
+          alt: file.name,
+          isPrimary: formData.images.length === 0 && compressedImages.length === 0,
+          sortOrder: formData.images.length + compressedImages.length,
+          file
+        });
+      }
+    }
+
     setFormData({ 
       ...formData, 
-      images: [...formData.images, ...newImages] 
+      images: [...formData.images, ...compressedImages] 
     });
+  };
+
+  // Helper function to compress a single image file
+  const compressImageFile = async (file) => {
+    try {
+      if (file.size <= 1024 * 1024) {
+        // File is 1MB or less, return as-is
+        return file;
+      }
+
+      const options = {
+        maxSizeMB: 0.95,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        quality: 0.8
+      };
+
+      const compressedBlob = await ImageCompression.compress(file, options);
+      return new File([compressedBlob], file.name, {
+        type: file.type || 'image/jpeg',
+        lastModified: Date.now()
+      });
+    } catch (error) {
+      console.error('Error compressing image file:', error);
+      return file; // Return original on error
+    }
   };
 
   const removeImage = (index) => {
@@ -429,8 +499,9 @@ export default function ProductForm() {
       let uploadedLogo = null;
       if (formData.logo?.file) {
         try {
+          const compressedLogo = await compressImageFile(formData.logo.file);
           const logoFormData = new FormData();
-          logoFormData.append('file', formData.logo.file);
+          logoFormData.append('file', compressedLogo);
           
           const logoResponse = await axios.post('/upload', logoFormData, {
             headers: {
@@ -460,8 +531,9 @@ export default function ProductForm() {
       let uploadedCustomImage = null;
       if (formData.customImage?.file) {
         try {
+          const compressedCustomImage = await compressImageFile(formData.customImage.file);
           const customImageFormData = new FormData();
-          customImageFormData.append('file', formData.customImage.file);
+          customImageFormData.append('file', compressedCustomImage);
           
           const customImageResponse = await axios.post('/upload', customImageFormData, {
             headers: {
@@ -996,14 +1068,15 @@ export default function ProductForm() {
                                 type="file"
                                 className="sr-only"
                                 accept="image/*"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files[0];
                                   if (file) {
+                                    const compressedFile = await compressImageFile(file);
                                     setFormData({
                                       ...formData,
                                       logo: {
-                                        file,
-                                        preview: URL.createObjectURL(file),
+                                        file: compressedFile,
+                                        preview: URL.createObjectURL(compressedFile),
                                         filename: file.name
                                       }
                                     });
@@ -1060,14 +1133,15 @@ export default function ProductForm() {
                                 type="file"
                                 className="sr-only"
                                 accept="image/*"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files[0];
                                   if (file) {
+                                    const compressedFile = await compressImageFile(file);
                                     setFormData({
                                       ...formData,
                                       customImage: {
-                                        file,
-                                        preview: URL.createObjectURL(file),
+                                        file: compressedFile,
+                                        preview: URL.createObjectURL(compressedFile),
                                         filename: file.name
                                       }
                                     });
