@@ -61,7 +61,7 @@ const uploadFile = async (fileBuffer, fileName, contentType = 'application/octet
     return {
       bucket: bucketName,
       fileName: fileName,
-      url: `${protocol}://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || 9000}/${bucketName}/${fileName}`
+      url: `${process.env.UPLOAD_API_URL || 'http://localhost:5001'}/api/files/${fileName}`
     };
   } catch (err) {
     console.error('Error uploading file to MinIO:', err);
