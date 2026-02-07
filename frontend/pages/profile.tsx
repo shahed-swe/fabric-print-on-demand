@@ -610,7 +610,7 @@ const Profile = () => {
                 ) : orders.length > 0 ? (
                   <div className="space-y-4">
                     {orders.map((order) => (
-                      <Link key={order._id} href={`/orders`} className="block p-5 border-2 border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all group">
+                      <Link key={order._id} href={`/orders#order-${order._id}`} className="block p-5 border-2 border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-all group cursor-pointer">
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
