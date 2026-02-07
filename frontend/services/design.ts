@@ -43,8 +43,8 @@ interface DesignElements {
 export const designService = {
   quickSaveDesign: async (designData: {
     userId?: string;
-    frontCanvasData?: string;
-    backCanvasData?: string;
+    frontCanvasData?: string | null;
+    backCanvasData?: string | null;
     frontImageFileId?: string | null;
     sizeQuantities: Record<string, number>;
     title: string;
