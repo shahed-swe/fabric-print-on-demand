@@ -25,6 +25,7 @@ const ShippingAddressForm = ({ onSubmit, onCancel }: ShippingAddressFormProps) =
   const [selectedAddress, setSelectedAddress] = useState<string>('new');
   const [isAdding, setIsAdding] = useState(false);
   const { user } = useAuth();
+  const [guestEmail, setGuestEmail] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     address: '',
@@ -56,13 +57,29 @@ const ShippingAddressForm = ({ onSubmit, onCancel }: ShippingAddressFormProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if guest needs to provide email
+    const isGuest = !user || user._id?.startsWith('guest_');
+    if (isGuest && !guestEmail) {
+      toast.error('Please enter your email address to continue');
+      return;
+    }
+
     if (selectedAddress === 'new') {
-      onSubmit({ ...formData, isNewAddress: true });
+      const submitData: any = { ...formData, isNewAddress: true };
+      if (isGuest) {
+        submitData.guestEmail = guestEmail;
+      }
+      onSubmit(submitData);
     } else {
       const selected = savedAddresses.find(addr => addr._id === selectedAddress);
       if (selected) {
         const { _id, ...addressData } = selected;
-        onSubmit({ ...addressData, isNewAddress: false });
+        const submitData: any = { ...addressData, isNewAddress: false };
+        if (isGuest) {
+          submitData.guestEmail = guestEmail;
+        }
+        onSubmit(submitData);
       }
     }
   };
@@ -164,6 +181,26 @@ const ShippingAddressForm = ({ onSubmit, onCancel }: ShippingAddressFormProps) =
       {/* Add/Edit Address Form */}
       {(isAdding || savedAddresses.length === 0) && (
         <form onSubmit={handleSubmit}>
+          {/* Guest Email Section */}
+          {(!user || user._id?.startsWith('guest_')) && (
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              <p className="text-xs text-gray-600 mt-2">
+                We'll create an account with this email and send you login credentials
+              </p>
+            </div>
+          )}
+          
           <div className="space-y-4">
             <input
               type="text"

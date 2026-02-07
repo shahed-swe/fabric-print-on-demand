@@ -15,6 +15,7 @@ const { protect } = require('../middlewares/auth');
 // Auth routes
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+router.post('/auth/create-guest-account', authController.createGuestAccount);
 
 // Cart routes
 router.get('/cart', cartController.getCartItems);

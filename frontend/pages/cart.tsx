@@ -12,6 +12,7 @@ import ShippingAddressForm from '../components/ShippingAddressForm';
 import { cartService } from '../services/cart';
 import { orderService } from '../services/order';
 import { shippingService } from '../services/shipping';
+import { guestAuthService } from '../services/guestAuth';
 import axios from 'axios';
 
 // Initialize Stripe
@@ -33,6 +34,7 @@ const Cart = () => {
   const [shippingAddress, setShippingAddress] = useState(null);
   const [editingSizes, setEditingSizes] = useState<string | null>(null);
   const [tempSizeQuantities, setTempSizeQuantities] = useState<Record<string, number>>({});
+  const [guestAccountUserId, setGuestAccountUserId] = useState<string | null>(null);
 
   useEffect(() => {
   const fetchCartItems = async () => {
@@ -162,14 +164,31 @@ const Cart = () => {
   const handleShippingSubmit = async (address: any) => {
     console.log('Shipping address:', address);
     try {
+      let userId = user?._id;
       let shippingAddressData;
       
+      // Check if this is a guest user
+      const isGuest = !user || user._id?.startsWith('guest_');
+      if (isGuest && address.guestEmail) {
+        try {
+          // Create a guest account with the provided email
+          const guestResponse = await guestAuthService.createGuestAccount(address.guestEmail);
+          userId = guestResponse.userId;
+          setGuestAccountUserId(guestResponse.userId); // Store the new user ID for order creation
+          toast.success('Account created! Check your email for login credentials.');
+        } catch (error: any) {
+          console.error('Error creating guest account:', error);
+          toast.error(error.response?.data?.message || 'Error creating account. Please try again.');
+          return;
+        }
+      }
       
       if (address.isNewAddress) {
-        const { isNewAddress, ...addressToSave } = address;
-        shippingAddressData = await shippingService.addAddress({...addressToSave, userId: user?._id});
+        const { isNewAddress, guestEmail, ...addressToSave } = address;
+        shippingAddressData = await shippingService.addAddress({...addressToSave, userId});
       } else {
-        shippingAddressData = address;
+        const { guestEmail, ...cleanAddress } = address;
+        shippingAddressData = cleanAddress;
       }
       
       setShippingAddress(shippingAddressData);
@@ -222,8 +241,11 @@ const Cart = () => {
 
       console.log('Order items being sent:', orderItems); // Debug log
 
+      // Use guestAccountUserId if it exists (for new guest accounts), otherwise use user._id
+      const finalUserId = (guestAccountUserId || user?._id) ?? '';
+
       await orderService.createOrder({
-        userId: user?._id ?? '',
+        userId: finalUserId,
         items: orderItems,
         shippingAddress,
         paymentStatus: 'completed',
@@ -232,10 +254,11 @@ const Cart = () => {
       });
 
 
-      await cartService.removeByUserId(user?._id ?? '');
+      await cartService.removeByUserId(finalUserId);
       setCartItems([]);
       refreshCart(); // Reset cart count to 0
       setShowPayment(false);
+      setGuestAccountUserId(null); // Clear the guest account userId
       toast.success('Order placed successfully!');
     } catch (error) {
       console.error('Error finalizing order:', error);
