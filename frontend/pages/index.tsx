@@ -32,6 +32,7 @@ const LandingPage = () => {
     const [loading, setLoading] = useState(true);
     const [wishlist, setWishlist] = useState<string[]>([]);
     const [addedToCart, setAddedToCart] = useState<string | null>(null);
+    const [reviewSlide, setReviewSlide] = useState(0);
 
     useEffect(() => {
         fetchFeaturedProducts();
@@ -40,6 +41,15 @@ const LandingPage = () => {
         if (savedWishlist) {
           setWishlist(JSON.parse(savedWishlist));
         }
+    }, []);
+
+    // Auto-play carousel - automatically changes every 5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setReviewSlide((prev) => (prev + 1) % 6);
+        }, 5000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchFeaturedProducts = async () => {
@@ -206,51 +216,283 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Testimonials Section - Modern Cards */}
+            {/* Testimonials Section - Carousel */}
             <section className="py-32 bg-white">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-20">
                         <h2 className="text-5xl md:text-6xl font-black mb-6 text-gray-900">Loved by Thousands</h2>
                         <p className="text-xl text-gray-600 max-w-2xl mx-auto">See what our customers have to say about their experience</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            {
-                                name: "Sarah Johnson",
-                                role: "Fashion Designer",
-                                comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding!",
-                                rating: 5,
-                                avatar: "🎨"
-                            },
-                            {
-                                name: "Mike Chen",
-                                role: "Business Owner",
-                                comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service!",
-                                rating: 5,
-                                avatar: "💼"
-                            },
-                            {
-                                name: "Emily Parker",
-                                role: "Artist",
-                                comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing!",
-                                rating: 5,
-                                avatar: "👩‍🎨"
-                            }
-                        ].map((testimonial, index) => (
-                            <div key={index} className="bg-gradient-to-br from-gray-50 to-white p-8 rounded-2xl border border-gray-200 hover:border-orange-500 shadow-lg hover:shadow-xl transition-all duration-300 group">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="text-5xl">{testimonial.avatar}</div>
-                                    <div className="flex gap-1">
-                                        {[...Array(testimonial.rating)].map((_, i) => (
-                                            <FaStar key={i} className="text-yellow-400 text-lg" />
+
+                    {/* Testimonials Carousel */}
+                    <div className="max-w-6xl mx-auto">
+                        {/* Main Carousel */}
+                        <div className="relative bg-gradient-to-br from-gray-50 to-white p-12 rounded-3xl border border-gray-200 shadow-2xl overflow-hidden">
+                            {/* Background decoration */}
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-orange-100 rounded-full blur-3xl opacity-50"></div>
+
+                            <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+                                {/* Left side - Testimonial Content */}
+                                <div className="flex-1 md:pr-8">
+                                    <div className="flex gap-1 mb-6">
+                                        {[...Array([
+                                            {
+                                                name: "Sarah Johnson",
+                                                role: "Fashion Designer",
+                                                comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding! I've recommended this to all my designer friends.",
+                                                rating: 5,
+                                                avatar: "🎨"
+                                            },
+                                            {
+                                                name: "Mike Chen",
+                                                role: "Business Owner",
+                                                comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service! Orders always arrive on time.",
+                                                rating: 5,
+                                                avatar: "💼"
+                                            },
+                                            {
+                                                name: "Emily Parker",
+                                                role: "Artist",
+                                                comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing! Best printing service ever.",
+                                                rating: 5,
+                                                avatar: "👩‍🎨"
+                                            },
+                                            {
+                                                name: "David Rodriguez",
+                                                role: "Entrepreneur",
+                                                comment: "Started my merchandise business using this platform. The quality and customer support are unmatched. Highly recommend!",
+                                                rating: 5,
+                                                avatar: "🚀"
+                                            },
+                                            {
+                                                name: "Lisa Thompson",
+                                                role: "Event Organizer",
+                                                comment: "Used it for our company event t-shirts. The turnaround time was incredibly fast and the quality exceeded expectations!",
+                                                rating: 5,
+                                                avatar: "🎉"
+                                            },
+                                            {
+                                                name: "James Wilson",
+                                                role: "Creative Director",
+                                                comment: "The design tools are professional-grade. We've produced over 500 custom items and every single one has been perfect.",
+                                                rating: 5,
+                                                avatar: "✨"
+                                            }
+                                        ][reviewSlide]?.rating)].map((_, i) => (
+                                            <FaStar key={i} className="text-yellow-400 text-2xl" />
+                                        ))}
+                                    </div>
+                                    
+                                    <p className="text-2xl text-gray-800 mb-8 italic leading-relaxed">
+                                        "{[
+                                            {
+                                                name: "Sarah Johnson",
+                                                role: "Fashion Designer",
+                                                comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding! I've recommended this to all my designer friends.",
+                                                rating: 5,
+                                                avatar: "🎨"
+                                            },
+                                            {
+                                                name: "Mike Chen",
+                                                role: "Business Owner",
+                                                comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service! Orders always arrive on time.",
+                                                rating: 5,
+                                                avatar: "💼"
+                                            },
+                                            {
+                                                name: "Emily Parker",
+                                                role: "Artist",
+                                                comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing! Best printing service ever.",
+                                                rating: 5,
+                                                avatar: "👩‍🎨"
+                                            },
+                                            {
+                                                name: "David Rodriguez",
+                                                role: "Entrepreneur",
+                                                comment: "Started my merchandise business using this platform. The quality and customer support are unmatched. Highly recommend!",
+                                                rating: 5,
+                                                avatar: "🚀"
+                                            },
+                                            {
+                                                name: "Lisa Thompson",
+                                                role: "Event Organizer",
+                                                comment: "Used it for our company event t-shirts. The turnaround time was incredibly fast and the quality exceeded expectations!",
+                                                rating: 5,
+                                                avatar: "🎉"
+                                            },
+                                            {
+                                                name: "James Wilson",
+                                                role: "Creative Director",
+                                                comment: "The design tools are professional-grade. We've produced over 500 custom items and every single one has been perfect.",
+                                                rating: 5,
+                                                avatar: "✨"
+                                            }
+                                        ][reviewSlide]?.comment}"
+                                    </p>
+
+                                    <div className="border-l-4 border-orange-500 pl-6">
+                                        <div className="text-2xl font-bold text-gray-900">
+                                            {[
+                                                {
+                                                    name: "Sarah Johnson",
+                                                    role: "Fashion Designer",
+                                                    comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding! I've recommended this to all my designer friends.",
+                                                    rating: 5,
+                                                    avatar: "🎨"
+                                                },
+                                                {
+                                                    name: "Mike Chen",
+                                                    role: "Business Owner",
+                                                    comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service! Orders always arrive on time.",
+                                                    rating: 5,
+                                                    avatar: "💼"
+                                                },
+                                                {
+                                                    name: "Emily Parker",
+                                                    role: "Artist",
+                                                    comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing! Best printing service ever.",
+                                                    rating: 5,
+                                                    avatar: "👩‍🎨"
+                                                },
+                                                {
+                                                    name: "David Rodriguez",
+                                                    role: "Entrepreneur",
+                                                    comment: "Started my merchandise business using this platform. The quality and customer support are unmatched. Highly recommend!",
+                                                    rating: 5,
+                                                    avatar: "🚀"
+                                                },
+                                                {
+                                                    name: "Lisa Thompson",
+                                                    role: "Event Organizer",
+                                                    comment: "Used it for our company event t-shirts. The turnaround time was incredibly fast and the quality exceeded expectations!",
+                                                    rating: 5,
+                                                    avatar: "🎉"
+                                                },
+                                                {
+                                                    name: "James Wilson",
+                                                    role: "Creative Director",
+                                                    comment: "The design tools are professional-grade. We've produced over 500 custom items and every single one has been perfect.",
+                                                    rating: 5,
+                                                    avatar: "✨"
+                                                }
+                                            ][reviewSlide]?.name}
+                                        </div>
+                                        <div className="text-orange-600 font-semibold text-lg">
+                                            {[
+                                                {
+                                                    name: "Sarah Johnson",
+                                                    role: "Fashion Designer",
+                                                    comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding! I've recommended this to all my designer friends.",
+                                                    rating: 5,
+                                                    avatar: "🎨"
+                                                },
+                                                {
+                                                    name: "Mike Chen",
+                                                    role: "Business Owner",
+                                                    comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service! Orders always arrive on time.",
+                                                    rating: 5,
+                                                    avatar: "💼"
+                                                },
+                                                {
+                                                    name: "Emily Parker",
+                                                    role: "Artist",
+                                                    comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing! Best printing service ever.",
+                                                    rating: 5,
+                                                    avatar: "👩‍🎨"
+                                                },
+                                                {
+                                                    name: "David Rodriguez",
+                                                    role: "Entrepreneur",
+                                                    comment: "Started my merchandise business using this platform. The quality and customer support are unmatched. Highly recommend!",
+                                                    rating: 5,
+                                                    avatar: "🚀"
+                                                },
+                                                {
+                                                    name: "Lisa Thompson",
+                                                    role: "Event Organizer",
+                                                    comment: "Used it for our company event t-shirts. The turnaround time was incredibly fast and the quality exceeded expectations!",
+                                                    rating: 5,
+                                                    avatar: "🎉"
+                                                },
+                                                {
+                                                    name: "James Wilson",
+                                                    role: "Creative Director",
+                                                    comment: "The design tools are professional-grade. We've produced over 500 custom items and every single one has been perfect.",
+                                                    rating: 5,
+                                                    avatar: "✨"
+                                                }
+                                            ][reviewSlide]?.role}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right side - Avatar and Dots */}
+                                <div className="flex flex-col items-center gap-8 md:w-40">
+                                    <div className="text-8xl animate-bounce">
+                                        {[
+                                            {
+                                                name: "Sarah Johnson",
+                                                role: "Fashion Designer",
+                                                comment: "The design tools are incredibly intuitive, and the quality of the prints is outstanding! I've recommended this to all my designer friends.",
+                                                rating: 5,
+                                                avatar: "🎨"
+                                            },
+                                            {
+                                                name: "Mike Chen",
+                                                role: "Business Owner",
+                                                comment: "Perfect for creating custom uniforms for my team. Fast delivery and great customer service! Orders always arrive on time.",
+                                                rating: 5,
+                                                avatar: "💼"
+                                            },
+                                            {
+                                                name: "Emily Parker",
+                                                role: "Artist",
+                                                comment: "I love how I can bring my artwork to life on clothing. The color accuracy is amazing! Best printing service ever.",
+                                                rating: 5,
+                                                avatar: "👩‍🎨"
+                                            },
+                                            {
+                                                name: "David Rodriguez",
+                                                role: "Entrepreneur",
+                                                comment: "Started my merchandise business using this platform. The quality and customer support are unmatched. Highly recommend!",
+                                                rating: 5,
+                                                avatar: "🚀"
+                                            },
+                                            {
+                                                name: "Lisa Thompson",
+                                                role: "Event Organizer",
+                                                comment: "Used it for our company event t-shirts. The turnaround time was incredibly fast and the quality exceeded expectations!",
+                                                rating: 5,
+                                                avatar: "🎉"
+                                            },
+                                            {
+                                                name: "James Wilson",
+                                                role: "Creative Director",
+                                                comment: "The design tools are professional-grade. We've produced over 500 custom items and every single one has been perfect.",
+                                                rating: 5,
+                                                avatar: "✨"
+                                            }
+                                        ][reviewSlide]?.avatar}
+                                    </div>
+
+                                    {/* Dot Indicators - Auto play only */}
+                                    <div className="flex gap-2 justify-center flex-wrap w-full">
+                                        {[0, 1, 2, 3, 4, 5].map((index) => (
+                                            <div
+                                                key={index}
+                                                className={`h-2 rounded-full transition-all duration-300 ${
+                                                    reviewSlide === index 
+                                                        ? 'bg-orange-500 w-8' 
+                                                        : 'bg-gray-300 w-2'
+                                                }`}
+                                            />
                                         ))}
                                     </div>
                                 </div>
-                                <p className="text-gray-700 mb-6 text-lg italic">"{testimonial.comment}"</p>
-                                <div className="font-bold text-gray-900 text-lg">{testimonial.name}</div>
-                                <div className="text-orange-600 text-sm font-semibold">{testimonial.role}</div>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Auto-playing carousel - no manual controls */}
                     </div>
                 </div>
             </section>
