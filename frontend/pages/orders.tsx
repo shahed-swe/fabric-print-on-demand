@@ -23,6 +23,7 @@ interface Order {
             title: string;
             sizeQuantities: { [size: string]: number };
             fileId: string;
+            frontImageFileId?: string;
             price: number;
         };
         productId?: {

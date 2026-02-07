@@ -36,7 +36,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ clientSecret, onSuccess, se
 
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement />
+      <PaymentElement options={{
+        layout: 'tabs',
+        wallets: { applePay: 'auto', googlePay: 'auto' },
+        fields: {
+          billingDetails: 'auto'
+        }
+      }} />
       {error && <div className="text-red-500 mt-2">{error}</div>}
       <div className='grid grid-cols-2 gap-4'>
         <button

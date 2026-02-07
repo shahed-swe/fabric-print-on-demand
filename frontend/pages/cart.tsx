@@ -374,10 +374,10 @@ const Cart = () => {
                         {editingSizes === item._id && (
                           <div className="mt-3 p-4 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200">
                             <h4 className="text-sm font-bold text-gray-800 mb-4">Size Quantities</h4>
-                            <div className="grid grid-cols-6 gap-3 mb-4">
+                            <div className="grid grid-cols-2 gap-3 mb-4">
                               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
-                                <div key={size} className="flex flex-col items-center">
-                                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">{size}</label>
+                                <div key={size} className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-orange-300 hover:border-orange-500 transition-all">
+                                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">{size}</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -389,14 +389,14 @@ const Cart = () => {
                                         handleSizeQuantityChange(size, value);
                                       }
                                     }}
-                                    className="w-16 h-16 px-0 py-0 text-center text-xl font-bold text-orange-600 bg-white border-2 border-orange-300 rounded-lg hover:border-orange-500 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100 transition-all"
+                                    className="w-32 px-3 py-1 text-center text-sm font-bold text-orange-600 bg-white border-2 border-orange-300 rounded-lg hover:border-orange-500 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100 transition-all"
                                   />
                                 </div>
                               ))}
                             </div>
                             <div className="bg-white rounded-lg border border-orange-300 p-3 mb-4 text-center">
                               <span className="text-sm text-gray-600">Total Items: </span>
-                              <span className="text-2xl font-bold text-orange-600">{Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)}</span>
+                              <span className="text-xl font-bold text-orange-600">{Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)}</span>
                             </div>
                             <div className="flex gap-2">
                               <button

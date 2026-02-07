@@ -53,13 +53,13 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
         <div className="space-y-8 mt-8">
           <div className="mt-4">
             <h4 className="text-lg font-semibold text-gray-800 mb-4">Choose Size & Quantity</h4>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {(["S", "M", "L", "XL", "XXL"] as (keyof SizeQuantities)[]).map((sizeOption) => (
                 <div
                   key={sizeOption}
                   className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all"
                 >
-                  <span className="text-sm font-bold text-gray-700">{sizeOption}</span>
+                  <label className="text-xs font-bold text-gray-700 min-w-fit">{sizeOption}:</label>
                   <input
                     type="number"
                     min="0"
@@ -71,7 +71,7 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
                         handleSizeQuantityChange(sizeOption, value);
                       }
                     }}
-                    className="w-12 px-2 py-1 text-center text-base font-bold text-gray-800 bg-white border-2 border-gray-300 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                    className="w-24 px-3 py-1 text-center text-sm font-bold text-gray-800 bg-white border-2 border-gray-300 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
                     placeholder="0"
                   />
                 </div>
