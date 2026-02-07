@@ -24,6 +24,8 @@ import { designService } from '../services/design';
 import TextEditorModal from "@/components/TextEditorModal";
 import { useRouter } from 'next/router';
 import { productService } from '@/services/product';
+import ProcessingLoader from '@/components/ProcessingLoader';
+import { compressImageWithDimensions } from '@/utils/imageCompressor';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -51,6 +53,15 @@ const Index = () => {
   const [frontPrice, setFrontPrice] = useState(0);
   const [backPrice, setBackPrice] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState<string>('');
+  const [processingSteps, setProcessingSteps] = useState<any[]>([
+    { id: 'capture-front', label: 'Capture Front', completed: false },
+    { id: 'capture-back', label: 'Capture Back', completed: false },
+    { id: 'generate-pdf', label: 'Generate PDF', completed: false },
+    { id: 'upload-image', label: 'Upload Image', completed: false },
+    { id: 'upload-pdf', label: 'Upload PDF', completed: false },
+    { id: 'save-design', label: 'Save Design', completed: false },
+  ]);
   const [data, setData] = useState<any[]>([]);
   const [aiImagePrompt, setAiImagePrompt] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -362,14 +373,34 @@ const Index = () => {
     return data;
   };
 
+  // Helper function to update processing steps
+  const updateProcessingStep = (stepId: string, completed: boolean, status: string) => {
+    setProcessingSteps(prev =>
+      prev.map(step =>
+        step.id === stepId ? { ...step, completed } : step
+      )
+    );
+    setLoadingStatus(status);
+  };
+
+  // Helper function to reset processing steps
+  const resetProcessingSteps = () => {
+    setProcessingSteps(prev =>
+      prev.map(step => ({ ...step, completed: false }))
+    );
+  };
+
   // Handle file upload
   const handleAddImage = async (file: File) => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
     try {
+      // Compress the image before processing
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
+      
       // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Create a new FileReader instance to display the image
@@ -411,7 +442,7 @@ const Index = () => {
         toast.error('Failed to read the file. Please try again.');
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     } catch (error) {
       console.error('Error uploading image to MinIO:', error);
       toast.error('Failed to upload image. Please try again.');
@@ -424,8 +455,11 @@ const Index = () => {
     if (!editor || !file) return;
 
     try {
+      // Compress the small image (even smaller dimensions)
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
+      
       // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Create a new FileReader instance each time
@@ -481,7 +515,7 @@ const Index = () => {
         toast.error('Failed to read the file. Please try again.');
       };
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     } catch (error) {
       console.error('Error uploading logo to MinIO:', error);
       toast.error('Failed to upload logo. Please try again.');
@@ -499,9 +533,12 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Upload blob to MinIO
+      // Compress the blob before uploading
       const file = new File([blob], 'artwork-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
+      
+      // Upload blob to MinIO
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Now display the image on canvas
@@ -566,9 +603,12 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Upload blob to MinIO
+      // Compress the small image (even smaller dimensions)
       const file = new File([blob], 'logo-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
+      
+      // Upload blob to MinIO
+      const uploadResponse = await designService.uploadFile(compressedFile);
       const minioFileId = uploadResponse.fileId;
 
       // Now display the image on canvas
@@ -633,6 +673,7 @@ const Index = () => {
     }
     
     setLoading(true);
+    resetProcessingSteps();
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
   
@@ -786,14 +827,17 @@ const Index = () => {
         removeBordersFromCurrentCanvas();
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        updateProcessingStep('capture-front', false, 'Capturing front design...');
         frontCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
           scale: 2
         });
+        updateProcessingStep('capture-front', true, '');
         
         // Switch to back view
+        updateProcessingStep('capture-back', false, 'Capturing back design...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("back");
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -808,19 +852,23 @@ const Index = () => {
           backgroundColor: null,
           scale: 2
         });
+        updateProcessingStep('capture-back', true, '');
       } else {
         // Remove borders for back view
         removeBordersFromCurrentCanvas();
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        updateProcessingStep('capture-back', false, 'Capturing back design...');
         backCanvas = await html2canvas(document.getElementById("sshot")!, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: null,
           scale: 2
         });
+        updateProcessingStep('capture-back', true, '');
 
         // Switch to front view
+        updateProcessingStep('capture-front', false, 'Capturing front design...');
         await new Promise(resolve => setTimeout(resolve, 1000));
         handleBack("front");
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -835,9 +883,11 @@ const Index = () => {
           backgroundColor: null,
           scale: 2
         });
+        updateProcessingStep('capture-front', true, '');
       }
   
       // Add front view to PDF
+      updateProcessingStep('generate-pdf', false, 'Generating PDF...');
       const imgWidth = 210;
       const imgHeight = frontCanvas ? (frontCanvas.height * imgWidth) / frontCanvas.width : 0;
   
@@ -869,8 +919,39 @@ const Index = () => {
       const pdfBlob = pdf.output('blob');
       const file = new File([pdfBlob], 't-shirt-design.pdf', { type: 'application/pdf' });
 
+      // Upload front image separately using canvas.toBlob()
+      let frontImageFileId = null;
+      try {
+        updateProcessingStep('upload-image', false, 'Uploading front image...');
+        const frontImageBlob = await new Promise<Blob>((resolve, reject) => {
+          frontCanvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to convert canvas to blob'));
+              }
+            },
+            'image/png',
+            1.0
+          );
+        });
+
+        const frontImageFile = new File([frontImageBlob], 'front-design.png', { type: 'image/png' });
+        const frontImageResponse = await designService.uploadFile(frontImageFile);
+        frontImageFileId = frontImageResponse.fileId;
+        updateProcessingStep('upload-image', true, '');
+        console.log('Front image uploaded successfully with fileId:', frontImageFileId);
+      } catch (error) {
+        console.error('Error uploading front image:', error);
+        updateProcessingStep('upload-image', true, '');
+        toast.warning('Front image upload failed, but design will be saved');
+      }
+
       // Use the design service instead of direct axios calls
+      updateProcessingStep('upload-pdf', false, 'Uploading PDF...');
       const uploadResponse = await designService.uploadFile(file);
+      updateProcessingStep('upload-pdf', true, '');
       
       if (!uploadResponse.fileId) {
         throw new Error('File upload failed');
@@ -880,21 +961,32 @@ const Index = () => {
       const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
       const designPrice = 30 * totalQuantity;
 
+      updateProcessingStep('save-design', false, 'Saving design...');
       await designService.saveDesign({
         userId: user?._id,
         fileId: uploadResponse.fileId,
+        frontImageFileId: frontImageFileId, // Include the front image file ID
         sizeQuantities,
         title: image.title,
         price: designPrice,
         elements: addedElements // Send the collected elements
       });
+      updateProcessingStep('save-design', true, '');
 
       incrementCart();
+      setLoading(false);
+      setLoadingStatus('');
       toast.success('Item Added to Cart successfully!');
+      
+      // Auto-redirect to cart page after success
+      await new Promise(resolve => setTimeout(resolve, 500));
+      router.push('/cart');
 
     } catch (error) {
+      setLoading(false);
+      setLoadingStatus('');
       console.error("Error generating PDF:", error);
-      toast.error("Error generating PDF. Please try again.");
+      toast.error("Error processing design. Please try again.");
     } finally {
       // Clean up and restore
       localStorage.removeItem("front");
@@ -903,6 +995,7 @@ const Index = () => {
       // Restore original view
       handleBack(currentView);
       setLoading(false);
+      setLoadingStatus('');
     }
   };
 
@@ -1153,6 +1246,8 @@ const Index = () => {
               handleSizeQuantityChange={handleSizeQuantityChange}
               getTotalQuantity={getTotalQuantity}
               handleSS={handleSS}
+              isLoading={loading}
+              loadingStatus={loadingStatus}
             />
           </div>
         </div>
@@ -1264,6 +1359,13 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Processing Loader */}
+      <ProcessingLoader
+        isVisible={loading}
+        currentStatus={loadingStatus}
+        steps={processingSteps}
+      />
     </div>
   );
 };

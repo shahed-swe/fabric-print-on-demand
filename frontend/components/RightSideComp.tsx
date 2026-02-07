@@ -18,6 +18,8 @@ interface RightSideCompProps {
   handleSizeQuantityChange: (size: keyof SizeQuantities, quantity: number) => void;
   getTotalQuantity: () => number;
   handleSS: () => void;
+  isLoading?: boolean;
+  loadingStatus?: string;
 }
 
 const RightSideComp: React.FC<RightSideCompProps> = ({
@@ -27,7 +29,9 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
   backPrice,
   handleSizeQuantityChange,
   getTotalQuantity,
-  handleSS
+  handleSS,
+  isLoading = false,
+  loadingStatus = ''
 }) => {
   const { isAuthenticated } = useAuth();
 
@@ -48,50 +52,50 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
 
         <div className="space-y-8 mt-8">
           <div className="mt-4">
-            <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Size & Quantity</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4">Choose Size & Quantity</h4>
+            <div className="grid grid-cols-3 gap-2">
               {(["S", "M", "L", "XL", "XXL"] as (keyof SizeQuantities)[]).map((sizeOption) => (
                 <div
                   key={sizeOption}
-                  className={`p-3 border-2 rounded-lg transition-colors ${sizeQuantities[sizeOption] > 0
-                    ? "border-orange-500 bg-orange-50"
-                    : "border-gray-200"
-                    }`}
+                  className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-medium">{sizeOption}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleSizeQuantityChange(sizeOption, Math.max(0, sizeQuantities[sizeOption] - 1))}
-                        className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center">{sizeQuantities[sizeOption]}</span>
-                      <button
-                        onClick={() => handleSizeQuantityChange(sizeOption, sizeQuantities[sizeOption] + 1)}
-                        className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
+                  <span className="text-sm font-bold text-gray-700">{sizeOption}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="999"
+                    value={sizeQuantities[sizeOption]}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      if (value >= 0) {
+                        handleSizeQuantityChange(sizeOption, value);
+                      }
+                    }}
+                    className="w-12 px-2 py-1 text-center text-base font-bold text-gray-800 bg-white border-2 border-gray-300 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                    placeholder="0"
+                  />
                 </div>
               ))}
             </div>
-            <div className="mt-2 text-right text-sm text-gray-600">
-              Total Quantity: {getTotalQuantity()}
+            <div className="mt-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-center text-sm">
+                <span className="font-semibold text-gray-800">Total: </span>
+                <span className="text-lg font-bold text-orange-600">{getTotalQuantity()}</span>
+              </p>
             </div>
           </div>
 
           <div className="flex gap-4 pt-4">
             <button
               onClick={handleSS}
-              // disabled={!isAuthenticated}
-              // className={`w-full px-6 py-3 rounded-lg transition-colors ${isAuthenticated ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-              className={`w-full px-6 py-3 rounded-lg transition-colors bg-green-500 text-white hover:bg-green-600`}
+              disabled={isLoading}
+              className={`w-full px-6 py-3 rounded-lg transition-colors font-medium text-lg ${
+                isLoading
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-green-500 text-white hover:bg-green-600 active:scale-95'
+              }`}
             >
-              Add To Cart
+              {isLoading ? 'Processing...' : 'Add To Cart'}
             </button>
           </div>
         </div>

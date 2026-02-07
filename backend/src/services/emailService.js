@@ -95,12 +95,10 @@ const generateInvoiceHTML = (order, user) => {
                 <td style="padding: 0 40px 30px 40px;">
                   <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; font-weight: 600;">Shipping Address</h3>
                   <p style="margin: 5px 0; font-size: 16px; color: #111827; line-height: 1.6;">
-                    ${order.shippingAddress.fullName}<br>
-                    ${order.shippingAddress.addressLine1}<br>
-                    ${order.shippingAddress.addressLine2 ? order.shippingAddress.addressLine2 + '<br>' : ''}
-                    ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.postalCode}<br>
-                    ${order.shippingAddress.country}
-                    ${order.shippingAddress.phone ? '<br>Phone: ' + order.shippingAddress.phone : ''}
+                    ${order.shippingAddress.fullName || 'N/A'}<br>
+                    ${order.shippingAddress.streetAddress || order.shippingAddress.address || 'N/A'}<br>
+                    ${order.shippingAddress.city ? order.shippingAddress.city : 'N/A'}${order.shippingAddress.state ? ', ' + order.shippingAddress.state : ''} ${order.shippingAddress.postalCode || order.shippingAddress.zipCode || 'N/A'}<br>
+                    ${order.shippingAddress.country || 'N/A'}${order.shippingAddress.phone ? '<br>Phone: ' + order.shippingAddress.phone : ''}
                   </p>
                 </td>
               </tr>
@@ -181,7 +179,7 @@ const sendOrderInvoice = async (order, user) => {
     const fromName = process.env.BREVO_FROM_NAME || 'Fabric Print on Demand';
     
     const mailOptions = {
-      from: `"${fromName}" <${fromEmail}>`,
+      from: `"${process.env.BREVO_FROM_NAME || 'Fabric Print on Demand'}" <${process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER}>`,
       to: user?.email || order.shippingAddress?.email || 'customer@example.com',
       subject: `Order Confirmation - Order #${order._id.toString().slice(-8).toUpperCase()}`,
       html: invoiceHTML,

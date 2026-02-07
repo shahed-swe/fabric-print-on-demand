@@ -1,3 +1,4 @@
+// Load environment variables FIRST before anything else
 require('dotenv').config();
 
 const express = require('express');
@@ -7,7 +8,7 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
-const { uploadsDir } = require('./config/fileStorage');
+const { initializeBucket } = require('./config/minio');
 
 const app = express();
 

@@ -42,6 +42,10 @@ const designSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  frontImageFileId: {
+    type: String,
+    default: null
+  },
   title: {
     type: String,
     required: true

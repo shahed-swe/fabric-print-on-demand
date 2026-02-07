@@ -6,7 +6,7 @@ const Cart = require('../models/Cart');
 // @access  Public
 exports.saveDesign = async (req, res) => {
   try {
-    const { fileId, sizeQuantities, title, price, userId, elements } = req.body;
+    const { fileId, frontImageFileId, sizeQuantities, title, price, userId, elements } = req.body;
 
     if (!userId) {
       return res.status(400).json({ message: 'User ID is required' });
@@ -72,10 +72,11 @@ exports.saveDesign = async (req, res) => {
       }
     }
 
-    // Create the design with calculated price and elements
+    // Create the design with calculated price, elements, and frontImageFileId
     const design = await Design.create({
       userId,
       fileId,
+      frontImageFileId: frontImageFileId || null,
       sizeQuantities,
       title,
       price: calculatedPrice,

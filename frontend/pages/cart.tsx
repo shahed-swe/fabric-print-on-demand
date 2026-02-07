@@ -302,11 +302,22 @@ const Cart = () => {
                   {/* Design Preview */}
                   {item.itemType === 'design' && (
                     <div className="flex-shrink-0">
-                      <div className="w-32 h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
-                        <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                        </svg>
-                      </div>
+                      {item.designId?.frontImageFileId ? (
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.customprintingservices.com.au/api'}/files/${item.designId.frontImageFileId}`}
+                          alt="Design front view"
+                          className="w-32 h-32 object-cover rounded-lg border border-purple-200"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-32 h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
+                          <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -362,43 +373,42 @@ const Cart = () => {
                         
                         {/* Size Editor */}
                         {editingSizes === item._id && (
-                          <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <h4 className="text-sm font-semibold mb-3">Edit Size Quantities</h4>
-                            <div className="grid grid-cols-2 gap-3 mb-3">
+                          <div className="mt-3 p-4 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200">
+                            <h4 className="text-sm font-bold text-gray-800 mb-4">Size Quantities</h4>
+                            <div className="grid grid-cols-6 gap-3 mb-4">
                               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
-                                <div key={size} className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">{size}:</span>
-                                  <div className="flex items-center space-x-2 border rounded">
-                                    <button
-                                      onClick={() => handleSizeQuantityChange(size, (tempSizeQuantities[size] || 0) - 1)}
-                                      className="px-2 py-1 hover:bg-gray-200"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="px-3 text-sm">{tempSizeQuantities[size] || 0}</span>
-                                    <button
-                                      onClick={() => handleSizeQuantityChange(size, (tempSizeQuantities[size] || 0) + 1)}
-                                      className="px-2 py-1 hover:bg-gray-200"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
+                                <div key={size} className="flex flex-col items-center">
+                                  <label className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">{size}</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="999"
+                                    value={tempSizeQuantities[size] || 0}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value) || 0;
+                                      if (value >= 0) {
+                                        handleSizeQuantityChange(size, value);
+                                      }
+                                    }}
+                                    className="w-16 h-16 px-0 py-0 text-center text-xl font-bold text-orange-600 bg-white border-2 border-orange-300 rounded-lg hover:border-orange-500 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100 transition-all"
+                                  />
                                 </div>
                               ))}
                             </div>
-                            <div className="text-sm text-gray-600 mb-3">
-                              Total: {Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)} items
+                            <div className="bg-white rounded-lg border border-orange-300 p-3 mb-4 text-center">
+                              <span className="text-sm text-gray-600">Total Items: </span>
+                              <span className="text-2xl font-bold text-orange-600">{Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)}</span>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex gap-2">
                               <button
                                 onClick={() => handleSaveSizes(item._id)}
-                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 text-sm"
+                                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition duration-200 text-sm font-bold shadow-md hover:shadow-lg"
                               >
-                                Save
+                                ✓ Save
                               </button>
                               <button
                                 onClick={handleCancelEditSizes}
-                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition duration-200 text-sm"
+                                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200 text-sm font-bold"
                               >
                                 Cancel
                               </button>
@@ -410,24 +420,21 @@ const Cart = () => {
 
                     {/* Quantity Controls - Only show for products, not custom designs */}
                     {item.itemType === 'product' && (
-                      <div className="flex items-center space-x-4 mt-3">
-                        <span className="text-sm font-medium text-gray-700">Quantity:</span>
-                        <div className="flex items-center space-x-2 border rounded-lg">
-                          <button
-                            onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
-                            className="px-3 py-1 hover:bg-gray-100 rounded-l-lg"
-                            disabled={item.quantity <= 1}
-                          >
-                            -
-                          </button>
-                          <span className="px-4 py-1 border-x">{item.quantity}</span>
-                          <button
-                            onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
-                            className="px-3 py-1 hover:bg-gray-100 rounded-r-lg"
-                          >
-                            +
-                          </button>
-                        </div>
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-sm font-medium text-gray-700">Qty:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 1;
+                            if (value >= 1) {
+                              handleQuantityChange(item._id, value);
+                            }
+                          }}
+                          className="w-20 px-3 py-2 text-center text-lg font-semibold text-gray-800 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
+                        />
                       </div>
                     )}
 

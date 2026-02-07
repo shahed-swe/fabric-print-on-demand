@@ -21,6 +21,7 @@ interface AuthContextProps {
   setTotalPrice: (price: number) => void;
   createGuestSession: () => void;
   isGuest: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | GuestUser | null>(null);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isGuest, setIsGuest] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -48,6 +50,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsGuest(true);
       setUser({ _id: guestId, type: 'guest' } as GuestUser);
     }
+    
+    setIsLoading(false);
   }, []);
 
   const login = (token: string, user: User) => {
@@ -81,9 +85,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       totalPrice, 
       setTotalPrice, 
       createGuestSession,
-      isGuest 
+      isGuest,
+      isLoading
     }), 
-    [isAuthenticated, user, totalPrice, isGuest]
+    [isAuthenticated, user, totalPrice, isGuest, isLoading]
   );
 
   return (
