@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FabricJSCanvas, useFabricJSEditor } from "fabricjs-react";
 import { fabric } from "fabric";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { ClipLoader } from "react-spinners";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
@@ -57,10 +56,9 @@ const Index = () => {
   const [processingSteps, setProcessingSteps] = useState<any[]>([
     { id: 'capture-front', label: 'Capture Front', completed: false },
     { id: 'capture-back', label: 'Capture Back', completed: false },
-    { id: 'generate-pdf', label: 'Generate PDF', completed: false },
+    { id: 'generate-pdf', label: 'Prepare Canvas', completed: false },
     { id: 'upload-image', label: 'Upload Image', completed: false },
-    { id: 'upload-pdf', label: 'Upload PDF', completed: false },
-    { id: 'save-design', label: 'Save Design', completed: false },
+    { id: 'save-design', label: 'Add to Cart', completed: false },
   ]);
   const [data, setData] = useState<any[]>([]);
   const [aiImagePrompt, setAiImagePrompt] = useState("");
@@ -817,7 +815,6 @@ const Index = () => {
     };
   
     try {
-      const pdf = new jsPDF();
       let frontCanvas;
       let backCanvas;
       
@@ -886,38 +883,19 @@ const Index = () => {
         updateProcessingStep('capture-front', true, '');
       }
   
-      // Add front view to PDF
-      updateProcessingStep('generate-pdf', false, 'Generating PDF...');
-      const imgWidth = 210;
-      const imgHeight = frontCanvas ? (frontCanvas.height * imgWidth) / frontCanvas.width : 0;
-  
-      pdf.setFontSize(16);
-      pdf.text("FRONT VIEW", 105, 20, { align: 'center' });
-      pdf.addImage(
-        frontCanvas.toDataURL("image/png", 1.0),
-        "PNG",
-        0,
-        30,
-        imgWidth,
-        imgHeight
-      );
-  
-      // Add back view on new page
-      pdf.addPage();
-      pdf.setFontSize(16);
-      pdf.text("BACK VIEW", 105, 20, { align: 'center' });
-      pdf.addImage(
-        backCanvas.toDataURL("image/png", 1.0),
-        "PNG",
-        0,
-        30,
-        imgWidth,
-        imgHeight
-      );
-  
-      // Save the PDF to a Blob
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], 't-shirt-design.pdf', { type: 'application/pdf' });
+      // Get canvas data as data URLs (optimized for backend processing)
+      let frontCanvasData = null;
+      let backCanvasData = null;
+      
+      try {
+        updateProcessingStep('generate-pdf', false, 'Preparing canvas data...');
+        frontCanvasData = frontCanvas.toDataURL('image/png', 0.8);  // Compress slightly
+        backCanvasData = backCanvas.toDataURL('image/png', 0.8);
+        updateProcessingStep('generate-pdf', true, '');
+      } catch (error) {
+        console.error('Error converting canvas to data URL:', error);
+        toast.warning('Canvas data conversion failed');
+      }
 
       // Upload front image separately using canvas.toBlob()
       let frontImageFileId = null;
@@ -948,28 +926,21 @@ const Index = () => {
         toast.warning('Front image upload failed, but design will be saved');
       }
 
-      // Use the design service instead of direct axios calls
-      updateProcessingStep('upload-pdf', false, 'Uploading PDF...');
-      const uploadResponse = await designService.uploadFile(file);
-      updateProcessingStep('upload-pdf', true, '');
-      
-      if (!uploadResponse.fileId) {
-        throw new Error('File upload failed');
-      }
-
       // Calculate price from actual size quantities ($30 per item)
       const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
       const designPrice = 30 * totalQuantity;
 
-      updateProcessingStep('save-design', false, 'Saving design...');
-      await designService.saveDesign({
+      // Use quick save design to add to cart immediately (PDF processing happens in backend)
+      updateProcessingStep('save-design', false, 'Adding to cart...');
+      await designService.quickSaveDesign({
         userId: user?._id,
-        fileId: uploadResponse.fileId,
-        frontImageFileId: frontImageFileId, // Include the front image file ID
+        frontCanvasData: frontCanvasData,
+        backCanvasData: backCanvasData,
+        frontImageFileId: frontImageFileId,
         sizeQuantities,
         title: image.title,
         price: designPrice,
-        elements: addedElements // Send the collected elements
+        elements: addedElements
       });
       updateProcessingStep('save-design', true, '');
 

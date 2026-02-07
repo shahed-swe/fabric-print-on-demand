@@ -39,6 +39,7 @@ router.get('/products/category/:categoryId', productController.getProductsByCate
 router.get('/products/:id', productController.getProduct);
 
 // Design routes
+router.post('/designs/quick-save', designController.quickSaveDesign);
 router.post('/designs', designController.saveDesign);
 router.get('/designs', designController.getDesigns);
 router.get('/designs/:id', designController.getDesignById);

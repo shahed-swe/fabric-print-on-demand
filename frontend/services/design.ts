@@ -41,6 +41,20 @@ interface DesignElements {
 }
 
 export const designService = {
+  quickSaveDesign: async (designData: {
+    userId?: string;
+    frontCanvasData?: string;
+    backCanvasData?: string;
+    frontImageFileId?: string | null;
+    sizeQuantities: Record<string, number>;
+    title: string;
+    price: number;
+    elements?: DesignElements;
+  }) => {
+    const response = await api.post('/designs/quick-save', designData);
+    return response.data;
+  },
+
   saveDesign: async (designData: {
     userId?: string;
     fileId: string;

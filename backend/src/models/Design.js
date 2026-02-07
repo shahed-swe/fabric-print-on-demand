@@ -40,7 +40,7 @@ const designSchema = new mongoose.Schema({
   },
   fileId: {
     type: String,
-    required: true
+    default: null  // Can be null initially, filled during async PDF generation
   },
   frontImageFileId: {
     type: String,
@@ -61,6 +61,23 @@ const designSchema = new mongoose.Schema({
   elements: {
     front: canvasElementsSchema,
     back: canvasElementsSchema
+  },
+  pdfStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'completed', 'failed'],
+    default: 'pending'
+  },
+  pdfError: {
+    type: String,
+    default: null
+  },
+  frontCanvasData: {
+    type: String,  // Store base64 or data URL temporarily
+    default: null
+  },
+  backCanvasData: {
+    type: String,  // Store base64 or data URL temporarily
+    default: null
   },
   createdAt: {
     type: Date,
