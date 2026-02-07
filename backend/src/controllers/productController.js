@@ -1,6 +1,32 @@
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
+// Helper function to transform image URLs to use backend API endpoint
+const transformProductUrls = (product) => {
+  if (!product) return product;
+  
+  const productObj = product.toObject ? product.toObject() : product;
+  
+  if (productObj.images && Array.isArray(productObj.images)) {
+    productObj.images = productObj.images.map(img => {
+      if (img.url) {
+        // Extract filename from URL (handles both old /uploads/ and new /api/files/ formats)
+        let filename = img.url;
+        if (filename.includes('/uploads/')) {
+          filename = filename.split('/uploads/')[1];
+        } else if (filename.includes('/api/files/')) {
+          filename = filename.split('/api/files/')[1];
+        }
+        // Ensure we use the backend API endpoint
+        img.url = `${process.env.UPLOAD_API_URL || 'http://localhost:5001'}/api/files/${filename}`;
+      }
+      return img;
+    });
+  }
+  
+  return productObj;
+};
+
 // @desc    Get all products
 // @route   GET /api/products
 // @access  Public
@@ -76,8 +102,11 @@ exports.getProducts = async (req, res) => {
 
     const count = await Product.countDocuments(query);
 
+    // Transform URLs to use backend API endpoint
+    const transformedProducts = products.map(transformProductUrls);
+
     res.json({
-      products,
+      products: transformedProducts,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
       total: count
@@ -100,7 +129,7 @@ exports.getProduct = async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json(product);
+    res.json(transformProductUrls(product));
   } catch (error) {
     console.error('Error fetching product:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -195,7 +224,7 @@ exports.updateProduct = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('category', 'name slug');
 
-    res.json(updatedProduct);
+    res.json(transformProductUrls(updatedProduct));
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ 
@@ -358,7 +387,7 @@ exports.updateProductStock = async (req, res) => {
 
     await product.save();
     
-    res.json(product);
+    res.json(transformProductUrls(product));
   } catch (error) {
     console.error('Error updating stock:', error);
     res.status(500).json({ 
@@ -380,7 +409,10 @@ exports.getFeaturedProducts = async (req, res) => {
       .populate('category', 'name slug')
       .limit(10);
 
-    res.json(products);
+    // Transform URLs to use backend API endpoint
+    const transformedProducts = products.map(transformProductUrls);
+
+    res.json(transformedProducts);
   } catch (error) {
     console.error('Error fetching featured products:', error);
     res.status(500).json({ 
