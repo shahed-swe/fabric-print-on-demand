@@ -36,8 +36,10 @@ export const compressImage = async (
         // Draw the image
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress with decreasing quality until under max size
-        let quality = 0.95;
+        // Determine output format - preserve PNG for transparency
+        const isTransparent = file.type === 'image/png';
+        const outputFormat = isTransparent ? 'image/png' : 'image/jpeg';
+        let quality = isTransparent ? 0.9 : 0.95;
         let compressedFile: File;
 
         const tryCompress = () => {
@@ -51,19 +53,19 @@ export const compressImage = async (
               const sizeInMB = blob.size / (1024 * 1024);
 
               // If size is acceptable or quality is too low, resolve
-              if (sizeInMB <= maxSizeMB || quality <= 0.1) {
+              if (sizeInMB <= maxSizeMB || quality <= (isTransparent ? 0.1 : 0.05)) {
                 compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
+                  type: outputFormat,
                   lastModified: Date.now(),
                 });
                 resolve(compressedFile);
               } else {
                 // Reduce quality and try again
-                quality -= 0.1;
-                canvas.toBlob(tryCompress, 'image/jpeg', quality);
+                quality -= isTransparent ? 0.1 : 0.1;
+                canvas.toBlob(tryCompress, outputFormat, quality);
               }
             },
-            'image/jpeg',
+            outputFormat,
             quality
           );
         };
@@ -129,8 +131,10 @@ export const compressImageWithDimensions = async (
         // Draw the image
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress with decreasing quality until under max size
-        let quality = 0.9;
+        // Determine output format - preserve PNG for transparency
+        const isTransparent = file.type === 'image/png';
+        const outputFormat = isTransparent ? 'image/png' : 'image/jpeg';
+        let quality = isTransparent ? 0.9 : 0.9;
         let compressedFile: File;
 
         const tryCompress = () => {
@@ -144,19 +148,19 @@ export const compressImageWithDimensions = async (
               const sizeInMB = blob.size / (1024 * 1024);
 
               // If size is acceptable or quality is too low, resolve
-              if (sizeInMB <= maxSizeMB || quality <= 0.05) {
+              if (sizeInMB <= maxSizeMB || quality <= (isTransparent ? 0.1 : 0.05)) {
                 compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
+                  type: outputFormat,
                   lastModified: Date.now(),
                 });
                 resolve(compressedFile);
               } else {
                 // Reduce quality and try again
-                quality -= 0.05;
-                canvas.toBlob(tryCompress, 'image/jpeg', quality);
+                quality -= isTransparent ? 0.1 : 0.05;
+                canvas.toBlob(tryCompress, outputFormat, quality);
               }
             },
-            'image/jpeg',
+            outputFormat,
             quality
           );
         };
