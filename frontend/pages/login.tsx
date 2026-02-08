@@ -53,7 +53,8 @@ const Login = () => {
       login(data.token, data);
       router.push('/');
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      // Display the error message from the service
+      setError(err.message || 'Failed to login. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -173,6 +173,8 @@ const OrdersPage = () => {
         switch (status.toLowerCase()) {
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'received':
+                return 'bg-cyan-100 text-cyan-800 border-cyan-200';
             case 'processing':
                 return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'packed':
@@ -181,6 +183,8 @@ const OrdersPage = () => {
                 return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'delivered':
                 return 'bg-green-100 text-green-800 border-green-200';
+            case 'cancelled':
+                return 'bg-red-100 text-red-800 border-red-200';
             default:
                 return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -195,6 +199,23 @@ const OrdersPage = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    // Calculate relative time (e.g., "3 days ago", "Today 15:45", "Yesterday 07:17")
+    const getRelativeTime = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+        if (diffDays === 0) {
+            return `Today ${time}`;
+        } else if (diffDays === 1) {
+            return `Yesterday ${time}`;
+        } else {
+            return `${diffDays} days ago ${time}`;
+        }
     };
 
     return (
@@ -262,10 +283,10 @@ const OrdersPage = () => {
                                         {/* Progress Bar */}
                                         <div className="mb-6">
                                             <div className="flex items-center mb-2">
-                                                {['Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
+                                                {['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
                                                     const normalizedStatus = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
-                                                    const isCompleted = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) >= index;
-                                                    const isCurrent = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) === index;
+                                                    const isCompleted = ['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) >= index;
+                                                    const isCurrent = ['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) === index;
                                                     
                                                     return (
                                                         <React.Fragment key={step}>
@@ -284,9 +305,9 @@ const OrdersPage = () => {
                                                                     <span className="text-sm font-semibold">{index + 1}</span>
                                                                 )}
                                                             </div>
-                                                            {index < 3 && (
+                                                            {index < 4 && (
                                                                 <div className={`flex-1 h-0.5 ${
-                                                                    ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()) > index 
+                                                                    ['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()) > index 
                                                                         ? 'bg-green-500' 
                                                                         : 'bg-gray-300'
                                                                 }`} />
@@ -296,7 +317,7 @@ const OrdersPage = () => {
                                                 })}
                                             </div>
                                             <div className="flex items-center">
-                                                {['Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
+                                                {['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'].map((step, index) => {
                                                     const normalizedStatus = order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase();
                                                     const isCompleted = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) >= index;
                                                     const isCurrent = ['Processing', 'Packed', 'Shipped', 'Delivered'].indexOf(normalizedStatus) === index;
@@ -310,7 +331,7 @@ const OrdersPage = () => {
                                                                     {step}
                                                                 </span>
                                                             </div>
-                                                            {index < 3 && <div className="flex-1" />}
+                                                            {index < 4 && <div className="flex-1" />}
                                                         </React.Fragment>
                                                     );
                                                 })}
@@ -321,14 +342,78 @@ const OrdersPage = () => {
                                         <div className="bg-gray-50 rounded-lg p-4">
                                             <h5 className="font-semibold text-gray-900 mb-3">Order Timeline</h5>
                                             <div className="space-y-3">
-                                                {/* Generate mock timeline events based on status */}
+                                                {/* Timeline in chronological order: Received → Processing → Packed → Departed → Shipped → Delivered */}
+                                                {(['received', 'processing', 'packed', 'shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <div className="flex items-start space-x-3">
+                                                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-sm font-medium text-gray-900">Order Received</span>
+                                                                <span className="text-xs text-gray-500">{getRelativeTime(order.createdAt)}</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600">Order received and payment confirmed</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {(['processing', 'packed', 'shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <div className="flex items-start space-x-3">
+                                                        <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-sm font-medium text-gray-900">Order Processing</span>
+                                                                <span className="text-xs text-gray-500">{getRelativeTime(order.updatedAt)}</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600">Order will be handed over to printing facility soon</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {(['packed', 'shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <div className="flex items-start space-x-3">
+                                                        <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2"></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="text-sm font-medium text-gray-900">Order Packed</span>
+                                                                <span className="text-xs text-gray-500">{getRelativeTime(order.updatedAt)}</span>
+                                                            </div>
+                                                            <p className="text-sm text-gray-600">Your order has been packed and is ready to ship</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {(['shipped', 'delivered'].includes(order.status.toLowerCase())) && (
+                                                    <>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Departed from Distribution Center</span>
+                                                                    <span className="text-xs text-gray-500">{getRelativeTime(order.updatedAt)}</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Package is being sorted and will soon head to the delivery facility</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-start space-x-3">
+                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span className="text-sm font-medium text-gray-900">Order Shipped</span>
+                                                                    <span className="text-xs text-gray-500">{getRelativeTime(order.updatedAt)}</span>
+                                                                </div>
+                                                                <p className="text-sm text-gray-600">Your order is on the way to delivery facility</p>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                
                                                 {order.status.toLowerCase() === 'delivered' && (
                                                     <div className="flex items-start space-x-3">
                                                         <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                                                         <div className="flex-1">
                                                             <div className="flex items-center space-x-2">
                                                                 <span className="text-sm font-medium text-gray-900">Package Delivered</span>
-                                                                <span className="text-xs text-gray-500">Today 18:29</span>
+                                                                <span className="text-xs text-gray-500">{getRelativeTime(order.updatedAt)}</span>
                                                             </div>
                                                             <p className="text-sm text-gray-600">
                                                               Package delivered! 
@@ -340,56 +425,6 @@ const OrdersPage = () => {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                )}
-                                                
-                                                {(['shipped', 'delivered'].includes(order.status.toLowerCase())) && (
-                                                    <>
-                                                        <div className="flex items-start space-x-3">
-                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-2">
-                                                                    <span className="text-sm font-medium text-gray-900">Order Shipped</span>
-                                                                    <span className="text-xs text-gray-500">Yesterday 07:17</span>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600">Your order is on the way to delivery facility</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-start space-x-3">
-                                                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-2">
-                                                                    <span className="text-sm font-medium text-gray-900">Departed from Distribution Center</span>
-                                                                    <span className="text-xs text-gray-500">2 days ago 01:18</span>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600">Package is being sorted and will soon head to the delivery facility</p>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                
-                                                {(['processing', 'packed', 'shipped', 'delivered'].includes(order.status.toLowerCase())) && (
-                                                    <>
-                                                        <div className="flex items-start space-x-3">
-                                                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-2">
-                                                                    <span className="text-sm font-medium text-gray-900">Order Processing</span>
-                                                                    <span className="text-xs text-gray-500">3 days ago 15:45</span>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600">Order will be handed over to printing facility soon</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-start space-x-3">
-                                                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center space-x-2">
-                                                                    <span className="text-sm font-medium text-gray-900">Order Received</span>
-                                                                    <span className="text-xs text-gray-500">4 days ago 21:14</span>
-                                                                </div>
-                                                                <p className="text-sm text-gray-600">Order received and payment confirmed</p>
-                                                            </div>
-                                                        </div>
-                                                    </>
                                                 )}
                                             </div>
                                         </div>

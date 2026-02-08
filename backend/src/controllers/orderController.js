@@ -54,9 +54,9 @@ exports.createOrder = async (req, res) => {
     // Determine order status based on payment status
     let orderStatus = status || 'Pending';
     
-    // If payment is completed, set status to Processing
+    // If payment is completed, set status to Received
     if (paymentStatus === 'completed') {
-      orderStatus = status || 'Processing';
+      orderStatus = status || 'Received';
     }
     
     const order = await Order.create({

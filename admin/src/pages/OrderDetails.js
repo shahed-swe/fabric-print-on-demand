@@ -56,6 +56,8 @@ export default function OrderDetails() {
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'Processing':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Received':
+        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
       case 'Pending':
         return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'Cancelled':
@@ -66,7 +68,7 @@ export default function OrderDetails() {
   };
 
   const getProgressSteps = (status) => {
-    const steps = ['Processing', 'Packed', 'Shipped', 'Delivered'];
+    const steps = ['Received', 'Processing', 'Packed', 'Shipped', 'Delivered'];
     const currentIndex = steps.indexOf(status);
     return steps.map((step, index) => ({
       step,
@@ -196,6 +198,7 @@ export default function OrderDetails() {
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="Pending">Pending</option>
+                  <option value="Received">Received</option>
                   <option value="Processing">Processing</option>
                   <option value="Packed">Packed</option>
                   <option value="Shipped">Shipped</option>

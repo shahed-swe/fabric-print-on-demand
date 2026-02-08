@@ -98,7 +98,8 @@ const Register = () => {
 
       router.push('/login?registered=true');
     } catch (err: any) {
-      setError(err.message || 'Failed to register');
+      // Display the error message from the service
+      setError(err.message || 'Failed to register. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -297,18 +297,18 @@ const Cart = () => {
   return (
     <div>
       <NavBar />
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">Shopping Cart</h1>
+      <div className="container mx-auto px-4 py-8 pt-20">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center">Shopping Cart</h1>
         {cartItems.length === 0 ? (
           <p className="text-center text-gray-600">Your cart is empty.</p>
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {cartItems.map(item => (
-              <div key={item._id} className="p-6 bg-white rounded-lg shadow-lg">
-                <div className="flex gap-6 items-start">
+              <div key={item._id} className="p-4 md:p-6 bg-white rounded-lg shadow-lg">
+                <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-start">
                   {/* Product Image */}
                   {item.itemType === 'product' && item.productId && (
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 w-full md:w-auto">
                       <img
                         src={
                           item.productId.images?.find((img: any) => img.isPrimary)?.url ||
@@ -316,26 +316,26 @@ const Cart = () => {
                           'https://via.placeholder.com/150'
                         }
                         alt={item.productId.name}
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                        className="w-full md:w-32 h-40 md:h-32 object-cover rounded-lg border border-gray-200"
                       />
                     </div>
                   )}
 
                   {/* Design Preview */}
                   {item.itemType === 'design' && (
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 w-full md:w-auto">
                       {item.designId?.frontImageFileId ? (
                         <img
                           src={`${process.env.NEXT_PUBLIC_API_URL || 'https://backend.customprintingservices.com.au/api'}/files/${item.designId.frontImageFileId}`}
                           alt="Design front view"
-                          className="w-32 h-32 object-cover rounded-lg border border-purple-200"
+                          className="w-full md:w-32 h-40 md:h-32 object-cover rounded-lg border border-purple-200"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
                           }}
                         />
                       ) : (
-                        <div className="w-32 h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
-                          <svg className="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-full md:w-32 h-40 md:h-32 bg-purple-50 rounded-lg border border-purple-200 flex items-center justify-center">
+                          <svg className="w-12 h-12 md:w-16 md:h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                           </svg>
                         </div>
@@ -343,7 +343,7 @@ const Cart = () => {
                     </div>
                   )}
 
-                  <div className="flex-1">
+                  <div className="flex-1 w-full">
                     {/* Item Type Badge */}
                     <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
                       item.itemType === 'design' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
@@ -352,7 +352,7 @@ const Cart = () => {
                     </span>
 
                     {/* Item Title */}
-                    <h2 className="text-xl font-semibold mb-2">
+                    <h2 className="text-lg md:text-xl font-semibold mb-2">
                       {item.itemType === 'product' 
                         ? item.productId?.name || 'Product'
                         : item.designId?.title || 'Custom Design'}
@@ -361,10 +361,10 @@ const Cart = () => {
                     {/* Product Details */}
                     {item.itemType === 'product' && (
                       <div className="text-gray-700 mb-3 space-y-1">
-                        {item.size && <p className="text-sm">Size: <span className="font-medium">{item.size}</span></p>}
-                        {item.color && <p className="text-sm">Color: <span className="font-medium">{item.color}</span></p>}
+                        {item.size && <p className="text-xs md:text-sm">Size: <span className="font-medium">{item.size}</span></p>}
+                        {item.color && <p className="text-xs md:text-sm">Color: <span className="font-medium">{item.color}</span></p>}
                         {item.productId?.material && (
-                          <p className="text-sm text-gray-600">{item.productId.material}</p>
+                          <p className="text-xs md:text-sm text-gray-600">{item.productId.material}</p>
                         )}
                       </div>
                     )}
@@ -372,19 +372,21 @@ const Cart = () => {
                     {/* Design Details */}
                     {item.itemType === 'design' && item.designId && (
                       <div className="text-gray-700 mb-3">
-                        <p className="text-sm text-gray-600">Custom print-on-demand design</p>
+                        <p className="text-xs md:text-sm text-gray-600">Custom print-on-demand design</p>
                         {item.designId.sizeQuantities && editingSizes !== item._id && (
-                          <div className="mt-2 text-sm">
-                            <div className="flex items-center justify-between">
+                          <div className="mt-2 text-xs md:text-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                               <div>
                                 <span className="font-medium">Sizes: </span>
-                                {Object.entries(item.designId.sizeQuantities).map(([size, qty]: [string, any]) => (
-                                  qty > 0 && <span key={size} className="mr-2">{size}: {qty}</span>
-                                ))}
+                                <div className="flex flex-wrap gap-1 mt-1 sm:mt-0 sm:inline-flex">
+                                  {Object.entries(item.designId.sizeQuantities).map(([size, qty]: [string, any]) => (
+                                    qty > 0 && <span key={size} className="text-xs sm:text-sm">{size}: {qty}</span>
+                                  ))}
+                                </div>
                               </div>
                               <button
                                 onClick={() => handleEditSizes(item)}
-                                className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center space-x-1 text-xs"
+                                className="w-full sm:w-auto px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center sm:justify-start space-x-1 text-xs"
                               >
                                 <FaEdit />
                                 <span>Edit Sizes</span>
@@ -397,10 +399,10 @@ const Cart = () => {
                         {editingSizes === item._id && (
                           <div className="mt-3 p-4 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-200">
                             <h4 className="text-sm font-bold text-gray-800 mb-4">Size Quantities</h4>
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
                               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
-                                <div key={size} className="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-orange-300 hover:border-orange-500 transition-all">
-                                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">{size}</label>
+                                <div key={size} className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-2 sm:px-3 py-2 bg-white rounded-lg border border-orange-300 hover:border-orange-500 transition-all">
+                                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-1 sm:mb-0">{size}</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -412,25 +414,25 @@ const Cart = () => {
                                         handleSizeQuantityChange(size, value);
                                       }
                                     }}
-                                    className="w-32 px-3 py-1 text-center text-sm font-bold text-orange-600 bg-white border-2 border-orange-300 rounded-lg hover:border-orange-500 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100 transition-all"
+                                    className="w-full sm:w-24 px-2 sm:px-3 py-1 text-center text-sm font-bold text-orange-600 bg-white border-2 border-orange-300 rounded-lg hover:border-orange-500 focus:outline-none focus:border-orange-600 focus:ring-2 focus:ring-orange-100 transition-all"
                                   />
                                 </div>
                               ))}
                             </div>
                             <div className="bg-white rounded-lg border border-orange-300 p-3 mb-4 text-center">
-                              <span className="text-sm text-gray-600">Total Items: </span>
-                              <span className="text-xl font-bold text-orange-600">{Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)}</span>
+                              <span className="text-xs sm:text-sm text-gray-600">Total Items: </span>
+                              <span className="text-lg sm:text-xl font-bold text-orange-600">{Object.values(tempSizeQuantities).reduce((sum, qty) => sum + qty, 0)}</span>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={() => handleSaveSizes(item._id)}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition duration-200 text-sm font-bold shadow-md hover:shadow-lg"
+                                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition duration-200 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg"
                               >
                                 ✓ Save
                               </button>
                               <button
                                 onClick={handleCancelEditSizes}
-                                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200 text-sm font-bold"
+                                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200 text-xs sm:text-sm font-bold"
                               >
                                 Cancel
                               </button>
@@ -443,7 +445,7 @@ const Cart = () => {
                     {/* Quantity Controls - Only show for products, not custom designs */}
                     {item.itemType === 'product' && (
                       <div className="flex items-center gap-3 mt-3">
-                        <span className="text-sm font-medium text-gray-700">Qty:</span>
+                        <span className="text-xs md:text-sm font-medium text-gray-700">Qty:</span>
                         <input
                           type="number"
                           min="1"
@@ -455,7 +457,7 @@ const Cart = () => {
                               handleQuantityChange(item._id, value);
                             }
                           }}
-                          className="w-20 px-3 py-2 text-center text-lg font-semibold text-gray-800 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
+                          className="w-16 md:w-20 px-2 md:px-3 py-2 text-center text-lg font-semibold text-gray-800 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
                         />
                       </div>
                     )}
@@ -464,19 +466,19 @@ const Cart = () => {
                     <div className="mt-3">
                       {item.itemType === 'product' ? (
                         <>
-                          <span className="text-sm text-gray-600">Unit Price: </span>
-                          <span className="text-lg font-semibold text-gray-900">${item.price.toFixed(2)}</span>
+                          <span className="text-xs md:text-sm text-gray-600">Unit Price: </span>
+                          <span className="text-base md:text-lg font-semibold text-gray-900">${item.price.toFixed(2)}</span>
                           {item.quantity > 1 && (
-                            <span className="text-sm text-gray-600 ml-2">
+                            <span className="text-xs md:text-sm text-gray-600 ml-2">
                               (Total: ${(item.price * item.quantity).toFixed(2)})
                             </span>
                           )}
                         </>
                       ) : (
                         <>
-                          <span className="text-sm text-gray-600">Total Price: </span>
-                          <span className="text-lg font-semibold text-gray-900">${item.price.toFixed(2)}</span>
-                          <span className="text-sm text-gray-600 ml-2">
+                          <span className="text-xs md:text-sm text-gray-600">Total Price: </span>
+                          <span className="text-base md:text-lg font-semibold text-gray-900">${item.price.toFixed(2)}</span>
+                          <span className="text-xs md:text-sm text-gray-600 ml-2">
                             ($30.00 per item × {item.quantity})
                           </span>
                         </>
@@ -485,49 +487,49 @@ const Cart = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col space-y-2 ml-4">
+                  <div className="flex flex-col gap-2 w-full md:w-auto md:ml-4">
                     <button
                       onClick={() => handleRemoveItem(item._id)}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 flex items-center space-x-2"
+                      className="px-3 md:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 flex items-center justify-center md:justify-start space-x-2 text-xs md:text-sm"
                     >
                       <FaTrash />
-                      <span className="text-sm">Remove</span>
+                      <span>Remove</span>
                     </button>
                     {item.itemType === 'design' && item.designId?.fileId && (
                       <button
                         onClick={() => handleDownloadFile(item.designId.fileId)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center space-x-2"
+                        className="px-3 md:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center justify-center md:justify-start space-x-2 text-xs md:text-sm"
                       >
                         <FaDownload />
-                        <span className="text-sm">Download</span>
+                        <span>Download</span>
                       </button>
                     )}
                   </div>
                 </div>
               </div>
             ))}
-            <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
+            <div className="mt-6 p-4 md:p-6 bg-white rounded-lg shadow-lg">
                 <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm md:text-base">
                     <span>Subtotal:</span>
                     <span>${calculateSubtotal().toFixed(2)}</span>
                   </div>
                   
                   {calculateSubtotal() > 0 && (
-                    <div className="flex justify-between text-gray-600">
+                    <div className="flex justify-between text-gray-600 text-sm md:text-base">
                       <span>Shipping:</span>
                       <span>${SHIPPING_COST.toFixed(2)}</span>
                     </div>
                   )}
 
                   <div className="pt-3 border-t">
-                    <div className="flex justify-between items-center">
-                      <div className="text-xl font-semibold">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                      <div className="text-lg md:text-xl font-semibold">
                         Total: ${calculateTotal().toFixed(2)}
                       </div>
                       <button
                         onClick={handleCheckout}
-                        className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200"
+                        className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 text-sm md:text-base"
                       >
                         Proceed to Payment
                       </button>
@@ -535,8 +537,8 @@ const Cart = () => {
                   </div>
                 </div>
                 {showShippingForm && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto">
                       <ShippingAddressForm
                         onSubmit={handleShippingSubmit}
                         onCancel={() => setShowShippingForm(false)}
@@ -545,9 +547,9 @@ const Cart = () => {
                   </div>
                 )}
                 {showPayment && clientSecret && stripePromise && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                  <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                    <h2 className="text-2xl font-bold mb-4">Complete Your Payment</h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                  <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto">
+                    <h2 className="text-xl md:text-2xl font-bold mb-4">Complete Your Payment</h2>
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <CheckoutForm 
                         clientSecret={clientSecret}
@@ -559,15 +561,15 @@ const Cart = () => {
                 </div>
               )}
               {showPayment && !stripePromise && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                  <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-                    <h2 className="text-2xl font-bold mb-4 text-red-600">Payment Error</h2>
-                    <p className="text-red-500 mb-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                  <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md">
+                    <h2 className="text-xl md:text-2xl font-bold mb-4 text-red-600">Payment Error</h2>
+                    <p className="text-xs md:text-sm text-red-500 mb-4">
                       Payment system is not properly configured. Please contact support.
                     </p>
                     <button
                       onClick={() => setShowPayment(false)}
-                      className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                      className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm md:text-base"
                     >
                       Close
                     </button>
