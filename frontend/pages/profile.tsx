@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { profileService } from '../services/profile';
 import { orderService } from '../services/order';
+import axios from '../config/axios';
 import { FaCamera, FaLock, FaUser, FaShoppingBag, FaArrowRight, FaEnvelope, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 
 interface ProfileData {
@@ -270,22 +271,11 @@ const Profile = () => {
       setError('');
       setSuccessMessage('');
 
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axios.post('/auth/resend-verification');
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccessMessage('Verification email sent! Please check your inbox.');
-      } else {
-        setError(data.message || 'Failed to send verification email');
-      }
+      setSuccessMessage('Verification email sent! Please check your inbox.');
     } catch (err: any) {
-      setError('Failed to send verification email');
+      setError(err.response?.data?.message || 'Failed to send verification email');
     } finally {
       setResendingVerification(false);
     }
