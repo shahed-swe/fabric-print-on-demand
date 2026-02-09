@@ -18,6 +18,8 @@ router.post('/auth/login', authController.login);
 router.post('/auth/create-guest-account', authController.createGuestAccount);
 router.get('/auth/verify/:token', authController.verifyEmail);
 router.post('/auth/resend-verification', protect, authController.resendVerificationEmail);
+router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/reset-password/:token', authController.resetPassword);
 
 // Cart routes
 router.get('/cart', cartController.getCartItems);

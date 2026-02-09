@@ -33,6 +33,14 @@ const userSchema = new mongoose.Schema({
   verificationTokenExpire: {
     type: Date,
     default: null
+  },
+  passwordResetToken: {
+    type: String,
+    default: null
+  },
+  passwordResetExpire: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 

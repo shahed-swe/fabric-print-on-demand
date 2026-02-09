@@ -403,9 +403,120 @@ const sendVerificationEmail = async (user, verificationToken) => {
   }
 };
 
+const sendPasswordResetEmail = async (user, resetToken) => {
+  try {
+    const resetURL = `${process.env.FRONTEND_URL || 'https://customprintingservices.com.au'}/reset-password?token=${resetToken}`;
+    
+    const resetHTML = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your Password</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 0;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Reset Your Password</h1>
+                    <p style="margin: 10px 0 0 0; color: #e5e7eb; font-size: 16px;">Secure your account</p>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #111827; font-size: 22px;">Hello ${user.name}!</h2>
+                    
+                    <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                      We received a request to reset your password for your <strong>Fabric Print on Demand</strong> account. Click the button below to create a new password.
+                    </p>
+                    
+                    <!-- Reset Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                      <tr>
+                        <td align="center">
+                          <a href="${resetURL}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Reset Password
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <p style="margin: 20px 0; color: #6b7280; font-size: 14px; text-align: center;">
+                      Or copy and paste this link in your browser:
+                    </p>
+                    <p style="margin: 0 0 20px 0; color: #667eea; font-size: 12px; word-break: break-all; background-color: #f9fafb; padding: 12px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                      ${resetURL}
+                    </p>
+                    
+                    <!-- Important Info -->
+                    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 20px 0;">
+                      <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                        <strong>ℹ️ Note:</strong> This reset link will expire in 1 hour. If you didn't request this, you can safely ignore this email.
+                      </p>
+                    </div>
+                    
+                    <!-- Security Info -->
+                    <div style="background-color: #fee2e2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 4px; margin: 20px 0;">
+                      <p style="margin: 0; color: #991b1b; font-size: 14px;">
+                        <strong>🔒 Security:</strong> Never share this link with anyone. We'll never ask for your password via email.
+                      </p>
+                    </div>
+                    
+                    <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px;">
+                      After resetting your password, you can:
+                    </p>
+                    <ul style="margin: 10px 0 20px 20px; color: #374151; font-size: 14px;">
+                      <li style="margin: 8px 0;">Log in with your new password</li>
+                      <li style="margin: 8px 0;">Update your account settings</li>
+                      <li style="margin: 8px 0;">Track your orders</li>
+                    </ul>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                      © 2026 Fabric Print on Demand. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: `"${process.env.BREVO_FROM_NAME || 'Fabric Print on Demand'}" <${process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: 'Reset Your Password - Fabric Print on Demand',
+      html: resetHTML
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Password reset email sent to ${user.email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendOrderInvoice,
   generateInvoiceHTML,
   sendAccountCreationEmail,
-  sendVerificationEmail
+  sendVerificationEmail,
+  sendPasswordResetEmail
 };
