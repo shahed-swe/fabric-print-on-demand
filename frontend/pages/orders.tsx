@@ -48,6 +48,8 @@ interface Order {
     };
     userId: string;
     totalAmount: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 interface ShippingAddress {
