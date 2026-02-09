@@ -25,6 +25,7 @@ import { useRouter } from 'next/router';
 import { productService } from '@/services/product';
 import ProcessingLoader from '@/components/ProcessingLoader';
 import { compressImageWithDimensions } from '@/utils/imageCompressor';
+import { compressCanvasBlob } from '@/utils/imageCompressionUtils';
 
 // Import t-shirt images
 const TShirtFront = "/images/crew_front.png";
@@ -883,25 +884,39 @@ const Index = () => {
         updateProcessingStep('capture-front', true, '');
       }
   
-      // Get canvas data as data URLs (optimized for backend processing)
+      // Helper function to compress blob if it exceeds 800KB
+      const compressBlob = async (blob: Blob, canvas: HTMLCanvasElement, maxSizeKB = 800): Promise<Blob> => {
+        return compressCanvasBlob(blob, canvas, maxSizeKB);
+      };
+
+      // Get canvas data as data URLs (heavily optimized for backend processing)
       let frontCanvasData = null;
       let backCanvasData = null;
       
       try {
         updateProcessingStep('generate-pdf', false, 'Preparing canvas data...');
-        frontCanvasData = frontCanvas.toDataURL('image/png', 0.8);  // Compress slightly
-        backCanvasData = backCanvas.toDataURL('image/png', 0.8);
+        // Use WebP format with lower quality (0.5) for better compression
+        // Falls back to PNG 0.6 quality if WebP is not supported
+        try {
+          frontCanvasData = frontCanvas.toDataURL('image/webp', 0.5);
+          backCanvasData = backCanvas.toDataURL('image/webp', 0.5);
+        } catch {
+          // Fallback to PNG if WebP not supported
+          frontCanvasData = frontCanvas.toDataURL('image/png', 0.6);
+          backCanvasData = backCanvas.toDataURL('image/png', 0.6);
+        }
         updateProcessingStep('generate-pdf', true, '');
       } catch (error) {
         console.error('Error converting canvas to data URL:', error);
         toast.warning('Canvas data conversion failed');
       }
 
-      // Upload front image separately using canvas.toBlob()
+      // Upload front image separately using canvas.toBlob() - higher quality for display
       let frontImageFileId = null;
       try {
         updateProcessingStep('upload-image', false, 'Uploading front image...');
-        const frontImageBlob = await new Promise<Blob>((resolve, reject) => {
+        let frontImageBlob = await new Promise<Blob>((resolve, reject) => {
+          // Try WebP first for better compression, fallback to PNG
           frontCanvas.toBlob(
             (blob) => {
               if (blob) {
@@ -910,16 +925,34 @@ const Index = () => {
                 reject(new Error('Failed to convert canvas to blob'));
               }
             },
-            'image/png',
-            1.0
+            'image/webp',
+            0.75
           );
+        }).catch(() => {
+          // Fallback to PNG if WebP fails
+          return new Promise<Blob>((resolve, reject) => {
+            frontCanvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  resolve(blob);
+                } else {
+                  reject(new Error('Failed to convert canvas to blob'));
+                }
+              },
+              'image/png',
+              0.8
+            );
+          });
         });
 
-        const frontImageFile = new File([frontImageBlob], 'front-design.png', { type: 'image/png' });
+        // Ensure file size doesn't exceed 800KB
+        frontImageBlob = await compressBlob(frontImageBlob, frontCanvas, 800);
+
+        const frontImageFile = new File([frontImageBlob], `front-design.${frontImageBlob.type === 'image/webp' ? 'webp' : 'png'}`, { type: frontImageBlob.type });
         const frontImageResponse = await designService.uploadFile(frontImageFile);
         frontImageFileId = frontImageResponse.fileId;
         updateProcessingStep('upload-image', true, '');
-        console.log('Front image uploaded successfully with fileId:', frontImageFileId);
+        console.log(`Front image uploaded successfully with fileId: ${frontImageFileId}, Size: ${(frontImageBlob.size / 1024).toFixed(2)}KB`);
       } catch (error) {
         console.error('Error uploading front image:', error);
         updateProcessingStep('upload-image', true, '');
