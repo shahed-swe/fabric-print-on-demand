@@ -231,7 +231,7 @@ export default function Orders() {
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().substring(0, 8) || 'N/A'}</p>
+                        <p className="text-sm font-medium text-primary-600 truncate">{order._id?.toString().slice(-8) || 'N/A'}</p>
                         <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>

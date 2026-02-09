@@ -122,7 +122,7 @@ export default function OrderDetails() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="mb-4 md:mb-0">
             <h1 className="text-3xl font-bold text-gray-900">
-              Order #{order._id?.toString().substring(0, 8) || 'N/A'}
+              Order #{order._id?.toString().slice(-8) || 'N/A'}
             </h1>
             <p className="text-gray-600 mt-1">
               Customer: <span className="font-semibold">{order.user?.name || 'Unknown'}</span>

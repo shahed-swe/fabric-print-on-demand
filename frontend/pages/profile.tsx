@@ -618,7 +618,7 @@ const Profile = () => {
                                 <FaShoppingBag className="text-orange-500" />
                               </div>
                               <div>
-                                <p className="font-semibold text-gray-900">Order #{order.orderNumber || order._id.slice(-6).toUpperCase()}</p>
+                                <p className="font-semibold text-gray-900">Order #{order._id.slice(-8)}</p>
                                 <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
                               </div>
                             </div>

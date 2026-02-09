@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../config/axios';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+import { Elements, CardElement } from '@stripe/react-stripe-js';
 import NavBar from '../components/NavBar';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -550,7 +550,7 @@ const Cart = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
                   <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto">
                     <h2 className="text-xl md:text-2xl font-bold mb-4">Complete Your Payment</h2>
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <Elements stripe={stripePromise}>
                       <CheckoutForm 
                         clientSecret={clientSecret}
                         onSuccess={handlePaymentSuccess}
