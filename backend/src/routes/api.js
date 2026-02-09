@@ -16,6 +16,8 @@ const { protect } = require('../middlewares/auth');
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
 router.post('/auth/create-guest-account', authController.createGuestAccount);
+router.get('/auth/verify/:token', authController.verifyEmail);
+router.post('/auth/resend-verification', protect, authController.resendVerificationEmail);
 
 // Cart routes
 router.get('/cart', cartController.getCartItems);

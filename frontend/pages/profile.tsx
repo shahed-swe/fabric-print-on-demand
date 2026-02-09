@@ -13,6 +13,7 @@ interface ProfileData {
   email: string;
   type: string;
   profilePicture: string | null;
+  isVerified?: boolean;
   createdAt: string;
 }
 
@@ -56,6 +57,9 @@ const Profile = () => {
   });
   const [passwordErrors, setPasswordErrors] = useState<FormErrors>({});
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Email Verification States
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   // Profile Picture States
   const [uploadingPicture, setUploadingPicture] = useState(false);
@@ -260,6 +264,33 @@ const Profile = () => {
     }
   };
 
+  const handleResendVerification = async () => {
+    try {
+      setResendingVerification(true);
+      setError('');
+      setSuccessMessage('');
+
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage('Verification email sent! Please check your inbox.');
+      } else {
+        setError(data.message || 'Failed to send verification email');
+      }
+    } catch (err: any) {
+      setError('Failed to send verification email');
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
   const handlePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -326,6 +357,30 @@ const Profile = () => {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">My Profile</h1>
             <p className="text-gray-600">Manage your account information and preferences</p>
           </div>
+
+          {/* Email Verification Banner */}
+          {profile && !profile.isVerified && (
+            <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex items-start justify-between">
+              <div className="flex items-start">
+                <svg className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zM8 9a1 1 0 100-2 1 1 0 000 2zm5-1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <h3 className="font-semibold text-blue-900">Email Not Verified</h3>
+                  <p className="text-sm text-blue-800 mt-1">
+                    Please verify your email address to unlock all features and ensure you receive important account notifications.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleResendVerification}
+                disabled={resendingVerification}
+                className="ml-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors text-sm font-medium flex-shrink-0 whitespace-nowrap"
+              >
+                {resendingVerification ? 'Sending...' : 'Send Verification Email'}
+              </button>
+            </div>
+          )}
 
           {/* Alert Messages */}
           {error && (

@@ -37,6 +37,7 @@ exports.getProfile = async (req, res) => {
       email: user.email,
       type: user.type,
       profilePicture: user.profilePicture,
+      isVerified: user.isVerified,
       createdAt: user.createdAt
     });
   } catch (error) {

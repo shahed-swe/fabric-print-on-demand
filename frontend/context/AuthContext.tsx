@@ -5,6 +5,7 @@ interface User {
   name: string;
   email: string;
   type: string;
+  isVerified?: boolean;
 }
 
 interface GuestUser {
@@ -17,6 +18,7 @@ interface AuthContextProps {
   user: User | GuestUser | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User | GuestUser) => void;
   totalPrice: number;
   setTotalPrice: (price: number) => void;
   createGuestSession: () => void;
@@ -76,12 +78,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     createGuestSession();
   };
 
+  const updateUser = (updatedUser: User | GuestUser) => {
+    setUser(updatedUser);
+    if (updatedUser.type !== 'guest') {
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = React.useMemo(
     () => ({ 
       isAuthenticated, 
       user, 
       login, 
-      logout, 
+      logout,
+      updateUser,
       totalPrice, 
       setTotalPrice, 
       createGuestSession,

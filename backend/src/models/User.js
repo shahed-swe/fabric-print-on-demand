@@ -21,6 +21,18 @@ const userSchema = new mongoose.Schema({
   profilePicture: {
     type: String,
     default: null
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  verificationToken: {
+    type: String,
+    default: null
+  },
+  verificationTokenExpire: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 

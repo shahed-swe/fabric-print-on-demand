@@ -299,8 +299,112 @@ const sendAccountCreationEmail = async (user, temporaryPassword) => {
   }
 };
 
+const sendVerificationEmail = async (user, verificationToken) => {
+  try {
+    const verificationURL = `${process.env.FRONTEND_URL || 'https://customprintingservices.com.au'}/verify-email?token=${verificationToken}`;
+    
+    const verifyHTML = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 40px 0;">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; text-align: center;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Verify Your Email</h1>
+                    <p style="margin: 10px 0 0 0; color: #e5e7eb; font-size: 16px;">Complete your registration</p>
+                  </td>
+                </tr>
+                
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 40px;">
+                    <h2 style="margin: 0 0 20px 0; color: #111827; font-size: 22px;">Hello ${user.name}!</h2>
+                    
+                    <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                      Thank you for registering with <strong>Fabric Print on Demand</strong>. To complete your registration and unlock all features, please verify your email address by clicking the button below.
+                    </p>
+                    
+                    <!-- Verification Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                      <tr>
+                        <td align="center">
+                          <a href="${verificationURL}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: bold; display: inline-block;">
+                            Verify Email Address
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <p style="margin: 20px 0; color: #6b7280; font-size: 14px; text-align: center;">
+                      Or copy and paste this link in your browser:
+                    </p>
+                    <p style="margin: 0 0 20px 0; color: #667eea; font-size: 12px; word-break: break-all; background-color: #f9fafb; padding: 12px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                      ${verificationURL}
+                    </p>
+                    
+                    <!-- Important Info -->
+                    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 4px; margin: 20px 0;">
+                      <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                        <strong>ℹ️ Note:</strong> This verification link will expire in 24 hours. If it expires, you can request a new one from your account settings.
+                      </p>
+                    </div>
+                    
+                    <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px;">
+                      Benefits of verification:
+                    </p>
+                    <ul style="margin: 10px 0 20px 20px; color: #374151; font-size: 14px;">
+                      <li style="margin: 8px 0;">Full access to your account dashboard</li>
+                      <li style="margin: 8px 0;">Track your design orders and shipments</li>
+                      <li style="margin: 8px 0;">Receive order updates via email</li>
+                      <li style="margin: 8px 0;">Save your designs and preferences</li>
+                    </ul>
+                  </td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; color: #6b7280; font-size: 12px;">
+                      © 2026 Fabric Print on Demand. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'noreply@customprintingservices.com.au',
+      to: user.email,
+      subject: 'Verify Your Email - Fabric Print on Demand',
+      html: verifyHTML
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Verification email sent to ${user.email}`);
+  } catch (error) {
+    console.error('Send verification email error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendOrderInvoice,
   generateInvoiceHTML,
-  sendAccountCreationEmail
+  sendAccountCreationEmail,
+  sendVerificationEmail
 };
