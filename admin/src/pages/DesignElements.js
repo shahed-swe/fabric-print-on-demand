@@ -36,16 +36,12 @@ const DesignElements = () => {
       const response = await axios.get('/admin/designs');
       setDesigns(response.data);
       
-      // Fetch user details for each unique userId
-      const uniqueUserIds = [...new Set(response.data.map(d => d.userId))];
-      const userPromises = uniqueUserIds.map(userId => 
-        axios.get(`/admin/users/${userId}`).catch(() => ({ data: { name: 'Unknown User', email: '' } }))
-      );
-      const userResponses = await Promise.all(userPromises);
-      
+      // Build users map from the design data which now includes user info
       const usersMap = {};
-      uniqueUserIds.forEach((userId, index) => {
-        usersMap[userId] = userResponses[index].data;
+      response.data.forEach(design => {
+        if (design.user) {
+          usersMap[design.userId] = design.user;
+        }
       });
       setUsers(usersMap);
     } catch (error) {

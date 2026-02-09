@@ -99,7 +99,14 @@ exports.getCustomer = async (req, res) => {
     const customer = await User.findById(id).select('-password');
     
     if (!customer) {
-      return res.status(404).json({ message: 'Customer not found' });
+      // Return a safe fallback object instead of 404 for user lookup
+      return res.json({
+        _id: id,
+        name: 'Unknown User',
+        email: '',
+        isActive: false,
+        createdAt: new Date()
+      });
     }
 
     // Get customer's orders

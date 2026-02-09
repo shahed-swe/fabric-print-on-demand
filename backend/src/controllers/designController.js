@@ -1,5 +1,6 @@
 const Design = require('../models/Design');
 const Cart = require('../models/Cart');
+const User = require('../models/User');
 const { jsPDF } = require('jspdf');
 const { uploadFile: uploadToMinio } = require('../config/minio');
 
@@ -385,7 +386,65 @@ exports.getDesignById = async (req, res) => {
 exports.getAllDesigns = async (req, res) => {
   try {
     const designs = await Design.find().sort({ createdAt: -1 });
-    res.json(designs);
+    
+    // Get unique user IDs
+    const uniqueUserIds = [...new Set(designs.map(d => d.userId))];
+    
+    // Separate guest and registered user IDs
+    const guestUserIds = uniqueUserIds.filter(id => id.startsWith('guest_'));
+    const registeredUserIds = uniqueUserIds.filter(id => !id.startsWith('guest_'));
+    
+    // Fetch registered user details
+    let registeredUsers = [];
+    if (registeredUserIds.length > 0) {
+      registeredUsers = await User.find({ 
+        _id: { $in: registeredUserIds.map(id => {
+          // Convert string IDs to MongoDB ObjectId
+          try {
+            return require('mongoose').Types.ObjectId(id);
+          } catch {
+            return id;
+          }
+        }) } 
+      }).select('_id name email');
+    }
+    
+    const usersMap = {};
+    
+    // Add registered users to map
+    registeredUsers.forEach(user => {
+      usersMap[user._id.toString()] = { 
+        _id: user._id,
+        name: user.name, 
+        email: user.email 
+      };
+    });
+    
+    // Add guest users to map
+    guestUserIds.forEach(guestId => {
+      usersMap[guestId] = {
+        _id: guestId,
+        name: 'Guest User',
+        email: 'guest@example.com',
+        isGuest: true
+      };
+    });
+    
+    // Enrich designs with user information
+    const enrichedDesigns = designs.map(design => {
+      const designObj = design.toObject();
+      const userId = design.userId;
+      
+      designObj.user = usersMap[userId] || {
+        _id: userId,
+        name: 'Unknown User',
+        email: ''
+      };
+      
+      return designObj;
+    });
+    
+    res.json(enrichedDesigns);
   } catch (error) {
     console.error('Get all designs error:', error);
     res.status(500).json({ message: error.message });
