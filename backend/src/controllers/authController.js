@@ -39,10 +39,13 @@ exports.register = async (req, res) => {
     
     const token = generateToken(user._id);
 
-    // Send verification email
-    sendVerificationEmail(user, verificationToken).catch(err => {
-      console.error('Failed to send verification email:', err);
-    });
+    // Send verification email (fire and forget, but log errors)
+    try {
+      await sendVerificationEmail(user, verificationToken);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+      // Don't fail the registration, but user won't get email
+    }
 
     res.status(201).json({
       _id: user._id,
@@ -243,9 +246,12 @@ exports.resendVerificationEmail = async (req, res) => {
     await user.save();
 
     // Send verification email
-    sendVerificationEmail(user, verificationToken).catch(err => {
-      console.error('Failed to send verification email:', err);
-    });
+    try {
+      await sendVerificationEmail(user, verificationToken);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+      // Still respond success - user can manually request new link
+    }
 
     res.status(200).json({ message: 'Verification email sent! Check your email.' });
   } catch (error) {

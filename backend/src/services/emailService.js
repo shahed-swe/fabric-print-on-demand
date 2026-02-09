@@ -388,16 +388,17 @@ const sendVerificationEmail = async (user, verificationToken) => {
     `;
 
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'noreply@customprintingservices.com.au',
+      from: `"${process.env.BREVO_FROM_NAME || 'Fabric Print on Demand'}" <${process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER}>`,
       to: user.email,
       subject: 'Verify Your Email - Fabric Print on Demand',
       html: verifyHTML
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Verification email sent to ${user.email}`);
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Verification email sent to ${user.email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Send verification email error:', error);
+    console.error('Error sending verification email:', error);
     throw error;
   }
 };
