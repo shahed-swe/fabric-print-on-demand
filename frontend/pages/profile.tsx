@@ -112,8 +112,11 @@ const Profile = () => {
         const userOrders = data.filter((order: any) => 
           order.userId === user?._id || (order.user && order.user._id === user?._id)
         );
-        // Get only the first 3 orders (most recent)
-        setOrders(userOrders.slice(0, 3));
+        // Sort by creation date (most recent first) and get only the first 3 orders
+        const sortedOrders = userOrders.sort((a: any, b: any) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setOrders(sortedOrders.slice(0, 3));
       } else {
         setOrders([]);
       }
