@@ -395,14 +395,14 @@ const Index = () => {
     if (!editor || !file) return;
 
     try {
-      // Compress the image before processing
-      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
-      
-      // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(compressedFile);
+      // Upload the original/large file to MinIO first
+      const uploadResponse = await designService.uploadFile(file);
       const minioFileId = uploadResponse.fileId;
+      
+      // Compress the image for display on canvas
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
 
-      // Create a new FileReader instance to display the image
+      // Create a new FileReader instance to display the compressed image
       const reader = new FileReader();
       reader.onload = () => {
         // Create a new image element
@@ -454,14 +454,14 @@ const Index = () => {
     if (!editor || !file) return;
 
     try {
-      // Compress the small image (even smaller dimensions)
-      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
-      
-      // Upload image to MinIO first
-      const uploadResponse = await designService.uploadFile(compressedFile);
+      // Upload the original/large file to MinIO first
+      const uploadResponse = await designService.uploadFile(file);
       const minioFileId = uploadResponse.fileId;
+      
+      // Compress the small image for display (even smaller dimensions)
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
 
-      // Create a new FileReader instance each time
+      // Create a new FileReader instance for the compressed file to display on canvas
       const reader = new FileReader();
       reader.onload = () => {
         // Create a new image element
@@ -532,15 +532,15 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Compress the blob before uploading
+      // Upload the original/large file to MinIO first
       const file = new File([blob], 'artwork-image.png', { type: blob.type });
-      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
-      
-      // Upload blob to MinIO
-      const uploadResponse = await designService.uploadFile(compressedFile);
+      const uploadResponse = await designService.uploadFile(file);
       const minioFileId = uploadResponse.fileId;
 
-      // Now display the image on canvas
+      // Compress the image for display on canvas
+      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
+      
+      // Now display the compressed image on canvas
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = proxyUrl;
@@ -602,15 +602,15 @@ const Index = () => {
       const response = await fetch(proxyUrl);
       const blob = await response.blob();
       
-      // Compress the small image (even smaller dimensions)
+      // Upload the original/large file to MinIO first
       const file = new File([blob], 'logo-image.png', { type: blob.type });
-      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
-      
-      // Upload blob to MinIO
-      const uploadResponse = await designService.uploadFile(compressedFile);
+      const uploadResponse = await designService.uploadFile(file);
       const minioFileId = uploadResponse.fileId;
+      
+      // Compress the small image for display only (even smaller dimensions)
+      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
 
-      // Now display the image on canvas
+      // Now display the compressed image on canvas
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = proxyUrl;
