@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
 import { FaPencilAlt, FaTshirt, FaMagic, FaShippingFast, FaUsers, FaStar, FaComments, FaHeart, FaCartPlus } from 'react-icons/fa';
 import { FaRegHeart } from 'react-icons/fa';
 
@@ -382,55 +383,7 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            <footer className="bg-gradient-to-b from-gray-900 to-black text-white py-20 relative overflow-hidden">
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl"></div>
-                
-                <div className="container mx-auto px-4 relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-                        <div>
-                            <h3 className="text-2xl font-black mb-6 text-white">CustomPrint</h3>
-                            <p className="text-gray-400 leading-relaxed mb-6">Creating unique custom clothing that brings your wildest ideas to life with premium quality and fast delivery.</p>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold mb-6">Product</h3>
-                            <ul className="space-y-3 text-gray-400">
-                                <li><Link href="/print-on-demand"><a className="hover:text-orange-500 transition duration-300">Design Studio</a></Link></li>
-                                <li><Link href="/products"><a className="hover:text-orange-500 transition duration-300">Browse Products</a></Link></li>
-                                <li><a href="#" className="hover:text-orange-500 transition duration-300">Pricing</a></li>
-                                <li><a href="#" className="hover:text-orange-500 transition duration-300">How It Works</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold mb-6">Support</h3>
-                            <ul className="space-y-3 text-gray-400">
-                                <li><a href="/contact" className="hover:text-orange-500 transition duration-300">Contact Us</a></li>
-                                <li><a href="#" className="hover:text-orange-500 transition duration-300">About Us</a></li>
-                                <li><a href="#" className="hover:text-orange-500 transition duration-300">FAQ</a></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold mb-6">Stay Updated</h3>
-                            <p className="text-gray-400 mb-4">Get the latest designs and offers delivered to your inbox</p>
-                            <div className="flex">
-                                <input type="email" placeholder="Your email" className="px-4 py-3 rounded-l-lg w-full text-gray-900 bg-white/90 focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                                <button className="bg-gradient-to-r from-orange-500 to-pink-500 px-4 py-3 rounded-r-lg hover:shadow-lg transition duration-300 font-semibold">→</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-gray-800 pt-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <p className="text-gray-500 text-sm">&copy; 2024 CustomPrint. All rights reserved.</p>
-                            <div className="flex gap-6 text-sm text-gray-500">
-                                <a href="#" className="hover:text-orange-500 transition duration-300">Privacy Policy</a>
-                                <a href="#" className="hover:text-orange-500 transition duration-300">Terms of Service</a>
-                                <a href="#" className="hover:text-orange-500 transition duration-300">Cookie Policy</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };

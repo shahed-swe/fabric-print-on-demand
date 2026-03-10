@@ -111,7 +111,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // Return default values when context is not available (e.g., in static pages)
+    return {
+      isAuthenticated: false,
+      user: null,
+      isGuest: false,
+      isLoading: false,
+      login: async () => {},
+      logout: async () => {},
+      register: async () => {},
+      resetPassword: async () => {},
+      updateProfile: async () => {},
+      updateUser: () => {},
+      createGuestSession: () => {},
+      totalPrice: 0,
+      setTotalPrice: () => {},
+    };
   }
   return context;
 };

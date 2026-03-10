@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import NavBar from '../components/NavBar';
+import Footer from '../components/Footer';
 import { FaEnvelope, FaPaperPlane } from 'react-icons/fa';
 import api from '../config/axios';
 
@@ -234,20 +235,7 @@ const ContactPage = () => {
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="bg-gray-900 text-white py-12 border-t border-gray-800">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <p className="text-gray-500 text-sm">&copy; 2024 CustomPrint. All rights reserved.</p>
-                        <div className="flex gap-6 text-sm text-gray-500">
-                            <a href="/" className="hover:text-orange-500 transition duration-300">Home</a>
-                            <a href="/products" className="hover:text-orange-500 transition duration-300">Products</a>
-                            <a href="#" className="hover:text-orange-500 transition duration-300">Privacy Policy</a>
-                            <a href="#" className="hover:text-orange-500 transition duration-300">Terms of Service</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };
