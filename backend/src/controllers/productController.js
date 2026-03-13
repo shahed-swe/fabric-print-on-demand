@@ -95,6 +95,7 @@ exports.getProducts = async (req, res) => {
 
     const products = await Product.find(query)
       .populate('category', 'name slug')
+      .populate('customStyle', 'title price')
       .sort(sortOption)
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -123,7 +124,8 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('category', 'name slug description');
+      .populate('category', 'name slug description')
+      .populate('customStyle', 'title price frontImage backImage');
     
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -173,7 +175,8 @@ exports.createProduct = async (req, res) => {
     const product = await Product.create(productData);
     
     const populatedProduct = await Product.findById(product._id)
-      .populate('category', 'name slug');
+      .populate('category', 'name slug')
+      .populate('customStyle', 'title price frontImage backImage');
 
     res.status(201).json(populatedProduct);
   } catch (error) {
@@ -222,7 +225,8 @@ exports.updateProduct = async (req, res) => {
       req.params.id,
       productData,
       { new: true, runValidators: true }
-    ).populate('category', 'name slug');
+    ).populate('category', 'name slug')
+    .populate('customStyle', 'title price frontImage backImage');
 
     res.json(transformProductUrls(updatedProduct));
   } catch (error) {
@@ -343,6 +347,7 @@ exports.getProductsByCategory = async (req, res) => {
 
     const products = await Product.find(query)
       .populate('category', 'name slug description')
+      .populate('customStyle', 'title price frontImage backImage')
       .sort(sortOption)
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -407,6 +412,7 @@ exports.getFeaturedProducts = async (req, res) => {
       status: 'active'
     })
       .populate('category', 'name slug')
+      .populate('customStyle', 'title price frontImage backImage')
       .limit(10);
 
     // Transform URLs to use backend API endpoint

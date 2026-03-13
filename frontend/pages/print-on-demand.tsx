@@ -246,7 +246,17 @@ const Index = () => {
         }));
         
         setData(transformedData);
-        if (transformedData.length > 0) {
+        
+        // If product has a custom style, select it; otherwise use first style
+        if (productData?.customStyle) {
+          const customStyleId = productData.customStyle._id || productData.customStyle;
+          const selectedStyle = transformedData.find((style: any) => style.id === customStyleId);
+          if (selectedStyle) {
+            setImage(selectedStyle);
+          } else if (transformedData.length > 0) {
+            setImage(transformedData[0]);
+          }
+        } else if (transformedData.length > 0) {
           setImage(transformedData[0]);
         }
       } catch (error) {
@@ -257,7 +267,7 @@ const Index = () => {
     };
     
     fetchCustomStyles();
-  }, []);
+  }, [productData]);
 
   // Handle canvas data - replace the existing useEffect
   useEffect(() => {

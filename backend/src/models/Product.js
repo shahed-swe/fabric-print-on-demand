@@ -106,6 +106,12 @@ const productSchema = new mongoose.Schema({
     default: false
   },
   
+  // Custom Style for Print-on-Demand
+  customStyle: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CustomStyle'
+  },
+  
   // Size Chart
   sizeChart: {
     measurements: [{
