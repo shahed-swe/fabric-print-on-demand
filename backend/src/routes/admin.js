@@ -11,6 +11,7 @@ const shippingController = require('../controllers/shippingController');
 const productController = require('../controllers/productController');
 const customerController = require('../controllers/customerController');
 const dashboardController = require('../controllers/dashboardController');
+const customStyleController = require('../controllers/customStyleController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -52,5 +53,13 @@ router.get('/dashboard/categories', protect, dashboardController.getCategoryData
 // Design routes (admin)
 router.get('/designs', protect, designController.getAllDesigns);
 router.get('/designs/:id', protect, designController.getDesignById);
+
+// Custom Styles routes (admin)
+router.get('/custom-styles', protect, customStyleController.getCustomStylesAdmin);
+router.post('/custom-styles', protect, customStyleController.createCustomStyle);
+router.route('/custom-styles/:id')
+  .get(protect, customStyleController.getCustomStyle)
+  .put(protect, customStyleController.updateCustomStyle)
+  .delete(protect, customStyleController.deleteCustomStyle);
 
 module.exports = router;

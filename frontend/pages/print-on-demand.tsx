@@ -20,6 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { toast } from 'react-toastify';
 import { designService } from '../services/design';
+import { customStyleService } from '../services/customStyle';
 import TextEditorModal from "@/components/TextEditorModal";
 import { useRouter } from 'next/router';
 import { productService } from '@/services/product';
@@ -228,42 +229,34 @@ const Index = () => {
     return Object.values(sizeQuantities).reduce((sum, quantity) => sum + quantity, 0);
   };
 
-  // Initialize data
+  // Initialize data from API
   useEffect(() => {
-    const initialData = [
-      {
-        front: { src: TShirtFront },
-        back: { src: TShirtBack },
-        title: "Mens T-shirt",
-        price: "500"
-      },
-      {
-        front: { src: WomenFront },
-        back: { src: WomenBack },
-        title: "Women's T-shirt",
-        price: "500"
-      },
-      {
-        front: { src: HoodieFront },
-        back: { src: HoodieBack },
-        title: "Hoodie",
-        price: "800"
-      },
-      {
-        front: { src: LongSleeveFront },
-        back: { src: LongSleeveBack },
-        title: "Long Sleeve",
-        price: "600"
-      },
-      {
-        front: { src: MensTankFront },
-        back: { src: MensTankBack },
-        title: "Mens Tank",
-        price: "450"
+    const fetchCustomStyles = async () => {
+      try {
+        const styles = await customStyleService.getAllCustomStyles();
+        
+        // Transform API response to match expected format
+        const transformedData = styles.map((style: any) => ({
+          front: { src: style.frontImage?.url || style.frontImage },
+          back: { src: style.backImage?.url || style.backImage },
+          title: style.title,
+          price: style.price.toString(),
+          id: style._id,
+          description: style.description
+        }));
+        
+        setData(transformedData);
+        if (transformedData.length > 0) {
+          setImage(transformedData[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching custom styles:', error);
+        toast.error('Failed to load custom styles. Please refresh the page.');
+        setData([]);
       }
-    ];
-    setData(initialData);
-    setImage(initialData[0]);
+    };
+    
+    fetchCustomStyles();
   }, []);
 
   // Handle canvas data - replace the existing useEffect

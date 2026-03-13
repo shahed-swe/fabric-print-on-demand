@@ -14,6 +14,7 @@ import ProductForm from './pages/ProductForm';
 import Categories from './pages/Categories';
 import DesignElements from './pages/DesignElements';
 import StockManagement from './pages/StockManagement';
+import CustomStyles from './pages/CustomStyles';
 
 // Layout
 import Layout from './components/Layout';
@@ -119,6 +120,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <DesignElements />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/custom-styles" element={
+            <ProtectedRoute>
+              <Layout>
+                <CustomStyles />
               </Layout>
             </ProtectedRoute>
           } />

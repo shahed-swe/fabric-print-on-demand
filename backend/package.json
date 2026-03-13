@@ -8,7 +8,8 @@
     "dev": "nodemon src/app.js",
     "seed:categories": "node src/scripts/categorySeeder.js",
     "seed:products": "node src/scripts/productSeeder.js",
-    "seed:all": "node src/scripts/seedAll.js"
+    "seed:all": "node src/scripts/seedAll.js",
+    "seed:custom-styles": "node scripts/seedCustomStyles.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
