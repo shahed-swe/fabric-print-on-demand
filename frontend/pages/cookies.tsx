@@ -80,7 +80,7 @@ export default function Cookies() {
           <p className="text-gray-700 mb-4">
             If you have any questions about how we use cookies or your privacy, please contact us at:
           </p>
-          <p className="text-gray-700 font-semibold">Email: shahed@k53tech.com</p>
+          <p className="text-gray-700 font-semibold">Email: sales@k53tech.com</p>
         </div>
 
         {/* Footer Note */}

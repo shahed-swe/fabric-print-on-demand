@@ -28,7 +28,7 @@ export default function Footer() {
         </div>
         <div>
           <h4 className="font-bold text-white mb-4">Contact</h4>
-          <p className="text-sm">Email: shahed@k53tech.com</p>
+          <p className="text-sm">Email: sales@k53tech.com</p>
           <p className="text-sm">Monday - Friday: 9:00 AM - 6:00 PM</p>
           <p className="text-sm">Saturday: 10:00 AM - 4:00 PM</p>
         </div>
