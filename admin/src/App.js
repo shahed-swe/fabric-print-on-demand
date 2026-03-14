@@ -15,6 +15,7 @@ import Categories from './pages/Categories';
 import DesignElements from './pages/DesignElements';
 import StockManagement from './pages/StockManagement';
 import CustomStyles from './pages/CustomStyles';
+import Colors from './pages/Colors';
 
 // Layout
 import Layout from './components/Layout';
@@ -128,6 +129,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <CustomStyles />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/colors" element={
+            <ProtectedRoute>
+              <Layout>
+                <Colors />
               </Layout>
             </ProtectedRoute>
           } />

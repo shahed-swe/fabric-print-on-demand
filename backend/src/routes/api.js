@@ -12,6 +12,7 @@ const productController = require('../controllers/productController');
 const profileController = require('../controllers/profileController');
 const contactController = require('../controllers/contactController');
 const customStyleController = require('../controllers/customStyleController');
+const colorController = require('../controllers/colorController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -82,6 +83,10 @@ router.post('/contact', contactController.sendContactMessage);
 // Custom Styles routes (public)
 router.get('/custom-styles', customStyleController.getCustomStyles);
 router.get('/custom-styles/:id', customStyleController.getCustomStyle);
+
+// Color routes (public)
+router.get('/colors', colorController.getColors);
+router.get('/colors/:id', colorController.getColor);
 
 // Ensure all routes have valid callback functions
 router.get('/some-route', protect, (req, res) => {

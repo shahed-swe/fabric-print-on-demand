@@ -25,6 +25,7 @@ const navigation = [
   { name: 'Categories', href: '/categories', icon: TagIcon },
   { name: 'Design Elements', href: '/design-elements', icon: PaintBrushIcon },
   { name: 'Custom Styles', href: '/custom-styles', icon: CubeIcon },
+  { name: 'Colors', href: '/colors', icon: PaintBrushIcon },
 ];
 
 export default function Layout({ children }) {

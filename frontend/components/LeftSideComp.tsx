@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faPenFancy, 
@@ -7,6 +7,7 @@ import {
   faTrash, 
   faImage 
 } from "@fortawesome/free-solid-svg-icons";
+import { colorService } from '../services/color';
 
 interface LeftSideCompProps {
   handleTextEditorOpen: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -47,6 +48,26 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
   setColor,
   image
 }) => {
+  const [colors, setColors] = useState<any[]>([]);
+  const [loadingColors, setLoadingColors] = useState(false);
+
+  // Fetch colors from API
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        setLoadingColors(true);
+        const fetchedColors = await colorService.getAllColors();
+        setColors(fetchedColors);
+      } catch (error) {
+        console.error('Error fetching colors:', error);
+        // Fallback to empty array if API fails
+        setColors([]);
+      } finally {
+        setLoadingColors(false);
+      }
+    };
+    fetchColors();
+  }, []);
   return (
     <div>
       <div className="flex flex-wrap gap-4 justify-center">
@@ -169,27 +190,24 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
       <div className="mt-4">
         <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
         <div className="flex flex-wrap gap-3">
-          {[
-            "#F6F6F6",
-            "black",
-            "#0C0CAE",
-            "#2A2929",
-            "gray",
-            "#919a54",
-            "#7F3232",
-            "#276457",
-            "#0DD6C5",
-          ].map((item, index) => (
-            <div
-              key={index}
-              style={{ backgroundColor: item }}
-              className="color-preview border-2 border-gray-200"
-              onClick={() => {
-                setColor(item);
-                localStorage.setItem("color", item);
-              }}
-            />
-          ))}
+          {loadingColors ? (
+            <p className="text-gray-500 text-sm">Loading colors...</p>
+          ) : colors.length === 0 ? (
+            <p className="text-gray-500 text-sm">No colors available</p>
+          ) : (
+            colors.map((color) => (
+              <div
+                key={color._id}
+                style={{ backgroundColor: color.hexCode }}
+                className="color-preview border-2 border-gray-200 cursor-pointer hover:border-gray-400 transition"
+                onClick={() => {
+                  setColor(color.hexCode);
+                  localStorage.setItem("color", color.hexCode);
+                }}
+                title={color.displayName}
+              />
+            ))
+          )}
         </div>
       </div>
 

@@ -12,6 +12,7 @@ const productController = require('../controllers/productController');
 const customerController = require('../controllers/customerController');
 const dashboardController = require('../controllers/dashboardController');
 const customStyleController = require('../controllers/customStyleController');
+const colorController = require('../controllers/colorController');
 const { protect } = require('../middlewares/auth');
 
 // Auth routes
@@ -61,5 +62,14 @@ router.route('/custom-styles/:id')
   .get(protect, customStyleController.getCustomStyle)
   .put(protect, customStyleController.updateCustomStyle)
   .delete(protect, customStyleController.deleteCustomStyle);
+
+// Color routes (admin)
+router.get('/colors', protect, colorController.getColorsAdmin);
+router.post('/colors', protect, colorController.createColor);
+router.route('/colors/:id')
+  .get(protect, colorController.getColor)
+  .put(protect, colorController.updateColor)
+  .delete(protect, colorController.deleteColor);
+router.patch('/colors/bulk/toggle-active', protect, colorController.toggleColorActiveBulk);
 
 module.exports = router;
