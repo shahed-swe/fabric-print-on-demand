@@ -15,7 +15,7 @@ export const colorService = {
   },
 
   // Get single color
-  getColor: async (id) => {
+  getColor: async (id: string) => {
     try {
       const response = await axios.get(`/colors/${id}`);
       return response.data;

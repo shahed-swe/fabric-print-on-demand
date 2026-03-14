@@ -15,7 +15,7 @@ export const customStyleService = {
   },
 
   // Get single custom style
-  getCustomStyle: async (id) => {
+  getCustomStyle: async (id: string) => {
     try {
       const response = await axios.get(`/custom-styles/${id}`);
       return response.data;
