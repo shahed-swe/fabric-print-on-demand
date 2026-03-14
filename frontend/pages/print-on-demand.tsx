@@ -137,6 +137,12 @@ const Index = () => {
       setProductData(product);
       console.log('Loaded product for customization:', product);
 
+      // Set color from product if available
+      if (product.color && product.color.hexCode) {
+        setColor(product.color.hexCode);
+        console.log('Product color set to:', product.color.hexCode);
+      }
+
       // Clear localStorage to prevent loading old canvas data
       localStorage.removeItem("front");
       localStorage.removeItem("back");

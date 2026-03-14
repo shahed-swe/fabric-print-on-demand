@@ -112,6 +112,12 @@ const productSchema = new mongoose.Schema({
     ref: 'CustomStyle'
   },
   
+  // Default Color for Print-on-Demand
+  color: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Color'
+  },
+  
   // Size Chart
   sizeChart: {
     measurements: [{

@@ -90,6 +90,7 @@ export default function ProductForm() {
     customImage: null,
     haveCustomPrint: false,
     customStyle: '',
+    color: '',
     sizeChart: { measurements: [] },
     careInstructions: [''],
     features: [''],
@@ -107,6 +108,7 @@ export default function ProductForm() {
   const [activeTab, setActiveTab] = useState('basic');
   const [categories, setCategories] = useState([]);
   const [customStyles, setCustomStyles] = useState([]);
+  const [colors, setColors] = useState([]);
 
   // Memoize Quill modules to prevent re-renders
   const quillModules = useMemo(() => ({
@@ -151,6 +153,17 @@ export default function ProductForm() {
     };
     fetchCustomStyles();
 
+    // Fetch colors
+    const fetchColors = async () => {
+      try {
+        const response = await axios.get('/admin/colors');
+        setColors(response.data.colors || response.data || []);
+      } catch (error) {
+        console.error('Error fetching colors:', error);
+      }
+    };
+    fetchColors();
+
     // Fetch product if in edit mode
     if (isEditMode) {
       const fetchProduct = async () => {
@@ -164,6 +177,7 @@ export default function ProductForm() {
             ...product,
             category: product.category?._id || '',
             customStyle: product.customStyle?._id || product.customStyle || '',
+            color: product.color?._id || product.color || '',
             tags: product.tags?.join(', ') || '',
             careInstructions: product.careInstructions?.length ? product.careInstructions : [''],
             features: product.features?.length ? product.features : [''],
@@ -1208,6 +1222,39 @@ export default function ProductForm() {
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
                   Select a custom style template that will be used for print-on-demand customization
+                </p>
+              </div>
+
+              {/* Color Selection */}
+              <div className="max-w-lg">
+                <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Default Color
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    id="color"
+                    name="color"
+                    value={formData.color || ''}
+                    onChange={handleChange}
+                    className="flex-1 block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  >
+                    <option value="">None - No default color</option>
+                    {colors.filter(color => color.active).map((color) => (
+                      <option key={color._id} value={color._id}>
+                        {color.displayName || color.name} ({color.hexCode})
+                      </option>
+                    ))}
+                  </select>
+                  {formData.color && colors.find(c => c._id === formData.color) && (
+                    <div
+                      className="w-12 h-10 rounded border border-gray-300"
+                      style={{ backgroundColor: colors.find(c => c._id === formData.color)?.hexCode }}
+                      title={colors.find(c => c._id === formData.color)?.displayName}
+                    />
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Select a default color for this product when customers customize it
                 </p>
               </div>
 

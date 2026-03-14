@@ -252,7 +252,14 @@ export default function Colors() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Hex Code <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
+                  <input
+                    type="color"
+                    value={formData.hexCode && /#[0-9A-F]{6}/i.test(formData.hexCode) ? formData.hexCode : '#000000'}
+                    onChange={(e) => setFormData({ ...formData, hexCode: e.target.value })}
+                    className="h-10 w-16 rounded-lg cursor-pointer border border-gray-300"
+                    title="Click to pick a color"
+                  />
                   <input
                     type="text"
                     name="hexCode"
