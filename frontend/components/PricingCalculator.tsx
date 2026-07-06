@@ -26,19 +26,20 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
   // Calculate total quantity
   const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + qty, 0);
 
-  // Fixed pricing: $30 per design
-  const DESIGN_PRICE = 30;
-
-  // Calculate total price (without shipping - will be added in cart)
+  // Use the provided basePrice and include front/back design costs
   const calculateTotalPrice = () => {
     if (totalQuantity === 0) return 0;
-    
-    // $30 per item (shipping will be calculated in cart)
-    return DESIGN_PRICE * totalQuantity;
+
+    const base = Number(basePrice) || 0;
+    const front = Number(frontDesignPrice) || 0;
+    const back = Number(backDesignPrice) || 0;
+
+    const pricePerItem = base + front + back;
+    return pricePerItem * totalQuantity;
   };
 
   const totalPrice = calculateTotalPrice();
-  const pricePerItem = totalQuantity > 0 ? DESIGN_PRICE : 0;
+  const pricePerItem = totalQuantity > 0 ? (Number(basePrice) || 0) + (Number(frontDesignPrice) || 0) + (Number(backDesignPrice) || 0) : 0;
 
   useEffect(() => {
     setTotalPrice(totalPrice);
@@ -50,8 +51,23 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
       
       <div className="space-y-3">
         <div className="flex justify-between text-gray-600">
-          <span>Price per Design:</span>
-          <span>${DESIGN_PRICE.toFixed(2)}</span>
+          <span>Price per Item:</span>
+          <span>${pricePerItem.toFixed(2)}</span>
+        </div>
+
+        <div className="flex justify-between text-gray-600">
+          <span className="text-sm text-gray-500">Base style price</span>
+          <span className="text-sm text-gray-500">${Number(basePrice || 0).toFixed(2)}</span>
+        </div>
+
+        <div className="flex justify-between text-gray-600">
+          <span className="text-sm text-gray-500">Front design</span>
+          <span className="text-sm text-gray-500">${Number(frontDesignPrice || 0).toFixed(2)}</span>
+        </div>
+
+        <div className="flex justify-between text-gray-600">
+          <span className="text-sm text-gray-500">Back design</span>
+          <span className="text-sm text-gray-500">${Number(backDesignPrice || 0).toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">

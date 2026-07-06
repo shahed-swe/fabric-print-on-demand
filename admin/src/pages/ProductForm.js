@@ -592,6 +592,10 @@ export default function ProductForm() {
       // Prepare data for API
       const productData = {
         ...formData,
+        category: formData.category || null,
+        customStyle: formData.customStyle || null,
+        color: formData.color || null,
+        sku: formData.sku?.trim() || null,
         images: uploadedImages, // Use uploaded images
         logo: uploadedLogo,
         customImage: uploadedCustomImage,

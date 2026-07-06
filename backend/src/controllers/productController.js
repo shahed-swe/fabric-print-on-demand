@@ -146,6 +146,12 @@ exports.getProduct = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const productData = req.body;
+
+    // Normalize optional reference fields so empty strings don't fail ObjectId validation
+    if (productData.category === '') productData.category = null;
+    if (productData.customStyle === '') productData.customStyle = null;
+    if (productData.color === '') productData.color = null;
+    if (productData.sku === '') productData.sku = undefined;
     
     // Validate required fields
     if (!productData.name || !productData.price) {
@@ -197,6 +203,12 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const productData = req.body;
+
+    // Normalize optional reference fields so empty strings don't fail ObjectId validation
+    if (productData.category === '') productData.category = null;
+    if (productData.customStyle === '') productData.customStyle = null;
+    if (productData.color === '') productData.color = null;
+    if (productData.sku === '') productData.sku = undefined;
     
     // Check if product exists
     const product = await Product.findById(req.params.id);
