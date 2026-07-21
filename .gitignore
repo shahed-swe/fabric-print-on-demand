@@ -33,3 +33,4 @@ logs
 *.njsproj
 *.sln
 *.sw?
+._*

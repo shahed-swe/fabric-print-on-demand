@@ -4,8 +4,9 @@ import { fabric } from "fabric";
 import html2canvas from "html2canvas";
 import { ClipLoader } from "react-spinners";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faTimes, 
+import {
+  faTimes,
+  faMagnifyingGlass,
 } from "@fortawesome/free-solid-svg-icons";
 import EmojiPicker from "emoji-picker-react";
 import Display from "../components/Display";
@@ -55,6 +56,7 @@ const Index = () => {
   const [backPrice, setBackPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string>('');
+  const [isAddingImage, setIsAddingImage] = useState(false);
   const [processingSteps, setProcessingSteps] = useState<any[]>([
     { id: 'capture-front', label: 'Capture Front', completed: false },
     { id: 'capture-back', label: 'Capture Back', completed: false },
@@ -120,6 +122,36 @@ const Index = () => {
 
   // Use ref to track if product images have been loaded (persists across re-renders)
   const productImagesLoadedRef = useRef(false);
+
+  // Track in-flight background uploads so we can wait for them before adding to cart
+  const pendingUploadsRef = useRef<Promise<void>[]>([]);
+
+  // Upload the original file to MinIO in the background (does NOT block canvas display).
+  // Once done, attach the returned fileId to the fabric object and re-persist the canvas
+  // so the fileId is saved with the design when the user adds it to the cart.
+  const uploadInBackground = (
+    file: File,
+    fabricImage: fabric.Image,
+    editor: any
+  ): Promise<void> => {
+    const uploadPromise = designService
+      .uploadFile(file)
+      .then((res) => {
+        (fabricImage as any).minioFileId = res.fileId;
+        // Re-serialize the canvas to localStorage so the new fileId is captured
+        editor?.canvas?.fire('object:modified', { target: fabricImage });
+      })
+      .catch((error) => {
+        console.error('Background image upload failed:', error);
+      })
+      .finally(() => {
+        pendingUploadsRef.current = pendingUploadsRef.current.filter(
+          (p) => p !== uploadPromise
+        );
+      });
+    pendingUploadsRef.current.push(uploadPromise);
+    return uploadPromise;
+  };
 
   // Load product data and add logo/custom image to canvas
   useEffect(() => {
@@ -206,6 +238,8 @@ const Index = () => {
   const [showEfgCollection, setShowEfgCollection] = useState(false);
   const [artworkDataPixy, setArtworkDataPixy] = useState<any[]>([]);
   const [artworkDataEFG, setArtworkDataEFG] = useState<any[]>([]);
+  const [isSearchingArt, setIsSearchingArt] = useState(false);
+  const [artSearchQuery, setArtSearchQuery] = useState('');
 
   // Add new state for size quantities
   type TShirtSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
@@ -403,12 +437,10 @@ const Index = () => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
+    setIsAddingImage(true);
     try {
-      // Upload the original/large file to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
-      const minioFileId = uploadResponse.fileId;
-      
-      // Compress the image for display on canvas
+      // Compress the image for display on canvas (fast). The original/large file is
+      // uploaded to MinIO in the background so the image appears on the canvas instantly.
       const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
 
       // Create a new FileReader instance to display the compressed image
@@ -417,7 +449,7 @@ const Index = () => {
         // Create a new image element
         const imgElement = new Image();
         imgElement.src = reader.result as string;
-        
+
         imgElement.onload = () => {
           // Create a new fabric Image instance using the image element
           const fabricImage = new fabric.Image(imgElement, {
@@ -429,45 +461,46 @@ const Index = () => {
             scaleY: 150 / imgElement.height,
           });
 
-          // Store MinIO fileId in the fabric object
-          (fabricImage as any).minioFileId = minioFileId;
-
           if (editor?.canvas) {
             editor.canvas.add(fabricImage);
             editor.canvas.setActiveObject(fabricImage);
             editor.canvas.renderAll();
           }
+
+          // Upload the original file in the background and attach the fileId when ready
+          uploadInBackground(file, fabricImage, editor);
+          setIsAddingImage(false);
         };
 
         imgElement.onerror = (error) => {
           console.error('Error loading image:', error);
           toast.error('Failed to load the image. Please try again.');
+          setIsAddingImage(false);
         };
       };
 
       reader.onerror = (error) => {
         console.error('Error reading file:', error);
         toast.error('Failed to read the file. Please try again.');
+        setIsAddingImage(false);
       };
 
       reader.readAsDataURL(compressedFile);
     } catch (error) {
-      console.error('Error uploading image to MinIO:', error);
-      toast.error('Failed to upload image. Please try again.');
+      console.error('Error processing image:', error);
+      toast.error('Failed to add image. Please try again.');
+      setIsAddingImage(false);
     }
   };
 
-  // Handle adding small image to top-left corner
+  // Handle adding small image (logo) to top-right corner
   const handleAddSmallImage = async (file: File) => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor || !file) return;
 
     try {
-      // Upload the original/large file to MinIO first
-      const uploadResponse = await designService.uploadFile(file);
-      const minioFileId = uploadResponse.fileId;
-      
-      // Compress the small image for display (even smaller dimensions)
+      // Compress the small logo for display (fast). The original file is uploaded to
+      // MinIO in the background so the logo shows on the canvas immediately.
       const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
 
       // Create a new FileReader instance for the compressed file to display on canvas
@@ -476,12 +509,12 @@ const Index = () => {
         // Create a new image element
         const imgElement = new Image();
         imgElement.src = reader.result as string;
-        
+
         imgElement.onload = () => {
           // Calculate small size (50x50 pixels max)
           const maxSize = 50;
           let scaleX, scaleY;
-          
+
           if (imgElement.width > imgElement.height) {
             // Landscape image
             scaleX = maxSize / imgElement.width;
@@ -502,14 +535,14 @@ const Index = () => {
             scaleY: scaleY,
           });
 
-          // Store MinIO fileId in the fabric object
-          (fabricImage as any).minioFileId = minioFileId;
-
           if (editor?.canvas) {
             editor.canvas.add(fabricImage);
             editor.canvas.setActiveObject(fabricImage);
             editor.canvas.renderAll();
           }
+
+          // Upload the original logo in the background and attach the fileId when ready
+          uploadInBackground(file, fabricImage, editor);
         };
 
         imgElement.onerror = (error) => {
@@ -525,8 +558,8 @@ const Index = () => {
 
       reader.readAsDataURL(compressedFile);
     } catch (error) {
-      console.error('Error uploading logo to MinIO:', error);
-      toast.error('Failed to upload logo. Please try again.');
+      console.error('Error processing logo:', error);
+      toast.error('Failed to add logo. Please try again.');
     }
   };
 
@@ -535,21 +568,11 @@ const Index = () => {
     const editor = back === "front" ? frontEditor : backEditor;
     if (!editor) return;
 
+    setIsAddingImage(true);
     try {
-      // First, fetch the image and convert to blob
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      const blob = await response.blob();
-      
-      // Upload the original/large file to MinIO first
-      const file = new File([blob], 'artwork-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
-      const minioFileId = uploadResponse.fileId;
 
-      // Compress the image for display on canvas
-      const compressedFile = await compressImageWithDimensions(file, 0.5, 1080, 1080);
-      
-      // Now display the compressed image on canvas
+      // Display the image on canvas first so it appears immediately.
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = proxyUrl;
@@ -559,18 +582,6 @@ const Index = () => {
         if (editor && editor.canvas) {
           const canvasWidth = editor.canvas.width || 200;
           const canvasHeight = editor.canvas.height || 400;
-          const imgWidth = img.width;
-          const imgHeight = img.height;
-
-          // Calculate scaling factor to fit within 50% of the canvas
-          let scale = 1;
-          if (imgWidth > imgHeight) {
-            // For landscape images, scale based on width
-            scale = (canvasWidth * 0.5) / imgWidth;
-          } else {
-            // For portrait images, scale based on height
-            scale = (canvasHeight * 0.5) / imgHeight;
-          }
 
           const fabricImage = new fabric.Image(img, {
             left: canvasWidth / 2,
@@ -581,22 +592,33 @@ const Index = () => {
             scaleY: 150 / img.height,
           });
 
-          // Store MinIO fileId in the fabric object
-          (fabricImage as any).minioFileId = minioFileId;
-
           editor.canvas.add(fabricImage);
           editor.canvas.setActiveObject(fabricImage);
           editor.canvas.renderAll();
+
+          // Fetch the original and upload to MinIO in the background
+          fetch(proxyUrl)
+            .then((response) => response.blob())
+            .then((blob) => {
+              const file = new File([blob], 'artwork-image.png', { type: blob.type });
+              return uploadInBackground(file, fabricImage, editor);
+            })
+            .catch((error) => {
+              console.error('Background artwork upload failed:', error);
+            });
         }
+        setIsAddingImage(false);
       };
 
       img.onerror = (error) => {
         console.error('Error loading image:', error);
         toast.error('Failed to load the image. Please try again.');
+        setIsAddingImage(false);
       };
     } catch (error) {
       console.error('Error adding image from URL:', error);
       toast.error('Failed to add the image. Please try again.');
+      setIsAddingImage(false);
     }
   };
 
@@ -606,20 +628,9 @@ const Index = () => {
     if (!editor) return;
 
     try {
-      // First, fetch the image and convert to blob
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-      const blob = await response.blob();
-      
-      // Upload the original/large file to MinIO first
-      const file = new File([blob], 'logo-image.png', { type: blob.type });
-      const uploadResponse = await designService.uploadFile(file);
-      const minioFileId = uploadResponse.fileId;
-      
-      // Compress the small image for display only (even smaller dimensions)
-      const compressedFile = await compressImageWithDimensions(file, 0.3, 200, 200);
 
-      // Now display the compressed image on canvas
+      // Display the logo on canvas first so it appears immediately.
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = proxyUrl;
@@ -629,7 +640,7 @@ const Index = () => {
           // Calculate small size (50x50 pixels max)
           const maxSize = 50;
           let scaleX, scaleY;
-          
+
           if (img.width > img.height) {
             // Landscape image
             scaleX = maxSize / img.width;
@@ -649,12 +660,20 @@ const Index = () => {
             scaleY: scaleY,
           });
 
-          // Store MinIO fileId in the fabric object
-          (fabricImage as any).minioFileId = minioFileId;
-
           editor.canvas.add(fabricImage);
           editor.canvas.setActiveObject(fabricImage);
           editor.canvas.renderAll();
+
+          // Fetch the original and upload to MinIO in the background
+          fetch(proxyUrl)
+            .then((response) => response.blob())
+            .then((blob) => {
+              const file = new File([blob], 'logo-image.png', { type: blob.type });
+              return uploadInBackground(file, fabricImage, editor);
+            })
+            .catch((error) => {
+              console.error('Background logo upload failed:', error);
+            });
         }
       };
 
@@ -684,7 +703,14 @@ const Index = () => {
     resetProcessingSteps();
     editor.canvas.discardActiveObject();
     editor.canvas.renderAll();
-  
+
+    // Wait for any in-flight background image/logo uploads to finish so their
+    // MinIO fileIds are attached and saved with the design before we capture it.
+    if (pendingUploadsRef.current.length > 0) {
+      setLoadingStatus('Finalizing uploaded images...');
+      await Promise.all(pendingUploadsRef.current);
+    }
+
     // Store current view
     const currentView = back;
     
@@ -968,9 +994,10 @@ const Index = () => {
         toast.warning('Front image upload failed, but design will be saved');
       }
 
-      // Calculate price from actual size quantities ($30 per item)
+      // Charge the selected style's base price (from the API) per item
       const totalQuantity = Object.values(sizeQuantities).reduce((sum, qty) => sum + Number(qty), 0);
-      const designPrice = 30 * totalQuantity;
+      const basePrice = Number(image?.price) || 0;
+      const designPrice = basePrice * totalQuantity;
 
       // Use quick save design to add to cart immediately (PDF processing happens in backend)
       updateProcessingStep('save-design', false, 'Adding to cart...');
@@ -989,7 +1016,12 @@ const Index = () => {
       incrementCart();
       setLoading(false);
       setLoadingStatus('');
-      toast.success('Item Added to Cart successfully!');
+      // Subtle, quick confirmation (no progress bar) instead of a large banner
+      toast.success('Added to cart', {
+        autoClose: 1500,
+        hideProgressBar: true,
+        icon: () => '✓',
+      });
       
       // Auto-redirect to cart page after success
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -1013,18 +1045,49 @@ const Index = () => {
   };
 
   // Handle pixabay search
-  const handleSearchPix = async (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const searchPixabay = async (query: string) => {
+    const q = (query || '').trim();
+    if (!q) {
+      setArtworkDataPixy([]);
+      setIsSearchingArt(false);
+      return;
+    }
+    setIsSearchingArt(true);
     try {
-      // Implement your pixabay API call here
-      const response = await fetch(`https://pixabay.com/api/?key=26989130-08a64865604ee2a22958b6c98&q=${event.target.value}&image_type=illustration&pretty=true`);
+      const response = await fetch(`https://pixabay.com/api/?key=26989130-08a64865604ee2a22958b6c98&q=${encodeURIComponent(q)}&image_type=illustration&pretty=true`);
       const data = await response.json();
-      setArtworkDataPixy(data.hits);
+      setArtworkDataPixy(data.hits || []);
     } catch (error) {
       console.error("Error searching Pixabay:", error);
+      setArtworkDataPixy([]);
+    } finally {
+      setIsSearchingArt(false);
     }
   };
 
-  const handleSearchArtWork = useCallback(debounce(handleSearchPix, 1000), []);
+  const debouncedSearchArt = useCallback(debounce(searchPixabay, 600), []);
+
+  // Called on every keystroke / category change: show the loader immediately, then
+  // run the (debounced) Pixabay search.
+  const handleArtSearchChange = (value: string) => {
+    setArtSearchQuery(value);
+    if (value && value.trim()) {
+      setIsSearchingArt(true);
+    } else {
+      setIsSearchingArt(false);
+    }
+    debouncedSearchArt(value);
+  };
+
+  const closeArtModal = () => {
+    setShowArtModal(false);
+    setShowPixabay(false);
+    setShowEfgCollection(false);
+    setArtworkDataPixy([]);
+    setArtworkDataEFG([]);
+    setIsSearchingArt(false);
+    setArtSearchQuery('');
+  };
 
   // Generate image using AI
   const handleGenerateAIImage = async () => {
@@ -1103,7 +1166,7 @@ const Index = () => {
         height: '100%',
         overflow: (loading || loadingProduct) ? 'hidden' : 'auto'
       }}>
-        {(loading || loadingProduct) && (
+        {loadingProduct && (
           <div style={{
             position: 'absolute',
             top: 0,
@@ -1119,13 +1182,26 @@ const Index = () => {
           }}>
             <ClipLoader color="#000000" loading={true} size={50} />
             <div style={{ marginTop: '1rem' }}>
-              {loadingProduct ? 'Loading product...' : 'Loading...'}
+              Loading product...
             </div>
           </div>
         )}
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="p-4 bg-white rounded-xl shadow-lg">
+          {/* Page header */}
+          <div className="mb-8 text-center">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-xs font-semibold uppercase tracking-wider">
+              Design Studio
+            </span>
+            <h1 className="mt-3 text-2xl md:text-3xl font-bold text-gray-800">
+              Create Your Custom {image?.title || "Print"}
+            </h1>
+            <p className="mt-2 text-sm text-gray-500">
+              Add text, images and logos, pick your style &amp; color, then add it to your cart.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <LeftSideComp
                 handleTextEditorOpen={handleTextEditorOpen}
                 setShowEmojiPicker={setShowEmojiPicker}
@@ -1144,6 +1220,7 @@ const Index = () => {
                 setImage={setImage}
                 setColor={setColor}
                 image={image}
+                color={color}
               />
 
               {/* Text Editor Modal */}
@@ -1191,42 +1268,52 @@ const Index = () => {
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-center">
-              {back === "front" ? (
-                <Display
-                  back="front"
-                  color={color}
-                  image={image}
-                  Canvas={FabricJSCanvas}
-                  onReady={onFrontReady}
-                  key="front-canvas"
-                />
-              ) : (
-                <Display
-                  back="back"
-                  color={color}
-                  image={image}
-                  Canvas={FabricJSCanvas}
-                  onReady={onBackReady}
-                  key="back-canvas"
-                />
-              )}
-              <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <div className="lg:col-span-6 flex flex-col items-center">
+              {/* Canvas stage */}
+              <div className="relative w-full rounded-2xl border border-gray-100 shadow-sm bg-gray-50 p-4 sm:p-8 flex items-center justify-center min-h-[420px]">
+                {/* Spinner shown while an image / artwork is being added to the design */}
+                {isAddingImage && (
+                  <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl">
+                    <div className="w-10 h-10 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
+                    <p className="mt-3 text-sm text-gray-500">Adding your image…</p>
+                  </div>
+                )}
+                {back === "front" ? (
+                  <Display
+                    back="front"
+                    color={color}
+                    image={image}
+                    Canvas={FabricJSCanvas}
+                    onReady={onFrontReady}
+                    key="front-canvas"
+                  />
+                ) : (
+                  <Display
+                    back="back"
+                    color={color}
+                    image={image}
+                    Canvas={FabricJSCanvas}
+                    onReady={onBackReady}
+                    key="back-canvas"
+                  />
+                )}
+              </div>
+
+              {/* Front / Back segmented toggle */}
+              <div className="mt-5 inline-flex p-1 bg-gray-100 rounded-full">
                 <button
-                  disabled={back === "front"}
-                  className={`px-6 py-2 rounded-lg transition-colors ${back === "front"
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${back === "front"
+                      ? "bg-white text-orange-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
                     }`}
                   onClick={() => handleBack("front")}
                 >
                   Front View
                 </button>
                 <button
-                  disabled={back === "back"}
-                  className={`px-6 py-2 rounded-lg transition-colors ${back === "back"
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${back === "back"
+                      ? "bg-white text-orange-600 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
                     }`}
                   onClick={() => handleBack("back")}
                 >
@@ -1234,8 +1321,9 @@ const Index = () => {
                 </button>
               </div>
 
-              {/* Design Tools */}
-
+              <p className="mt-3 text-xs text-gray-400">
+                Drag elements to position • Click to select • Use the tools to edit
+              </p>
 
               <input
                 type="file"
@@ -1251,122 +1339,119 @@ const Index = () => {
                 accept="image/*"
               />
             </div>
-            <RightSideComp
-              image={image}
-              sizeQuantities={sizeQuantities}
-              frontPrice={frontPrice}
-              backPrice={backPrice}
-              handleSizeQuantityChange={handleSizeQuantityChange}
-              getTotalQuantity={getTotalQuantity}
-              handleSS={handleSS}
-              isLoading={loading}
-              loadingStatus={loadingStatus}
-            />
+            <div className="lg:col-span-3 lg:sticky lg:top-24">
+              <RightSideComp
+                image={image}
+                sizeQuantities={sizeQuantities}
+                frontPrice={frontPrice}
+                backPrice={backPrice}
+                handleSizeQuantityChange={handleSizeQuantityChange}
+                getTotalQuantity={getTotalQuantity}
+                handleSS={handleSS}
+                isLoading={loading}
+                loadingStatus={loadingStatus}
+              />
+            </div>
           </div>
         </div>
 
         {/* Artwork Modal */}
         {showArtModal && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 transition-opacity">
-                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-              </div>
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div className="flex justify-between mb-4">
-                    <h3 className="text-lg font-medium">
-                      Browse Artwork {showPixabay ? "From Pixabay" : showEfgCollection ? "From EFG Collection" : ""}
-                    </h3>
-                    <button
-                      onClick={() => {
-                        setShowArtModal(false);
-                        setShowPixabay(false);
-                        setShowEfgCollection(false);
-                        setArtworkDataPixy([]);
-                        setArtworkDataEFG([]);
-                      }}
-                      className="text-gray-400 hover:text-gray-500"
-                    >
-                      <span className="sr-only">Close</span>
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              onClick={closeArtModal}
+            />
 
-                  <div className="flex gap-4 mb-4" >
-                    <div style={{ width: "100%" }}>
-                      <div className="flex gap-2 mb-4" >
-                        <input
-                          type="text"
-
-                          className="flex-1 px-3 py-2 border rounded"
-                          placeholder="Search artwork..."
-                          onChange={handleSearchArtWork}
-                        />
-                        <select
-                          className="px-3 py-2 border rounded"
-                          onChange={handleSearchArtWork}
-                        >
-                          <option value="">Select Category</option>
-                          {["All", "Animals","Architecture","Beauty","Computer","Food","Music","Movies","Medical","Nature","Places","Science","Sports","Technology","Transportation","Travel"].map((item) => (
-                            <option key={item} value={item}>
-                              {item}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="grid grid-cols-4 gap-4">
-                        {artworkDataPixy.map((item, index) => (
-                          <div
-                            key={index}
-                            className="cursor-pointer hover:opacity-75"
-                            onClick={() => {
-                              handleAddImageFromUrl(item.largeImageURL);
-                              setShowArtModal(false);
-                            }}
-                            
-                          >
-                            <img
-                              src={item.previewURL}
-                              alt={item.tags}
-                              className="rounded"
-                              
-                              style={{height: "150px", width: "200px"}}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* {showPixabay && (
-                    
-                  )} */}
-
-                  {showEfgCollection && (
-                    <div className="grid grid-cols-4 gap-4">
-                      {artworkDataEFG.map((item, index) => (
-                        <div
-                          key={index}
-                          className="cursor-pointer hover:opacity-75"
-                          onClick={() => {
-                            handleAddImageFromUrl(item.imageUrl);
-                            setShowArtModal(false);
-                          }}
-                        >
-                          <img
-                            src={item.thumbnailUrl}
-                            alt={item.title}
-                            className="w-full h-auto rounded"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            {/* Dialog */}
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} />
+                  </span>
+                  <h3 className="text-lg font-bold text-gray-800">Browse Artwork</h3>
                 </div>
+                <button
+                  onClick={closeArtModal}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <span className="sr-only">Close</span>
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              </div>
+
+              {/* Search bar */}
+              <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} />
+                  </span>
+                  <input
+                    type="text"
+                    value={artSearchQuery}
+                    onChange={(e) => handleArtSearchChange(e.target.value)}
+                    placeholder="Search artwork (e.g. flowers, cat, logo)…"
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+                <select
+                  defaultValue=""
+                  onChange={(e) => handleArtSearchChange(e.target.value)}
+                  className="px-3 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value="">All categories</option>
+                  {["Animals","Architecture","Beauty","Computer","Food","Music","Movies","Medical","Nature","Places","Science","Sports","Technology","Transportation","Travel"].map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                {isSearchingArt ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="w-10 h-10 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
+                    <p className="mt-3 text-sm text-gray-500">Searching artwork…</p>
+                  </div>
+                ) : artworkDataPixy.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {artworkDataPixy.map((item, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          handleAddImageFromUrl(item.largeImageURL);
+                          closeArtModal();
+                        }}
+                        className="group relative aspect-square rounded-xl overflow-hidden border border-gray-100 bg-gray-50 hover:border-orange-300 hover:shadow-md transition-all"
+                      >
+                        <img
+                          src={item.previewURL}
+                          alt={item.tags}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute inset-0 flex items-center justify-center bg-orange-500/70 text-white text-sm font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                          + Add
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : artSearchQuery.trim() ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl mb-3" />
+                    <p className="text-sm">No artwork found for &ldquo;{artSearchQuery}&rdquo;.</p>
+                    <p className="text-xs mt-1">Try a different keyword or category.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center text-gray-400">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl mb-3" />
+                    <p className="text-sm">Search for artwork or choose a category to get started.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

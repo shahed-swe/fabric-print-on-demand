@@ -1,6 +1,5 @@
 import React from 'react';
-import PricingCalculator from './PricingCalculator';
-import { useAuth } from '../context/AuthContext';
+import { FaShoppingCart, FaMinus, FaPlus } from 'react-icons/fa';
 
 interface SizeQuantities {
   S: number;
@@ -22,83 +21,125 @@ interface RightSideCompProps {
   loadingStatus?: string;
 }
 
+const SIZES: (keyof SizeQuantities)[] = ["S", "M", "L", "XL", "XXL"];
+
 const RightSideComp: React.FC<RightSideCompProps> = ({
   image,
   sizeQuantities,
-  frontPrice,
-  backPrice,
   handleSizeQuantityChange,
   getTotalQuantity,
   handleSS,
   isLoading = false,
-  loadingStatus = ''
 }) => {
-  const { isAuthenticated } = useAuth();
+  const totalQuantity = getTotalQuantity();
+  const basePrice = image?.price ? Number(image.price) : 0;
 
   return (
     <div className="w-full">
-      <div className="bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        {/* Header */}
+        <span className="inline-block px-2.5 py-1 text-[11px] font-semibold rounded-full bg-purple-100 text-purple-700 uppercase tracking-wide">
+          Custom Design
+        </span>
+        <h2 className="text-xl font-bold text-gray-800 mt-2">
           {image?.title || "Custom T-Shirt"}
         </h2>
 
-        <PricingCalculator
-          basePrice={image?.price ? parseInt(image.price) : 500}
-          sizeQuantities={sizeQuantities}
-          frontDesignPrice={frontPrice}
-          backDesignPrice={backPrice}
-          style={image?.title || "T-shirt"}
-        />
+        {/* Base style price */}
+        {basePrice > 0 && (
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-orange-600">${basePrice.toFixed(2)}</span>
+            <span className="text-xs text-gray-400">base style price</span>
+          </div>
+        )}
 
-        <div className="space-y-8 mt-8">
-          <div className="mt-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Choose Size & Quantity</h4>
-            <div className="grid grid-cols-2 gap-3">
-              {(["S", "M", "L", "XL", "XXL"] as (keyof SizeQuantities)[]).map((sizeOption) => (
+        {/* Size & Quantity */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-gray-700">Size &amp; Quantity</h4>
+            <span className="text-xs text-gray-400">{totalQuantity} item{totalQuantity === 1 ? '' : 's'}</span>
+          </div>
+
+          <div className="space-y-2">
+            {SIZES.map((sizeOption) => {
+              const qty = sizeQuantities[sizeOption];
+              const active = qty > 0;
+              return (
                 <div
                   key={sizeOption}
-                  className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all"
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${
+                    active
+                      ? "border-orange-300 bg-orange-50"
+                      : "border-gray-200 bg-gray-50 hover:border-gray-300"
+                  }`}
                 >
-                  <label className="text-xs font-bold text-gray-700 min-w-fit">{sizeOption}:</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="999"
-                    value={sizeQuantities[sizeOption]}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value) || 0;
-                      if (value >= 0) {
-                        handleSizeQuantityChange(sizeOption, value);
-                      }
-                    }}
-                    className="w-24 px-3 py-1 text-center text-sm font-bold text-gray-800 bg-white border-2 border-gray-300 rounded focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
-                    placeholder="0"
-                  />
+                  <span className="w-10 text-sm font-bold text-gray-700">{sizeOption}</span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSizeQuantityChange(sizeOption, Math.max(0, qty - 1))}
+                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition"
+                      aria-label={`Decrease ${sizeOption}`}
+                    >
+                      <FaMinus className="w-2.5 h-2.5" />
+                    </button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="999"
+                      value={qty}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value) || 0;
+                        if (value >= 0) {
+                          handleSizeQuantityChange(sizeOption, value);
+                        }
+                      }}
+                      className="w-14 px-2 py-1 text-center text-sm font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSizeQuantityChange(sizeOption, qty + 1)}
+                      className="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-500 flex items-center justify-center hover:bg-gray-100 hover:text-gray-700 active:scale-95 transition"
+                      aria-label={`Increase ${sizeOption}`}
+                    >
+                      <FaPlus className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="mt-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-center text-sm">
-                <span className="font-semibold text-gray-800">Total: </span>
-                <span className="text-lg font-bold text-orange-600">{getTotalQuantity()}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <button
-              onClick={handleSS}
-              disabled={isLoading}
-              className={`w-full px-6 py-3 rounded-lg transition-colors font-medium text-lg ${
-                isLoading
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-green-500 text-white hover:bg-green-600 active:scale-95'
-              }`}
-            >
-              {isLoading ? 'Processing...' : 'Add To Cart'}
-            </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Total summary */}
+        <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-700">Total quantity</span>
+          <span className="text-2xl font-bold text-orange-600">{totalQuantity}</span>
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={handleSS}
+          disabled={isLoading}
+          className={`mt-5 w-full px-6 py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all ${
+            isLoading
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-700 active:scale-[0.98]'
+          }`}
+        >
+          {isLoading ? (
+            'Processing…'
+          ) : (
+            <>
+              <FaShoppingCart className="w-4 h-4" />
+              Add To Cart
+            </>
+          )}
+        </button>
+
+        <p className="text-center text-xs text-gray-400 mt-3">
+          Shipping calculated at checkout
+        </p>
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faPenFancy, 
-  faFont, 
-  faSmile, 
-  faTrash, 
-  faImage 
+import {
+  faFont,
+  faSmile,
+  faTrash,
+  faImage,
+  faPalette,
+  faStamp,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { colorService } from '../services/color';
 
@@ -27,6 +29,7 @@ interface LeftSideCompProps {
   setImage: (image: any) => void;
   setColor: (color: string) => void;
   image: any;
+  color?: string;
 }
 
 const LeftSideComp: React.FC<LeftSideCompProps> = ({
@@ -35,18 +38,14 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
   setTextEditorPosition,
   setShowTextEditor,
   showEmojiPicker,
-  handleAddImage,
   handleAddSmallImage,
   setShowArtModal,
   deleteSelected,
-  handleGenerateAIImage,
-  isGeneratingImage,
-  aiImagePrompt,
-  setAiImagePrompt,
   data,
   setImage,
   setColor,
-  image
+  image,
+  color,
 }) => {
   const [colors, setColors] = useState<any[]>([]);
   const [loadingColors, setLoadingColors] = useState(false);
@@ -68,150 +67,167 @@ const LeftSideComp: React.FC<LeftSideCompProps> = ({
     };
     fetchColors();
   }, []);
+
+  // Shared classes for a tool tile
+  const toolTile =
+    "group flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50 hover:shadow-sm active:scale-95 transition-all cursor-pointer";
+
   return (
-    <div>
-      <div className="flex flex-wrap gap-4 justify-center">
-        <button
-          onClick={handleTextEditorOpen}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        >
-          <FontAwesomeIcon icon={faFont} />
-          Add Text
-        </button>
+    <div className="space-y-6">
+      {/* ===== Add Elements ===== */}
+      <div>
+        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          Add Elements
+        </h4>
+        <div className="grid grid-cols-3 gap-2.5">
+          <button onClick={handleTextEditorOpen} className={toolTile}>
+            <span className="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faFont} />
+            </span>
+            <span className="text-xs font-medium text-gray-700">Text</span>
+          </button>
 
-        <button
-          onClick={(e) => {
-            setShowEmojiPicker(!showEmojiPicker);
-            const buttonRect = e.currentTarget.getBoundingClientRect();
-            setTextEditorPosition({
-              x: buttonRect.left,
-              y: buttonRect.bottom + window.scrollY
-            });
-            setShowTextEditor(false); // Ensure Text Editor is closed
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-        >
-          <FontAwesomeIcon icon={faSmile} />
-          Add Emoji
-        </button>
-
-        <label
-          htmlFor="imageUpload"
-          className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer"
-        >
-          <FontAwesomeIcon icon={faImage} />
-          Add Image
-        </label>
-
-        <button
-          onClick={() => setShowArtModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-        >
-          <FontAwesomeIcon icon={faImage} />
-          Browse Artwork
-        </button>
-
-        <label
-          htmlFor="smallImageUpload"
-          className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 cursor-pointer"
-        >
-          <FontAwesomeIcon icon={faImage} />
-          Add Logo
-        </label>
-
-        <button
-          onClick={deleteSelected}
-          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-        >
-          <FontAwesomeIcon icon={faTrash} />
-          Delete
-        </button>
-      </div>
-{/* 
-      <div className="mt-4">
-        <h4 className="text-lg font-semibold text-gray-700 mb-3">Generate AI Image</h4>
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            value={aiImagePrompt}
-            onChange={(e) => setAiImagePrompt(e.target.value)}
-            placeholder="Enter prompt for AI image"
-            className="flex-1 px-3 py-2 border rounded"
-          />
           <button
-            onClick={handleGenerateAIImage}
-            disabled={isGeneratingImage || !aiImagePrompt}
-            className={`flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg ${isGeneratingImage || !aiImagePrompt ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-600'
-              }`}
+            onClick={(e) => {
+              setShowEmojiPicker(!showEmojiPicker);
+              const buttonRect = e.currentTarget.getBoundingClientRect();
+              setTextEditorPosition({
+                x: buttonRect.left,
+                y: buttonRect.bottom + window.scrollY
+              });
+              setShowTextEditor(false); // Ensure Text Editor is closed
+            }}
+            className={toolTile}
           >
-            {isGeneratingImage ? (
-              <>
-                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Generating...
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon icon={faPenFancy} />
-                Generate
-              </>
-            )}
+            <span className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faSmile} />
+            </span>
+            <span className="text-xs font-medium text-gray-700">Emoji</span>
+          </button>
+
+          <label htmlFor="imageUpload" className={toolTile}>
+            <span className="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faImage} />
+            </span>
+            <span className="text-xs font-medium text-gray-700">Image</span>
+          </label>
+
+          <button onClick={() => setShowArtModal(true)} className={toolTile}>
+            <span className="w-9 h-9 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faPalette} />
+            </span>
+            <span className="text-xs font-medium text-gray-700">Artwork</span>
+          </button>
+
+          <label htmlFor="smallImageUpload" className={toolTile}>
+            <span className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faStamp} />
+            </span>
+            <span className="text-xs font-medium text-gray-700">Logo</span>
+          </label>
+
+          <button
+            onClick={deleteSelected}
+            className="group flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-red-100 bg-white hover:border-red-300 hover:bg-red-50 active:scale-95 transition-all"
+          >
+            <span className="w-9 h-9 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+              <FontAwesomeIcon icon={faTrash} />
+            </span>
+            <span className="text-xs font-medium text-red-600">Delete</span>
           </button>
         </div>
-      </div> */}
+      </div>
 
-      <div className="mt-4">
-        <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Style</h4>
-        <div className="grid grid-cols-2 gap-4">
-          {data?.map((item, index) => (
-            <button
-              key={index}
-              className={`p-4 border-2 rounded-lg flex items-center gap-3 transition-colors ${image === item
-                ? "border-orange-500 bg-orange-50"
-                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+      {/* ===== Choose Style ===== */}
+      <div>
+        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          Choose Style
+        </h4>
+        <div className="grid grid-cols-2 gap-3">
+          {data?.map((item, index) => {
+            const isSelected = image === item;
+            return (
+              <button
+                key={index}
+                className={`relative p-3 border-2 rounded-xl flex flex-col items-center gap-2 transition-all ${
+                  isSelected
+                    ? "border-orange-500 bg-orange-50 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
-              onClick={() => {
-                setImage(item);
-                localStorage.setItem("image", JSON.stringify(item));
-              }}
-            >
-              <img
-                src={item.front.src}
-                alt={item.title}
-                className="w-10 h-12 object-contain"
-              />
-              <span className="text-sm font-medium text-gray-700">{item.title}</span>
-            </button>
-          ))}
+                onClick={() => {
+                  setImage(item);
+                  localStorage.setItem("image", JSON.stringify(item));
+                }}
+              >
+                {isSelected && (
+                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] flex items-center justify-center">
+                    <FontAwesomeIcon icon={faCheck} />
+                  </span>
+                )}
+                <img
+                  src={item.front.src}
+                  alt={item.title}
+                  className="w-12 h-14 object-contain"
+                />
+                <span className="text-xs font-medium text-gray-700 text-center leading-tight">
+                  {item.title}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
-      <div className="mt-4">
-        <h4 className="text-lg font-semibold text-gray-700 mb-3">Choose Color</h4>
+
+      {/* ===== Choose Color ===== */}
+      <div>
+        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          Choose Color
+        </h4>
         <div className="flex flex-wrap gap-3">
           {loadingColors ? (
-            <p className="text-gray-500 text-sm">Loading colors...</p>
+            <p className="text-gray-400 text-sm">Loading colors...</p>
           ) : colors.length === 0 ? (
-            <p className="text-gray-500 text-sm">No colors available</p>
+            <p className="text-gray-400 text-sm">No colors available</p>
           ) : (
-            colors.map((color) => (
-              <div
-                key={color._id}
-                style={{ backgroundColor: color.hexCode }}
-                className="color-preview border-2 border-gray-200 cursor-pointer hover:border-gray-400 transition"
-                onClick={() => {
-                  setColor(color.hexCode);
-                  localStorage.setItem("color", color.hexCode);
-                }}
-                title={color.displayName}
-              />
-            ))
+            colors.map((c) => {
+              const isSelected = color === c.hexCode;
+              return (
+                <button
+                  key={c._id}
+                  onClick={() => {
+                    setColor(c.hexCode);
+                    localStorage.setItem("color", c.hexCode);
+                  }}
+                  title={c.displayName}
+                  className={`relative w-10 h-10 rounded-full transition-all hover:scale-110 ${
+                    isSelected
+                      ? "ring-2 ring-orange-500 ring-offset-2"
+                      : "ring-1 ring-gray-200"
+                  }`}
+                  style={{ backgroundColor: c.hexCode }}
+                >
+                  {isSelected && (
+                    <span
+                      className="absolute inset-0 flex items-center justify-center text-xs"
+                      style={{
+                        color: ['#ffffff', '#fff', '#f5f5f5'].includes(
+                          (c.hexCode || '').toLowerCase()
+                        )
+                          ? '#374151'
+                          : '#ffffff',
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faCheck} />
+                    </span>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* Hidden file inputs */}
+      {/* Hidden file input for logo upload */}
       <input
         type="file"
         onChange={(e) => {

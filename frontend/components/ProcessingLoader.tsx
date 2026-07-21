@@ -1,5 +1,4 @@
 import React from 'react';
-import { FaSpinner, FaCheckCircle } from 'react-icons/fa';
 
 interface ProcessingStep {
   id: string;
@@ -9,90 +8,49 @@ interface ProcessingStep {
 
 interface ProcessingLoaderProps {
   isVisible: boolean;
-  currentStatus: string;
-  steps: ProcessingStep[];
+  currentStatus?: string;
+  steps?: ProcessingStep[];
 }
 
+/**
+ * A clean, brand-consistent buffering overlay shown while the design is being
+ * processed and added to the cart. Replaces the old blue progress bar / step list
+ * with a subtle animated logo for a smoother experience.
+ */
 const ProcessingLoader: React.FC<ProcessingLoaderProps> = ({
   isVisible,
   currentStatus,
-  steps
 }) => {
   if (!isVisible) return null;
 
-  const currentStepIndex = steps.findIndex(step => !step.completed);
-  const completedSteps = steps.filter(step => step.completed).length;
-  const progressPercent = (completedSteps / steps.length) * 100;
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 shadow-2xl z-50 animate-slide-up">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <FaSpinner className="w-6 h-6 animate-spin text-white" />
-            <div>
-              <h3 className="font-semibold text-lg">Processing Your Design</h3>
-              <p className="text-blue-100 text-sm">{currentStatus}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold">{Math.round(progressPercent)}%</p>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="w-full bg-blue-400 rounded-full h-2 mb-4 overflow-hidden">
-          <div
-            className="bg-white h-full rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
-        {/* Steps */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {steps.map((step, index) => (
-            <div
-              key={step.id}
-              className={`flex items-center gap-2 p-3 rounded-lg transition-all ${
-                step.completed
-                  ? 'bg-blue-400 bg-opacity-50'
-                  : index === currentStepIndex
-                  ? 'bg-white bg-opacity-20 border border-white border-opacity-40'
-                  : 'bg-blue-400 bg-opacity-30'
-              }`}
-            >
-              <div className="flex-shrink-0 w-5 h-5">
-                {step.completed ? (
-                  <FaCheckCircle className="w-5 h-5 text-white" />
-                ) : index === currentStepIndex ? (
-                  <FaSpinner className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <div className="w-5 h-5 rounded-full border-2 border-white border-opacity-30" />
-                )}
-              </div>
-              <span className="text-sm font-medium truncate">{step.label}</span>
-            </div>
-          ))}
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+      {/* Animated brand logo with spinning ring */}
+      <div className="relative flex items-center justify-center">
+        <div className="absolute w-24 h-24 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
+        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg animate-pulse">
+          <svg
+            className="w-8 h-8 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 2L2 7v10c0 5.55 3.84 10 9 9s9-4.65 9-9V7l-8-5z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M8 11l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
+      {/* Status text */}
+      <p className="mt-6 text-gray-700 font-medium">
+        {currentStatus || 'Processing your design…'}
+      </p>
 
-        .animate-slide-up {
-          animation: slide-up 0.4s ease-out;
-        }
-      `}</style>
+      {/* Subtle buffering dots */}
+      <div className="mt-3 flex gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '-0.3s' }} />
+        <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '-0.15s' }} />
+        <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" />
+      </div>
     </div>
   );
 };

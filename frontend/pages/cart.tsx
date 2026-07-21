@@ -26,7 +26,8 @@ const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : 
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState<any[]>([]);
-  const { user } = useAuth();
+  const [isCartLoading, setIsCartLoading] = useState(true);
+  const { user, isLoading: authLoading } = useAuth();
   const { refreshCart } = useCart();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
@@ -38,21 +39,32 @@ const Cart = () => {
 
   useEffect(() => {
   const fetchCartItems = async () => {
-    if (!user?._id) return; 
+    if (!user?._id) {
+      setCartItems([]);
+      setIsCartLoading(false);
+      return;
+    }
     try {
+      setIsCartLoading(true);
       const response = await cartService.getCartItems(user._id);
       const items = response.items || [];
-      
+
       setCartItems(items);
       refreshCart(); // Update cart count in navbar
     } catch (error: any) {
       console.error('Error fetching cart items:', error);
       toast.error(error.message || 'Failed to load cart items');
+    } finally {
+      setIsCartLoading(false);
     }
   };
 
-  fetchCartItems();
-}, [user]);
+  // Wait until auth has resolved so we don't briefly show an empty cart
+  // (which flashes "Your cart is empty" incorrectly) before items load.
+  if (!authLoading) {
+    fetchCartItems();
+  }
+}, [user, authLoading]);
 
   const handleRemoveItem = async (itemId: string) => {
     if (!user?._id) return;
@@ -146,11 +158,8 @@ const Cart = () => {
     }, 0);
   };
 
-  const SHIPPING_COST = 7;
-
   const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    return subtotal > 0 ? subtotal + SHIPPING_COST : 0;
+    return calculateSubtotal();
   };
 
   const handleCheckout = async () => {
@@ -175,7 +184,8 @@ const Cart = () => {
           const guestResponse = await guestAuthService.createGuestAccount(address.guestEmail);
           userId = guestResponse.userId;
           setGuestAccountUserId(guestResponse.userId); // Store the new user ID for order creation
-          toast.success('Account created! Check your email for login credentials.');
+          // Account is created silently in the background; the user receives login
+          // credentials by email. (No banner over the payment section.)
         } catch (error: any) {
           console.error('Error creating guest account:', error);
           toast.error(error.response?.data?.message || 'Error creating account. Please try again.');
@@ -299,8 +309,18 @@ const Cart = () => {
       <NavBar />
       <div className="container mx-auto px-4 py-8 pt-20">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center">Shopping Cart</h1>
-        {cartItems.length === 0 ? (
-          <p className="text-center text-gray-600">Your cart is empty.</p>
+        {(isCartLoading || authLoading) ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 rounded-full border-4 border-orange-100 border-t-orange-500 animate-spin" />
+            <p className="mt-4 text-gray-500 text-sm">Loading your cart…</p>
+          </div>
+        ) : cartItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p className="text-gray-600">Your cart is empty.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {cartItems.map(item => (
@@ -479,7 +499,7 @@ const Cart = () => {
                           <span className="text-xs md:text-sm text-gray-600">Total Price: </span>
                           <span className="text-base md:text-lg font-semibold text-gray-900">${item.price.toFixed(2)}</span>
                           <span className="text-xs md:text-sm text-gray-600 ml-2">
-                            ($30.00 per item × {item.quantity})
+                            (${item.quantity > 0 ? (item.price / item.quantity).toFixed(2) : item.price.toFixed(2)} per item × {item.quantity})
                           </span>
                         </>
                       )}
@@ -514,13 +534,6 @@ const Cart = () => {
                     <span>Subtotal:</span>
                     <span>${calculateSubtotal().toFixed(2)}</span>
                   </div>
-                  
-                  {calculateSubtotal() > 0 && (
-                    <div className="flex justify-between text-gray-600 text-sm md:text-base">
-                      <span>Shipping:</span>
-                      <span>${SHIPPING_COST.toFixed(2)}</span>
-                    </div>
-                  )}
 
                   <div className="pt-3 border-t">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">

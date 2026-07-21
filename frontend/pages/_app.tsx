@@ -18,7 +18,15 @@ function MyApp({ Component, pageProps }: AppProps) {
         </Head>
         <Layout>
           <Component {...pageProps} />
-          <ToastContainer position="bottom-center" />
+          <ToastContainer
+            position="bottom-center"
+            autoClose={2000}
+            hideProgressBar
+            newestOnTop
+            closeOnClick
+            pauseOnHover={false}
+            theme="light"
+          />
         </Layout>
       </CartProvider>
     </AuthProvider>
