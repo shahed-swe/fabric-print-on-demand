@@ -33,8 +33,11 @@ export default function Footer() {
           <p className="text-sm">Saturday: 10:00 AM - 4:00 PM</p>
         </div>
       </div>
-      <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-        <p>&copy; 2026 Custom Print Service. All rights reserved.</p>
+      <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm space-y-1">
+        <p className="font-semibold text-white">Frendo Tech Solution</p>
+        <p>Trade License No.: TRAD/DNCC/018980/2023</p>
+        <p>House #2023, Abdus Sobhan Dhali Road, Vhatara, Dhaka</p>
+        <p className="pt-3">&copy; 2026 Custom Print Service. All rights reserved.</p>
       </div>
     </footer>
   );
