@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : 0;
 
   return (
-    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col h-full">
       {/* Product Image */}
       <Link href={`/products/${product._id}`}>
         <a className="block relative overflow-hidden bg-gray-100">
@@ -71,7 +71,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         {/* Category */}
         {product.category && (
           <Link href={`/categories/${product.category.slug}`}>
@@ -146,9 +146,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Price */}
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
+        <div className="mt-auto pt-4 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-baseline gap-x-2">
               <span className="text-2xl font-bold text-gray-900">
                 {formatBDT(product.price)}
               </span>
@@ -166,7 +166,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             {/* Custom Button */}
             {product.haveCustomPrint && (
               <button

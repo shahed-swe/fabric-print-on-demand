@@ -322,7 +322,7 @@ const LandingPage = () => {
 
                                             {/* Price */}
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex flex-wrap items-baseline gap-x-2">
                                                     <span className="text-2xl font-bold text-gray-900">
                                                         {formatBDT(product.price)}
                                                     </span>
