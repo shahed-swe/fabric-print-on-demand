@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { ChevronRightIcon, ChevronLeftIcon, ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
@@ -251,7 +252,7 @@ export default function Orders() {
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                         <p>
-                          {new Date(order.createdAt).toLocaleDateString()} · ৳{order.totalAmount?.toFixed(2) || '0.00'} · {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
+                          {new Date(order.createdAt).toLocaleDateString()} · {formatBDT(order.totalAmount)} · {order.items?.length || 0} item{(order.items?.length || 0) > 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>

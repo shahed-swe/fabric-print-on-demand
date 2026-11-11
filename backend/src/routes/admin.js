@@ -72,4 +72,10 @@ router.route('/colors/:id')
   .delete(protect, colorController.deleteColor);
 router.patch('/colors/bulk/toggle-active', protect, colorController.toggleColorActiveBulk);
 
+// Exchange rate (USD -> BDT display rate)
+const exchangeRateController = require('../controllers/exchangeRateController');
+router.get('/exchange-rate', protect, exchangeRateController.getExchangeRate);
+router.post('/exchange-rate/refresh', protect, exchangeRateController.refreshExchangeRate);
+router.put('/exchange-rate', protect, exchangeRateController.updateExchangeRate);
+
 module.exports = router;

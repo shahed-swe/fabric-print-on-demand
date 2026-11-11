@@ -1,3 +1,4 @@
+import { formatBDT } from '../../utils/currency';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -270,7 +271,7 @@ const CountryProducts = () => {
           </div>
           
           <div className="w-full md:w-4/12">
-            <h3 className="text-sm font-medium mb-2 text-gray-700">Price Range: ৳{priceRange[0]} - ৳{priceRange[1]}</h3>
+            <h3 className="text-sm font-medium mb-2 text-gray-700">Price Range: {formatBDT(priceRange[0])} - {formatBDT(priceRange[1])}</h3>
             <div className="px-2">
               <input 
                 type="range" 
@@ -282,9 +283,9 @@ const CountryProducts = () => {
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500" 
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>৳0</span>
-                <span>৳50</span>
-                <span>৳100</span>
+                <span>{formatBDT(0)}</span>
+                <span>{formatBDT(50)}</span>
+                <span>{formatBDT(100)}</span>
               </div>
             </div>
           </div>
@@ -389,7 +390,7 @@ const CountryProducts = () => {
                   {renderRatingStars(product.rating)}
                 </div>
                 <div className="flex justify-between items-center mt-3">
-                  <p className="text-xl font-bold text-black">৳{product.price.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-black">{formatBDT(product.price)}</p>
                   <button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-md text-sm transition-colors duration-300">
                     Add to Cart
                   </button>

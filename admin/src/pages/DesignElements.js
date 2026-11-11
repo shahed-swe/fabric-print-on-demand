@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import axios from '../config/axios';
 import { toast } from 'react-toastify';
@@ -154,7 +155,7 @@ const DesignElements = () => {
       summaryContent += `${'='.repeat(50)}\n\n`;
       summaryContent += `Design Title: ${design.title}\n`;
       summaryContent += `Design ID: ${design._id}\n`;
-      summaryContent += `Price: ৳${design.price.toFixed(2)}\n`;
+      summaryContent += `Price: ${formatBDT(design.price)}\n`;
       summaryContent += `Created: ${new Date(design.createdAt).toLocaleString()}\n\n`;
       summaryContent += `Front Elements:\n`;
       summaryContent += `  - Texts: ${frontTexts.length}\n`;
@@ -284,7 +285,7 @@ const DesignElements = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ৳{design.price.toFixed(2)}
+                      {formatBDT(design.price)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(design.createdAt)}

@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -674,7 +675,7 @@ const Profile = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                             <div>
                               <p className="text-sm text-gray-600">Amount</p>
-                              <p className="font-bold text-lg text-gray-900">৳{order.totalAmount.toFixed(2)}</p>
+                              <p className="font-bold text-lg text-gray-900">{formatBDT(order.totalAmount)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${

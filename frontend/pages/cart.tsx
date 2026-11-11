@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import { useEffect, useState } from 'react';
 import api from '../config/axios';
 import { loadStripe } from '@stripe/stripe-js';
@@ -487,17 +488,17 @@ const Cart = () => {
                       {item.itemType === 'product' ? (
                         <>
                           <span className="text-xs md:text-sm text-gray-600">Unit Price: </span>
-                          <span className="text-base md:text-lg font-semibold text-gray-900">৳{item.price.toFixed(2)}</span>
+                          <span className="text-base md:text-lg font-semibold text-gray-900">{formatBDT(item.price)}</span>
                           {item.quantity > 1 && (
                             <span className="text-xs md:text-sm text-gray-600 ml-2">
-                              (Total: ৳{(item.price * item.quantity).toFixed(2)})
+                              (Total: {formatBDT((item.price * item.quantity))})
                             </span>
                           )}
                         </>
                       ) : (
                         <>
                           <span className="text-xs md:text-sm text-gray-600">Total Price: </span>
-                          <span className="text-base md:text-lg font-semibold text-gray-900">৳{item.price.toFixed(2)}</span>
+                          <span className="text-base md:text-lg font-semibold text-gray-900">{formatBDT(item.price)}</span>
                           <span className="text-xs md:text-sm text-gray-600 ml-2">
                             (${item.quantity > 0 ? (item.price / item.quantity).toFixed(2) : item.price.toFixed(2)} per item × {item.quantity})
                           </span>
@@ -532,13 +533,13 @@ const Cart = () => {
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-gray-600 text-sm md:text-base">
                     <span>Subtotal:</span>
-                    <span>৳{calculateSubtotal().toFixed(2)}</span>
+                    <span>{formatBDT(calculateSubtotal())}</span>
                   </div>
 
                   <div className="pt-3 border-t">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                       <div className="text-lg md:text-xl font-semibold">
-                        Total: ৳{calculateTotal().toFixed(2)}
+                        Total: {formatBDT(calculateTotal())}
                       </div>
                       <button
                         onClick={handleCheckout}

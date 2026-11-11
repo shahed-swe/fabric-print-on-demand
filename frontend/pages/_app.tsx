@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { AppProps } from 'next/app';
+import { getRate, loadExchangeRate } from '../utils/currency';
 import Head from 'next/head';
 import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
@@ -8,6 +10,12 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
+  // Load the USD -> BDT display rate; re-render all prices when it changes.
+  const [, setRate] = useState(getRate());
+  useEffect(() => {
+    loadExchangeRate(setRate);
+  }, []);
+
   return (
     <AuthProvider>
       <CartProvider>

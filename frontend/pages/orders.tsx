@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import NavBar from '../components/NavBar';
@@ -508,16 +509,16 @@ const OrdersPage = () => {
                                                             {/* Price */}
                                                             <div className="text-right">
                                                                 <span className="text-lg font-semibold text-orange-600">
-                                                                    ৳{item.price.toFixed(2)}
+                                                                    {formatBDT(item.price)}
                                                                 </span>
                                                                 {itemType === 'product' && item.quantity > 1 && (
                                                                     <div className="text-xs text-gray-500">
-                                                                        ৳{(item.price / item.quantity).toFixed(2)} each
+                                                                        {formatBDT((item.price / item.quantity))} each
                                                                     </div>
                                                                 )}
                                                                 {itemType === 'design' && item.quantity && (
                                                                     <div className="text-xs text-gray-500">
-                                                                        ৳{(item.price / item.quantity).toFixed(2)} per item
+                                                                        {formatBDT((item.price / item.quantity))} per item
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -532,7 +533,7 @@ const OrdersPage = () => {
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-lg font-semibold text-gray-900">Total:</span>
                                                     <span className="text-xl font-bold text-orange-600">
-                                                        ৳{order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                                                        {formatBDT(order.items.reduce((total, item) => total + item.price, 0))}
                                                     </span>
                                                 </div>
                                             </div>

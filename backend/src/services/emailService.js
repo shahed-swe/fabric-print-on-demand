@@ -1,4 +1,5 @@
 const transporter = require('../config/email');
+const { formatBDT } = require('./exchangeRateService');
 
 const generateInvoiceHTML = (order, user) => {
   const formatDate = (date) => {
@@ -9,9 +10,8 @@ const generateInvoiceHTML = (order, user) => {
     });
   };
 
-  const formatCurrency = (amount) => {
-    return `৳${Number(amount).toFixed(2)}`;
-  };
+  // Stored/charged in USD; shown in BDT at the daily exchange rate.
+  const formatCurrency = (amount) => formatBDT(amount);
 
   // Calculate subtotal (total - shipping)
   const shippingCost = 7;

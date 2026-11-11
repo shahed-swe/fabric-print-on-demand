@@ -1,3 +1,4 @@
+import { formatBDT } from '../../utils/currency';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -301,11 +302,11 @@ const ProductDetails = () => {
             <div className="border-t border-b border-gray-200 py-4">
               <div className="flex items-center gap-3">
                 <span className="text-4xl font-bold text-gray-900">
-                  ৳{product.price.toFixed(2)}
+                  {formatBDT(product.price)}
                 </span>
                 {product.basePrice && product.basePrice > product.price && (
                   <span className="text-xl text-gray-500 line-through">
-                    ৳{product.basePrice.toFixed(2)}
+                    {formatBDT(product.basePrice)}
                   </span>
                 )}
                 {discount > 0 && (
@@ -466,7 +467,7 @@ const ProductDetails = () => {
                 <FaTruck className="w-5 h-5 text-orange-500 mt-1" />
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm">Free Shipping</h4>
-                  <p className="text-xs text-gray-600">On orders over ৳50</p>
+                  <p className="text-xs text-gray-600">On orders over {formatBDT(50)}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

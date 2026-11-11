@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, PhotoIcon } from '@heroicons/react/24/outline';
@@ -314,7 +315,7 @@ export default function CustomStyles() {
               {/* Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price <span className="text-red-500">*</span>
+                  Price (USD $) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -521,7 +522,7 @@ export default function CustomStyles() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    ৳{style.price}
+                    {formatBDT(style.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

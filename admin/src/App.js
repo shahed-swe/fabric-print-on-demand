@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getRate, loadExchangeRate } from './utils/currency';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
@@ -39,6 +40,12 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
+  // Load the USD -> BDT display rate; re-render all prices when it changes.
+  const [, setRate] = useState(getRate());
+  useEffect(() => {
+    loadExchangeRate(setRate);
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

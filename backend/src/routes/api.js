@@ -14,6 +14,10 @@ const contactController = require('../controllers/contactController');
 const customStyleController = require('../controllers/customStyleController');
 const colorController = require('../controllers/colorController');
 const { protect } = require('../middlewares/auth');
+const exchangeRateController = require('../controllers/exchangeRateController');
+
+// USD -> BDT display rate (refreshed daily)
+router.get('/exchange-rate', exchangeRateController.getExchangeRate);
 
 // Auth routes
 router.post('/auth/register', authController.register);

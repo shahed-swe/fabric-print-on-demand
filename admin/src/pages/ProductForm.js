@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PhotoIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
@@ -750,7 +751,7 @@ export default function ProductForm() {
 
               <div className="sm:col-span-2">
                 <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700">
-                  Base Price (৳) *
+                  Base Price (USD $) *
                 </label>
                 <input
                   type="number"
@@ -767,7 +768,7 @@ export default function ProductForm() {
 
               <div className="sm:col-span-2">
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                  Selling Price (৳) *
+                  Selling Price (USD $) *
                 </label>
                 <input
                   type="number"
@@ -1220,7 +1221,7 @@ export default function ProductForm() {
                   <option value="">None - No custom style</option>
                   {customStyles.filter(style => style.active).map((style) => (
                     <option key={style._id} value={style._id}>
-                      {style.title} {style.price ? `(৳${style.price})` : ''}
+                      {style.title} {style.price ? `(${formatBDT(style.price)})` : ''}
                     </option>
                   ))}
                 </select>

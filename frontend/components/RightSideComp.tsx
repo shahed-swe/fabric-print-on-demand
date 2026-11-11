@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React from 'react';
 import { FaShoppingCart, FaMinus, FaPlus } from 'react-icons/fa';
 
@@ -48,7 +49,7 @@ const RightSideComp: React.FC<RightSideCompProps> = ({
         {/* Base style price */}
         {basePrice > 0 && (
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-orange-600">৳{basePrice.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-orange-600">{formatBDT(basePrice)}</span>
             <span className="text-xs text-gray-400">base style price</span>
           </div>
         )}

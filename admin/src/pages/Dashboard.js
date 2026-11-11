@@ -1,7 +1,9 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import axios from '../config/axios';
+import ExchangeRateCard from '../components/ExchangeRateCard';
 
 // Register the chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
@@ -19,6 +21,7 @@ export default function Dashboard() {
   const [categoryData, setCategoryData] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [, setDisplayRate] = useState(null); // re-render taka amounts when the rate changes
 
   useEffect(() => {
     fetchDashboardData();
@@ -112,12 +115,15 @@ export default function Dashboard() {
 
   return (
     <div className="py-6 space-y-6">
+      {/* USD -> BDT display rate */}
+      <ExchangeRateCard onRateChange={setDisplayRate} />
+
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="stat-card">
           <div>
             <p className="text-sm font-medium text-gray-600 truncate">Total Revenue</p>
-            <p className="mt-1 text-3xl font-semibold text-gray-900">৳{parseFloat(stats.revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            <p className="mt-1 text-3xl font-semibold text-gray-900">{formatBDT(stats.revenue)}</p>
             <p className="text-xs text-gray-500 mt-1">From delivered orders</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-800">
@@ -229,7 +235,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                    ৳{order.total}
+                    {formatBDT(order.total)}
                   </td>
                 </tr>
               ))}

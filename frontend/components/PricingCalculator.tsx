@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -52,22 +53,22 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
       <div className="space-y-3">
         <div className="flex justify-between text-gray-600">
           <span>Price per Item:</span>
-          <span>৳{pricePerItem.toFixed(2)}</span>
+          <span>{formatBDT(pricePerItem)}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
           <span className="text-sm text-gray-500">Base style price</span>
-          <span className="text-sm text-gray-500">৳{Number(basePrice || 0).toFixed(2)}</span>
+          <span className="text-sm text-gray-500">{formatBDT(Number(basePrice || 0))}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
           <span className="text-sm text-gray-500">Front design</span>
-          <span className="text-sm text-gray-500">৳{Number(frontDesignPrice || 0).toFixed(2)}</span>
+          <span className="text-sm text-gray-500">{formatBDT(Number(frontDesignPrice || 0))}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
           <span className="text-sm text-gray-500">Back design</span>
-          <span className="text-sm text-gray-500">৳{Number(backDesignPrice || 0).toFixed(2)}</span>
+          <span className="text-sm text-gray-500">{formatBDT(Number(backDesignPrice || 0))}</span>
         </div>
 
         <div className="flex justify-between text-gray-600">
@@ -78,7 +79,7 @@ const PricingCalculator: React.FC<PricingCalculatorProps> = ({
         <div className="border-t pt-3 mt-3">
           <div className="flex justify-between font-bold text-lg text-orange-500">
             <span>Subtotal:</span>
-            <span>৳{totalPrice.toFixed(2)}</span>
+            <span>{formatBDT(totalPrice)}</span>
           </div>
         </div>
 

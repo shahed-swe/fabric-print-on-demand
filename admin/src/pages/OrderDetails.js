@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -313,16 +314,16 @@ export default function OrderDetails() {
                       {/* Price */}
                       <div className="text-right">
                         <span className="text-lg font-bold text-primary-600">
-                          ৳{item.price?.toFixed(2) || '0.00'}
+                          {formatBDT(item.price)}
                         </span>
                         {itemType === 'product' && item.quantity > 1 && (
                           <div className="text-xs text-gray-500 mt-1">
-                            ৳{(item.price / item.quantity).toFixed(2)} each
+                            {formatBDT((item.price / item.quantity))} each
                           </div>
                         )}
                         {itemType === 'design' && item.quantity && (
                           <div className="text-xs text-gray-500 mt-1">
-                            ৳{(item.price / item.quantity).toFixed(2)} per item
+                            {formatBDT((item.price / item.quantity))} per item
                           </div>
                         )}
                       </div>
@@ -336,7 +337,7 @@ export default function OrderDetails() {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
                     <span className="text-2xl font-bold text-primary-600">
-                      ৳{itemTotal.toFixed(2)}
+                      {formatBDT(itemTotal)}
                     </span>
                   </div>
                 </div>
@@ -393,7 +394,7 @@ export default function OrderDetails() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="text-gray-900 font-medium">৳{itemTotal.toFixed(2)}</span>
+                  <span className="text-gray-900 font-medium">{formatBDT(itemTotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Items:</span>
@@ -402,7 +403,7 @@ export default function OrderDetails() {
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between">
                     <span className="font-semibold text-gray-900">Total:</span>
-                    <span className="font-bold text-primary-600">৳{order.totalAmount?.toFixed(2) || itemTotal.toFixed(2)}</span>
+                    <span className="font-bold text-primary-600">{formatBDT(order.totalAmount || itemTotal)}</span>
                   </div>
                 </div>
                 <div className="mt-3">

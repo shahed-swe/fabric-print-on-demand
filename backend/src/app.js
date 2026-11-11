@@ -8,6 +8,7 @@ const fileUpload = require('express-fileupload');
 const apiRoutes = require('./routes/api');
 const adminRoutes = require('./routes/admin');
 const { initializeBucket } = require('./config/minio');
+const { startExchangeRateScheduler } = require('./services/exchangeRateService');
 
 const app = express();
 
@@ -35,7 +36,10 @@ app.use('/api/admin', adminRoutes);
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✓ Connected to MongoDB'))
+  .then(() => {
+    console.log('✓ Connected to MongoDB');
+    startExchangeRateScheduler();
+  })
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Initialize MinIO bucket

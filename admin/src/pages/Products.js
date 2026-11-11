@@ -1,3 +1,4 @@
+import { formatBDT } from '../utils/currency';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -273,7 +274,7 @@ export default function Products() {
                         <div className="mt-2 sm:flex sm:justify-between">
                           <div className="sm:flex sm:gap-6">
                             <p className="flex items-center text-sm text-gray-800 font-semibold">
-                              ৳{product.price.toFixed(2)}
+                              {formatBDT(product.price)}
                             </p>
                             {product.sizes && product.sizes.length > 0 && (
                               <div className="flex items-center gap-1">
