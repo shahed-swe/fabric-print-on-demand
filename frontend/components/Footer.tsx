@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-8">
         <div>
           <h4 className="font-bold text-white mb-4">Custom Print Service</h4>
-          <p className="text-sm">Professional DTF printing solutions for Australian businesses.</p>
+          <p className="text-sm">Professional DTF printing solutions for businesses.</p>
         </div>
         <div>
           <h4 className="font-bold text-white mb-4">Quick Links</h4>
