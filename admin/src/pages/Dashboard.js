@@ -117,7 +117,7 @@ export default function Dashboard() {
         <div className="stat-card">
           <div>
             <p className="text-sm font-medium text-gray-600 truncate">Total Revenue</p>
-            <p className="mt-1 text-3xl font-semibold text-gray-900">${parseFloat(stats.revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            <p className="mt-1 text-3xl font-semibold text-gray-900">৳{parseFloat(stats.revenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
             <p className="text-xs text-gray-500 mt-1">From delivered orders</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-800">
@@ -229,7 +229,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                    ${order.total}
+                    ৳{order.total}
                   </td>
                 </tr>
               ))}

@@ -508,16 +508,16 @@ const OrdersPage = () => {
                                                             {/* Price */}
                                                             <div className="text-right">
                                                                 <span className="text-lg font-semibold text-orange-600">
-                                                                    ${item.price.toFixed(2)}
+                                                                    ৳{item.price.toFixed(2)}
                                                                 </span>
                                                                 {itemType === 'product' && item.quantity > 1 && (
                                                                     <div className="text-xs text-gray-500">
-                                                                        ${(item.price / item.quantity).toFixed(2)} each
+                                                                        ৳{(item.price / item.quantity).toFixed(2)} each
                                                                     </div>
                                                                 )}
                                                                 {itemType === 'design' && item.quantity && (
                                                                     <div className="text-xs text-gray-500">
-                                                                        ${(item.price / item.quantity).toFixed(2)} per item
+                                                                        ৳{(item.price / item.quantity).toFixed(2)} per item
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -532,7 +532,7 @@ const OrdersPage = () => {
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-lg font-semibold text-gray-900">Total:</span>
                                                     <span className="text-xl font-bold text-orange-600">
-                                                        ${order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+                                                        ৳{order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
                                                     </span>
                                                 </div>
                                             </div>

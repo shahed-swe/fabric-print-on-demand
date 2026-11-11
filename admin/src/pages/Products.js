@@ -273,7 +273,7 @@ export default function Products() {
                         <div className="mt-2 sm:flex sm:justify-between">
                           <div className="sm:flex sm:gap-6">
                             <p className="flex items-center text-sm text-gray-800 font-semibold">
-                              ${product.price.toFixed(2)}
+                              ৳{product.price.toFixed(2)}
                             </p>
                             {product.sizes && product.sizes.length > 0 && (
                               <div className="flex items-center gap-1">

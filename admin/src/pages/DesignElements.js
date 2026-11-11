@@ -154,7 +154,7 @@ const DesignElements = () => {
       summaryContent += `${'='.repeat(50)}\n\n`;
       summaryContent += `Design Title: ${design.title}\n`;
       summaryContent += `Design ID: ${design._id}\n`;
-      summaryContent += `Price: $${design.price.toFixed(2)}\n`;
+      summaryContent += `Price: ৳${design.price.toFixed(2)}\n`;
       summaryContent += `Created: ${new Date(design.createdAt).toLocaleString()}\n\n`;
       summaryContent += `Front Elements:\n`;
       summaryContent += `  - Texts: ${frontTexts.length}\n`;
@@ -284,7 +284,7 @@ const DesignElements = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${design.price.toFixed(2)}
+                      ৳{design.price.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(design.createdAt)}

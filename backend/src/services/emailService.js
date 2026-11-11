@@ -10,7 +10,7 @@ const generateInvoiceHTML = (order, user) => {
   };
 
   const formatCurrency = (amount) => {
-    return `$${Number(amount).toFixed(2)}`;
+    return `৳${Number(amount).toFixed(2)}`;
   };
 
   // Calculate subtotal (total - shipping)

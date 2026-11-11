@@ -1069,7 +1069,7 @@ async function seedAll() {
     products.forEach(product => {
       const totalStock = product.sizes.reduce((sum, s) => sum + s.stockQuantity, 0);
       console.log(`  - ${product.name} (${product.sku})`);
-      console.log(`    Price: $${product.price}, Stock: ${totalStock}, Status: ${product.status}`);
+      console.log(`    Price: ৳${product.price}, Stock: ${totalStock}, Status: ${product.status}`);
     });
 
     console.log('\n✅ Database seeding completed successfully!');

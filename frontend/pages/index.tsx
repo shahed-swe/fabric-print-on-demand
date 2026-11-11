@@ -323,11 +323,11 @@ const LandingPage = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-2xl font-bold text-gray-900">
-                                                        ${product.price.toFixed(2)}
+                                                        ৳{product.price.toFixed(2)}
                                                     </span>
                                                     {product.basePrice && product.basePrice > product.price && (
                                                         <span className="text-sm text-gray-500 line-through">
-                                                            ${product.basePrice.toFixed(2)}
+                                                            ৳{product.basePrice.toFixed(2)}
                                                         </span>
                                                     )}
                                                 </div>

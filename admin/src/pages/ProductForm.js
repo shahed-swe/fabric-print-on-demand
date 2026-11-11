@@ -750,7 +750,7 @@ export default function ProductForm() {
 
               <div className="sm:col-span-2">
                 <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700">
-                  Base Price ($) *
+                  Base Price (৳) *
                 </label>
                 <input
                   type="number"
@@ -767,7 +767,7 @@ export default function ProductForm() {
 
               <div className="sm:col-span-2">
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                  Selling Price ($) *
+                  Selling Price (৳) *
                 </label>
                 <input
                   type="number"
@@ -1220,7 +1220,7 @@ export default function ProductForm() {
                   <option value="">None - No custom style</option>
                   {customStyles.filter(style => style.active).map((style) => (
                     <option key={style._id} value={style._id}>
-                      {style.title} {style.price ? `($${style.price})` : ''}
+                      {style.title} {style.price ? `(৳${style.price})` : ''}
                     </option>
                   ))}
                 </select>
