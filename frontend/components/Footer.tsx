@@ -33,18 +33,19 @@ export default function Footer() {
           <p className="text-sm">Saturday: 10:00 AM - 4:00 PM</p>
         </div>
       </div>
-      {/* Payment methods (PayStation) */}
-      <div className="max-w-6xl mx-auto px-4 mt-10">
-        <div className="bg-white rounded-lg p-3 sm:p-4">
-          <img
-            src="/images/paystation-banner.png"
-            alt="Verified by PayStation: Visa, Mastercard, American Express, NexusPay, UnionPay, bKash, Nagad, Rocket, Upay and more"
-            className="w-full h-auto"
-            loading="lazy"
-          />
-        </div>
-      </div>
       <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm space-y-1">
+        {/* Payment methods (PayStation) */}
+        <div className="px-4 pb-6">
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">We accept</p>
+          <div className="inline-block bg-white rounded-md px-3 py-2 w-full max-w-md">
+            <img
+              src="/images/paystation-banner.png"
+              alt="Verified by PayStation: Visa, Mastercard, American Express, NexusPay, UnionPay, bKash, Nagad, Rocket, Upay and more"
+              className="block w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+        </div>
         <p className="font-semibold text-white">Frendo Tech Solution</p>
         <p>Trade License No.: TRAD/DNCC/018980/2023</p>
         <p>House #2023, Abdus Sobhan Dhali Road, Vhatara, Dhaka</p>
